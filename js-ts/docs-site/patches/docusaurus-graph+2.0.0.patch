@@ -1,0 +1,43 @@
+diff --git a/node_modules/docusaurus-graph/src/index.ts b/node_modules/docusaurus-graph/src/index.ts
+index d59fe8c..5826922 100644
+--- a/node_modules/docusaurus-graph/src/index.ts
++++ b/node_modules/docusaurus-graph/src/index.ts
+@@ -57,10 +57,15 @@ export default async function docusaurusGraph(context: any, options: any) {
+ 						tagName: "div",
+ 						innerHTML: templates.containerGraph,
+ 					},
+-					{
+-						tagName: "script",
+-						innerHTML: templates.scriptGraph,
+-					},
++				{
++					tagName: "script",
++					// patched (patch-package): 注入的脚本原样写死 fetch('/docusaurus-graph.json')，
++					// 部署到子路径（baseUrl 非 /）时 404；构建时用 context.baseUrl 替换为绝对全路径。
++					innerHTML: templates.scriptGraph.replaceAll(
++						"'/docusaurus-graph.json'",
++						`'${context.baseUrl}docusaurus-graph.json'`,
++					),
++				},
+ 				],
+ 			};
+ 		},
+diff --git a/node_modules/docusaurus-graph/src/theme/mdUtils.ts b/node_modules/docusaurus-graph/src/theme/mdUtils.ts
+index 74fa8cd..707dcee 100644
+--- a/node_modules/docusaurus-graph/src/theme/mdUtils.ts
++++ b/node_modules/docusaurus-graph/src/theme/mdUtils.ts
+@@ -70,7 +70,14 @@ export function readMarkdownFiles(
+ 
+ 				const node = getNode(id);
+ 				if (node) {
++					// patched (patch-package): 占位节点合并——若本文件在更早扫描的文件中被
++					// references/sources 引用过，getNode 会命中占位节点（linkTo 为空）。
++					// 上游只更新 title，会静默丢弃本文件自己的 front matter 边。
+ 					node.title = title;
++					for (const r of data[referenceTag] || [])
++						if (!node.linkTo.includes(r)) node.linkTo.push(r);
++					for (const s of data[sourceTag] || [])
++						if (!node.referencedBy.includes(s)) node.referencedBy.push(s);
+ 				} else {
+ 					nodes.push({
+ 						id,

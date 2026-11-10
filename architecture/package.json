@@ -1,0 +1,23 @@
+{
+  "name": "arch-notes-docusaurus",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/copy-samples.mjs && docusaurus start --port 8081 --no-open",
+    "build": "node scripts/copy-samples.mjs && docusaurus build",
+    "serve": "docusaurus serve --port 8081",
+    "clear": "docusaurus clear"
+  },
+  "dependencies": {
+    "@docusaurus/core": "^3.10.2",
+    "@docusaurus/preset-classic": "^3.10.2",
+    "@docusaurus/theme-mermaid": "^3.10.2",
+    "@easyops-cn/docusaurus-search-local": "^0.55.3",
+    "force-graph": "^1.52.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "browserslist": {
+    "production": [">0.5%", "not dead", "not op_mini all"],
+    "development": ["last 3 chrome version", "last 3 firefox version", "last 5 safari version"]
+  }
+}

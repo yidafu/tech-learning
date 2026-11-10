@@ -1,0 +1,45 @@
+# Loki 3.1.1 —— 单机本地配置（对象存储用本地文件系统，schema v13 + tsdb）
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+
+common:
+  path_prefix: /loki
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+
+schema_config:
+  configs:
+    - from: "2024-01-01"
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+storage_config:
+  filesystem:
+    directory: /loki/chunks
+  tsdb_shipper:
+    active_index_directory: /loki/tsdb-index
+    cache_location: /loki/tsdb-cache
+
+compactor:
+  working_directory: /loki/compactor
+
+limits_config:
+  # ⚠️ 教学专用：本实验经 collector 把 trace_id/span_id 提升为 Loki 标签，
+  # 方便 LogQL 直接 {trace_id="..."} 过滤。生产环境严禁高基数标签！
+  # （正确姿势见 notes/04-integration/correlation.md"常见坑"一节）
+  max_label_names_per_series: 15
+  reject_old_samples: false
+  allow_structured_metadata: true

@@ -1,0 +1,102 @@
+# lab03 · 微服务链路追踪：frontend → orders → inventory + otel-collector + jaeger
+# 镜像均使用具体版本 tag；以官方发布为准：
+#   - jaegertracing/all-in-one: https://hub.docker.com/r/jaegertracing/all-in-one（访问日期：2026-11-04）
+#   - otel/opentelemetry-collector-contrib: https://hub.docker.com/r/otel/opentelemetry-collector-contrib（访问日期：2026-11-04）
+#   - python: https://hub.docker.com/_python（访问日期：2026-11-04）
+name: lab03-otel-tracing-jaeger
+
+services:
+  # ─────────────────────── 追踪后端：Jaeger all-in-one ───────────────────────
+  # all-in-one = collector + query + UI + 内存存储，仅供学习/演示（生产不可用）
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    environment:
+      # OTLP 接收开关（1.43+ 已默认开启；显式声明以兼容旧版）
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"   # Jaeger UI 与查询 API：http://localhost:16686
+      # 4317/4318 由 collector 使用（容器网络内 jaeger:4317），不需要映射到宿主机
+    # 说明：all-in-one 镜像内置工具有限，官方镜像不保证带 curl/wget，
+    # 因此不配置 healthcheck；三个业务服务的 healthcheck 已足够保证启动顺序。
+    networks: [lab03]
+
+  # ─────────────────────── OTel Collector（gateway 形态）─────────────────────
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.112.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4317:4317"     # OTLP/gRPC（本实验未用，方便你把别的应用也接进来）
+      - "4318:4318"     # OTLP/HTTP：/v1/traces
+    # 说明：collector 镜像为 distroless（无 shell/curl），无法配置 exec 型 healthcheck；
+    # exporter 内置重试，Jaeger 晚启动片刻不影响数据最终到达。
+    depends_on:
+      - jaeger
+    networks: [lab03]
+
+  # ─────────────────────── 业务服务（leaf → root 逐层声明）────────────────────
+  inventory:
+    build:
+      context: .
+      dockerfile: services/inventory/Dockerfile
+    environment:
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://otel-collector:4318/v1/traces"
+    ports:
+      - "8002:8002"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    depends_on:
+      - otel-collector
+    networks: [lab03]
+
+  orders:
+    build:
+      context: .
+      dockerfile: services/orders/Dockerfile
+    environment:
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://otel-collector:4318/v1/traces"
+      INVENTORY_URL: "http://inventory:8002"
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    depends_on:
+      inventory:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    networks: [lab03]
+
+  frontend:
+    build:
+      context: .
+      dockerfile: services/frontend/Dockerfile
+    environment:
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://otel-collector:4318/v1/traces"
+      ORDERS_URL: "http://orders:8001"
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    depends_on:
+      orders:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    networks: [lab03]
+
+networks:
+  lab03: {}

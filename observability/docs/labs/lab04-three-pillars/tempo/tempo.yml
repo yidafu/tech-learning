@@ -1,0 +1,55 @@
+# Tempo 2.6.0 —— 单机本地配置
+# - OTLP 接收 trace（:4317/:4318）
+# - metrics_generator：从 trace 派生指标（spanmetrics + service graphs），
+#   remote_write 推给 Prometheus —— 这是 Grafana "Trace to metrics" 与
+#   服务图（Service Graph）视图的数据来源。
+# - 后端存储：本地磁盘（生产应换对象存储 S3/GCS/OSS）
+
+server:
+  http_listen_port: 3200
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+# 实验环境把 flush 周期调短，trace 落盘更快（生产默认即可）
+ingester:
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    block_retention: 24h   # 实验只留一天
+
+metrics_generator:
+  processor:
+    service_graphs:
+      histogram_buckets: [100ms, 250ms, 500ms, 1s, 2s, 5s]
+      # peer_attributes: [peer.service]   # 如需按 mesh/对端维度拆边可打开
+    spanmetrics:
+      histogram_buckets: [100ms, 250ms, 500ms, 1s, 2s, 5s]
+  storage:
+    path: /var/tempo/generator/wal
+  remote_write:
+    - url: http://prometheus:9090/api/v1/write
+
+storage:
+  trace:
+    backend: local
+    wal:
+      path: /var/tempo/wal
+    local:
+      path: /var/tempo/blocks
+
+overrides:
+  defaults:
+    metrics_generator:
+      processors: [service-graphs, spanmetrics]
+
+# 关闭匿名使用上报（本地实验）
+usage_report:
+  reporting_enabled: false

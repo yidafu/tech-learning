@@ -1,0 +1,85 @@
+# lab01 告警规则
+# 语法参考：https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/（访问日期：2026-11-04）
+groups:
+  # ── 服务层：面向"症状"（用户可见影响）的告警 ──────────────────────────
+  - name: http.alerts
+    interval: 10s          # lab 加快评估节奏，便于演示（生产用全局 15s~1m 即可）
+    rules:
+      # 1. 错误率过高：5xx 比例 > 5% 且持续 1 分钟（生产建议 for: 5m 左右）
+      - alert: HighErrorRate
+        expr: |
+          sum by (job) (rate(http_requests_total{status=~"5.."}[1m]))
+            / sum by (job) (rate(http_requests_total[1m])) > 0.05
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.job }} 5xx 错误率过高"
+          description: >-
+            {{ $labels.job }} 最近 1 分钟 5xx 比例 {{ $value | humanizePercentage }}（阈值 5%），
+            已持续 1 分钟。可能是下游故障或发布引入缺陷。
+          runbook_url: "https://wiki.example.com/runbook/high-error-rate"
+
+      # 2. p99 延迟过高：> 1s 且持续 2 分钟
+      #    注意 sum by (job, le) 保留 job —— 否则下方 {{ $labels.job }} 渲染为空
+      - alert: HighLatencyP99
+        expr: |
+          histogram_quantile(0.99,
+            sum by (job, le) (rate(http_request_duration_seconds_bucket[2m]))) > 1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.job }} p99 延迟超过 1s"
+          description: >-
+            当前 p99 延迟 {{ $value | humanizeDuration }}（阈值 1s）。
+            查看 Grafana 延迟分位图确认是整体变慢还是长尾请求。
+          runbook_url: "https://wiki.example.com/runbook/high-latency"
+
+  # ── 基础设施层：目标存活与元监控 ────────────────────────────────────
+  - name: infra.alerts
+    interval: 15s
+    rules:
+      # 3. 抓取目标不可达（每挂一个实例产生一条告警）
+      - alert: TargetDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "抓取目标不可达：{{ $labels.job }}/{{ $labels.instance }}"
+          description: "Prometheus 已连续 1 分钟无法抓取 {{ $labels.instance }}。"
+
+      # 4. 主机磁盘将满（提前 4 小时预警的思路：>85% 即告警）
+      - alert: HostDiskFillingUp
+        expr: |
+          (1 - node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs"}
+                / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs"}) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.instance }} 磁盘 {{ $labels.mountpoint }} 使用率超 85%"
+          description: "使用率 {{ $value | humanizePercentage }}，可用空间不足 15%。"
+
+  # ── 元监控 + 死信告警：监控"监控系统本身" ───────────────────────────
+  - name: meta.alerts
+    interval: 30s
+    rules:
+      # 5. Watchdog：永远 firing 的哨兵告警。
+      #    它的接收端若发现哨兵停了 → 说明 Prometheus→Alertmanager→接收端链路断了。
+      - alert: Watchdog
+        expr: vector(1)
+        labels:
+          severity: info
+        annotations:
+          summary: "告警链路哨兵（正常情况应持续收到）"
+
+      # 6. Prometheus 规则评估失败（元监控）
+      - alert: PrometheusRuleEvalFailures
+        expr: increase(prometheus_rule_evaluation_failures_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prometheus 规则评估出现失败"

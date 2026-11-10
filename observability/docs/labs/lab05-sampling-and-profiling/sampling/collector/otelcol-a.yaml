@@ -1,0 +1,36 @@
+# Collector A —— 基准组：不做任何采样，全量转发到 Jaeger A。
+# 用途：作为"地面真值"（ground truth），与 Collector B 的采样结果对照。
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # 只是演示用的小批量参数；生产请用默认(200/5s)或按吞吐调整
+  batch:
+    timeout: 2s
+    send_batch_size: 256
+
+exporters:
+  otlp/jaeger-a:
+    endpoint: jaeger-a:4317
+    tls:
+      insecure: true
+
+extensions:
+  health_check:
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/jaeger-a]
+  telemetry:
+    metrics:
+      # 0.112.0 支持 telemetry.metrics.address（已标记废弃，未来版本将改用 servers 字段）
+      address: 0.0.0.0:8888   # 暴露 otelcol_* 自身指标，验证用

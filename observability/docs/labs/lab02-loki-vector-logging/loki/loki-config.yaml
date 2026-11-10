@@ -1,0 +1,109 @@
+# =============================================================================
+# Lab02 Loki 配置：单实例本地模式（开发/学习用，非生产拓扑）
+# 参考：https://grafana.com/docs/loki/latest/configure/（访问日期：2026-11-04）
+# 基于 Grafana 官方 loki-local-config.yaml 裁剪，并加上本实验要演示的
+# TSDB 索引 + compactor retention（日志保留期）。
+# =============================================================================
+
+# 关闭多租户：单租户模式下不需要 X-Scope-OrgID 头（生产开启并按团队分 tenant）
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+  # 本地实验放开日志级别，便于观察 compactor 行为；生产保持默认 info
+  log_level: info
+
+common:
+  instance_addr: 127.0.0.1
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks     # 日志数据块（chunk）落盘目录
+      rules_directory: /loki/rules       # ruler 规则目录
+  replication_factor: 1                  # 单机模式，无副本
+  ring:
+    kvstore:
+      store: inmemory                    # 单机用内存 ring，无需 consul/etcd
+
+# 查询加速：结果缓存 + 查询步长对齐（避免不同 step 的重复计算）
+query_range:
+  align_queries_with_step: true
+  cache_results: true
+  results_cache:
+    cache:
+      embedded_cache:
+        enabled: true
+        max_size_mb: 100
+
+# -----------------------------------------------------------------------------
+# Schema：决定索引与日志块如何存储。
+# tsdb + v13 是 Loki 3.x 推荐（structured metadata 等新特性要求 v13）。
+# from 日期只影响"从该日期起新写入的数据"，设置为过去的固定日期即可。
+# -----------------------------------------------------------------------------
+schema_config:
+  configs:
+    - from: "2024-01-01"
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+storage_config:
+  # TSDB 索引文件：active 目录写、cache 目录缓存已 ship 的索引
+  tsdb_shipper:
+    active_index_directory: /loki/tsdb-index
+    cache_location: /loki/tsdb-cache
+  filesystem:
+    directory: /loki/chunks
+
+# Ingester：日志先写内存 + WAL，后台压缩成 chunk 后 flush 到对象存储
+ingester:
+  wal:
+    enabled: true
+    dir: /loki/wal
+
+# -----------------------------------------------------------------------------
+# Limits：本实验重点演示 retention（日志保留期）
+#   retention_period 必须是 24h 的整数倍；0 表示永久保留
+#   实验设 72h：3 天前的日志由 compactor 删除（本地难等 3 天，改小也必须是 24h 倍数）
+# -----------------------------------------------------------------------------
+limits_config:
+  retention_period: 72h
+  # Loki 3.x 默认 true：允许随日志附带结构化元数据（structured metadata）
+  allow_structured_metadata: true
+  # 拒绝太旧/太新的样本，防止错误时钟污染索引
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h
+  # 每 stream 限速，防止单一标签流把 ingester 打爆（默认 3MB，这里显式写出便于学习）
+  per_stream_rate_limit: 3MB
+  per_stream_rate_limit_burst: 6MB
+  # pattern / volume 查询需要显式开启（用于日志模板聚合分析）
+  volume_enabled: true
+
+# -----------------------------------------------------------------------------
+# Compactor：
+#   1) 周期性合并 TSDB 索引，防止小索引文件膨胀；
+#   2) retention_enabled: true 时按 retention_period 删除过期数据。
+#   retention 需要删除请求存储（delete_request_store），本地用 filesystem。
+# -----------------------------------------------------------------------------
+compactor:
+  working_directory: /loki/compactor
+  compaction_interval: 10m
+  retention_enabled: true
+  retention_concurrency: 1
+  delete_request_store: filesystem
+
+# Ruler：基于 LogQL 的告警规则（本实验未配置规则文件，仅保留本地模式骨架）
+ruler:
+  alertmanager_url: http://localhost:9093
+  ring:
+    kvstore:
+      store: inmemory
+  rule_path: /loki/rules
+
+# 本地实验关闭匿名使用统计上报
+analytics:
+  reporting_enabled: false

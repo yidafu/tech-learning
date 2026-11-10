@@ -1,0 +1,5 @@
+{{ define "slack.custom.title" }}[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} · {{ .CommonLabels.service }}{{ end }}
+
+{{ define "slack.custom.body" }}{{ range .Alerts }}*{{ .Annotations.summary }}*{{ if .Annotations.description }}
+{{ .Annotations.description }}{{ end }}
+_开始于 {{ .StartsAt }} · 发送自 {{ .GeneratorURL }}_{{ end }}{{ end }}

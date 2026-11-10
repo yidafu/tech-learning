@@ -1,0 +1,57 @@
+.typeCheck {
+  margin-bottom: var(--ifm-leading);
+}
+
+.panel {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--ifm-color-danger-light);
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-color-danger-contrast-background);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  max-height: 24rem;
+  overflow-y: auto;
+}
+
+.summary {
+  color: var(--ifm-color-danger-dark);
+  font-weight: 600;
+}
+
+.diag {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--ifm-color-danger-dark);
+}
+
+.loc {
+  font-weight: 600;
+}
+
+.code {
+  color: var(--ifm-color-emphasis-700);
+}
+
+.clean {
+  margin-top: 0.5rem;
+  color: var(--ifm-color-success-dark);
+  font-weight: 600;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.85rem;
+}
+
+.note {
+  margin-top: 0.5rem;
+  color: var(--ifm-color-emphasis-600);
+  font-size: 0.8rem;
+}
+
+.failed {
+  margin-top: 0.5rem;
+  color: var(--ifm-color-danger-dark);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.82rem;
+}

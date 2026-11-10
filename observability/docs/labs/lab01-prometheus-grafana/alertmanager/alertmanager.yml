@@ -1,0 +1,56 @@
+# lab01 Alertmanager 配置：演示 grouping / inhibition / routing 三件套
+# 配置语法参考：https://prometheus.io/docs/alerting/latest/configuration/（访问日期：2026-11-04）
+global:
+  resolve_timeout: 1m        # lab 快节奏：告警源 1 分钟没重发即视为 resolved（生产常用 5m）
+
+# ──────────────────────────────────────────────────────────────────────────
+# 路由树：每条进入的告警自上而下匹配，首个命中即走该分支（除非 continue: true）
+# ──────────────────────────────────────────────────────────────────────────
+route:
+  receiver: demo-webhook            # 兜底：所有未匹配子路由的告警
+  group_by: ['alertname', 'job']    # 分组：同名+同服务的告警合并成一封通知（对抗告警风暴）
+  group_wait: 10s                   # 首次通知前等待同伴聚合（生产 30s~1m）
+  group_interval: 30s               # 同组新告警的追加间隔
+  repeat_interval: 10m              # firing 且无变化时的重发间隔（生产 4h+）
+  routes:
+    # critical 走"值班"接收器（lab 里同样是演示 webhook，生产接电话/PagerDuty）
+    - matchers:
+        - severity = "critical"
+      receiver: oncall-webhook
+      group_wait: 10s
+      repeat_interval: 5m
+
+    # Watchdog 哨兵单独路由：更高频重发，接收端发现它停了 = 告警链路断了
+    - matchers:
+        - alertname = "Watchdog"
+      receiver: demo-webhook
+      repeat_interval: 2m
+
+# ──────────────────────────────────────────────────────────────────────────
+# 抑制：critical 触发时，压制同源的 warning（演示 inhibition 机制）
+# ──────────────────────────────────────────────────────────────────────────
+inhibit_rules:
+  - source_matchers:
+      - severity = "critical"
+    target_matchers:
+      - severity = "warning"
+    equal: ['alertname', 'job']     # 仅当 alertname 与 job 都相同时才抑制
+
+# ──────────────────────────────────────────────────────────────────────────
+# 接收器：lab 用示例应用的 webhook 端点演示通知到达
+# 查看收到的告警：curl http://localhost:8000/webhook/alerts
+# ──────────────────────────────────────────────────────────────────────────
+receivers:
+  - name: demo-webhook
+    webhook_configs:
+      - url: http://app:8000/webhook/alerts
+        send_resolved: true         # 恢复时也通知（lab 便于观察 resolved 状态）
+
+  - name: oncall-webhook
+    webhook_configs:
+      - url: http://app:8000/webhook/alerts
+        send_resolved: true
+
+# Silence（静默）不写在配置文件里，而是运行时通过 UI/API 创建：
+#   UI:  http://localhost:9093 （Silence → New Silence，如对 job="demo-app" 静默 10 分钟）
+#   CLI: amtool silence add --comment="维护窗口" --duration=10m job=demo-app

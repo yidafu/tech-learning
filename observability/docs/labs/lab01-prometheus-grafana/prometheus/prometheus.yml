@@ -1,0 +1,35 @@
+# lab01 Prometheus 主配置
+# 语法参考：https://prometheus.io/docs/prometheus/latest/configuration/configuration/（访问日期：2026-11-04）
+global:
+  scrape_interval: 5s       # lab 用短间隔，数据密度高、面板更快出形状（生产常用 15s~1m）
+  scrape_timeout: 4s        # 必须 <= scrape_interval
+  evaluation_interval: 5s   # 告警/记录规则评估间隔
+
+# 告警规则与记录规则文件（容器内路径，由 compose 挂载 ./prometheus/alerts）
+rule_files:
+  - /etc/prometheus/alerts/*.yml
+
+# 告警发送目标：Alertmanager
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+# 抓取任务：静态服务发现即可满足 lab 需求
+scrape_configs:
+  # Prometheus 自监控（第一个要学的指标：up / scrape_*）
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # 示例应用（本 lab 主角）：FastAPI + prometheus_client
+  - job_name: demo-app
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['app:8000']
+
+  # 主机指标：node_exporter 容器
+  # 注意：podman machine (Mac/Win) 下看到的是 Linux VM 的指标，Linux 下即宿主机
+  - job_name: node-exporter
+    static_configs:
+      - targets: ['node-exporter:9100']

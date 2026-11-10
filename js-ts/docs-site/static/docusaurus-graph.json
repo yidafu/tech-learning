@@ -1,0 +1,318 @@
+[
+  {
+    "id": "00-environment-setup",
+    "title": "00 · 环境准备",
+    "linkTo": [],
+    "referencedBy": [
+      "28-js-ts-history"
+    ]
+  },
+  {
+    "id": "01-types-and-coercion",
+    "title": "01 类型系统与类型转换：原始值、装箱与四套相等语义",
+    "linkTo": [],
+    "referencedBy": [
+      "24-interview-prediction-questions",
+      "27-weird-behaviors-by-stage",
+      "28-js-ts-history",
+      "30-internals-vs-mainstream"
+    ]
+  },
+  {
+    "id": "02-scope-and-closure",
+    "title": "02 · 作用域与闭包",
+    "linkTo": [],
+    "referencedBy": [
+      "24-interview-prediction-questions",
+      "26-compiler-perspective",
+      "27-weird-behaviors-by-stage"
+    ]
+  },
+  {
+    "id": "03-this-and-prototype",
+    "title": "03 · this 与原型链",
+    "linkTo": [],
+    "referencedBy": [
+      "29-prototype-chain-supplement",
+      "24-interview-prediction-questions",
+      "28-js-ts-history",
+      "30-internals-vs-mainstream"
+    ]
+  },
+  {
+    "id": "04-async-programming",
+    "title": "04 · 异步编程：事件循环、Promise 状态机与 async/await",
+    "linkTo": [],
+    "referencedBy": [
+      "31-async-supplement",
+      "24-interview-prediction-questions",
+      "28-js-ts-history",
+      "30-internals-vs-mainstream"
+    ]
+  },
+  {
+    "id": "05-es2015-plus",
+    "title": "05 · ES2015+ 关键特性：解构、展开、迭代器、生成器、Proxy/Reflect",
+    "linkTo": [],
+    "referencedBy": [
+      "24-interview-prediction-questions"
+    ]
+  },
+  {
+    "id": "06-memory-management",
+    "title": "06 · 内存管理：V8 垃圾回收、泄漏排查与 Weak 家族",
+    "linkTo": [],
+    "referencedBy": [
+      "30-internals-vs-mainstream"
+    ]
+  },
+  {
+    "id": "25-milestone-implementations",
+    "title": "里程碑笔记：手写 Promise / bind / new / 深拷贝 / EventEmitter",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "29-prototype-chain-supplement",
+    "title": "29 · 原型链补充：谱系、槽位规则、instanceof、键序与污染攻防",
+    "linkTo": [
+      "03-this-and-prototype",
+      "30-internals-vs-mainstream",
+      "27-weird-behaviors-by-stage",
+      "07-v8-engine"
+    ],
+    "referencedBy": []
+  },
+  {
+    "id": "30-internals-vs-mainstream",
+    "title": "30 · JS 特性的底层实现：与主流语言逐项对比",
+    "linkTo": [
+      "26-compiler-perspective",
+      "07-v8-engine",
+      "06-memory-management",
+      "03-this-and-prototype",
+      "01-types-and-coercion",
+      "04-async-programming"
+    ],
+    "referencedBy": [
+      "29-prototype-chain-supplement"
+    ]
+  },
+  {
+    "id": "27-weird-behaviors-by-stage",
+    "title": "27 · 特异行为解码：每个 JS「怪现象」都归属于一个编译阶段",
+    "linkTo": [
+      "26-compiler-perspective",
+      "01-types-and-coercion",
+      "02-scope-and-closure",
+      "07-v8-engine"
+    ],
+    "referencedBy": [
+      "29-prototype-chain-supplement"
+    ]
+  },
+  {
+    "id": "07-v8-engine",
+    "title": "07 · V8 引擎：从源码到机器码",
+    "linkTo": [],
+    "referencedBy": [
+      "29-prototype-chain-supplement",
+      "24-interview-prediction-questions",
+      "26-compiler-perspective",
+      "27-weird-behaviors-by-stage",
+      "28-js-ts-history",
+      "30-internals-vs-mainstream"
+    ]
+  },
+  {
+    "id": "31-async-supplement",
+    "title": "31 · 异步补充：Node 事件循环、工程三件套与异步资源管理",
+    "linkTo": [
+      "04-async-programming"
+    ],
+    "referencedBy": []
+  },
+  {
+    "id": "08-render-and-performance",
+    "title": "08 · 渲染管线、事件循环与性能专题",
+    "linkTo": [],
+    "referencedBy": [
+      "24-interview-prediction-questions"
+    ]
+  },
+  {
+    "id": "09-ts-narrowing",
+    "title": "09 · TypeScript 类型收窄（Narrowing）",
+    "linkTo": [],
+    "referencedBy": [
+      "10-ts-generics",
+      "26-compiler-perspective"
+    ]
+  },
+  {
+    "id": "10-ts-generics",
+    "title": "10 · TypeScript 泛型深入",
+    "linkTo": [
+      "09-ts-narrowing"
+    ],
+    "referencedBy": [
+      "24-interview-prediction-questions"
+    ]
+  },
+  {
+    "id": "11-ts-type-programming",
+    "title": "11 · TypeScript 类型编程：映射 / 条件 / infer / 模板字面量 / 变长元组",
+    "linkTo": [],
+    "referencedBy": [
+      "22-design-patterns"
+    ]
+  },
+  {
+    "id": "12-ts-utility-types",
+    "title": "12 · 内置工具类型：源码级理解与手写",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "13-ts-type-theory",
+    "title": "13 · TypeScript 类型系统理论",
+    "linkTo": [],
+    "referencedBy": [
+      "24-interview-prediction-questions",
+      "26-compiler-perspective",
+      "28-js-ts-history"
+    ]
+  },
+  {
+    "id": "14-ts-declarations-and-modules",
+    "title": "14 · 声明文件与模块解析",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "15-tsconfig",
+    "title": "15 · tsconfig 关键项",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "16-modules-esm-cjs",
+    "title": "16 · 模块化：CommonJS 与 ESM 的机制差异",
+    "linkTo": [],
+    "referencedBy": [
+      "24-interview-prediction-questions",
+      "26-compiler-perspective",
+      "28-js-ts-history"
+    ]
+  },
+  {
+    "id": "17-build-tools",
+    "title": "17 · 构建工具：Vite / esbuild / SWC 为什么这样设计",
+    "linkTo": [],
+    "referencedBy": [
+      "24-interview-prediction-questions"
+    ]
+  },
+  {
+    "id": "18-testing-vitest",
+    "title": "18 · 测试：Vitest 基础与 Mock 机制",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "19-code-quality-eslint-prettier",
+    "title": "19 · 代码质量：ESLint（flat config）+ typescript-eslint + Prettier",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "20-package-manager-monorepo",
+    "title": "20 · 包管理：npm/pnpm、semver、workspace 与 monorepo",
+    "linkTo": [],
+    "referencedBy": [
+      "24-interview-prediction-questions"
+    ]
+  },
+  {
+    "id": "21-functional-programming",
+    "title": "21 · 函数式编程：纯函数、组合与柯里化（TS 视角）",
+    "linkTo": [
+      "24-interview-prediction-questions"
+    ],
+    "referencedBy": [
+      "22-design-patterns"
+    ]
+  },
+  {
+    "id": "24-interview-prediction-questions",
+    "title": "24 · 面试高频输出预测题集",
+    "linkTo": [
+      "01-types-and-coercion",
+      "02-scope-and-closure",
+      "03-this-and-prototype",
+      "04-async-programming",
+      "05-es2015-plus",
+      "16-modules-esm-cjs",
+      "13-ts-type-theory",
+      "10-ts-generics",
+      "08-render-and-performance",
+      "07-v8-engine",
+      "20-package-manager-monorepo",
+      "17-build-tools"
+    ],
+    "referencedBy": [
+      "21-functional-programming"
+    ]
+  },
+  {
+    "id": "22-design-patterns",
+    "title": "22 · 设计模式的 TS 实现：从 GoF 到「union + 函数表」",
+    "linkTo": [
+      "23-reactivity-source-reading",
+      "21-functional-programming",
+      "11-ts-type-programming"
+    ],
+    "referencedBy": []
+  },
+  {
+    "id": "23-reactivity-source-reading",
+    "title": "23 · 响应式源码阅读：@vue/reactivity 路线图",
+    "linkTo": [],
+    "referencedBy": [
+      "22-design-patterns",
+      "28-js-ts-history"
+    ]
+  },
+  {
+    "id": "26-compiler-perspective",
+    "title": "26 · 编译原理视角：把 JS/TS 放回编译器全景",
+    "linkTo": [
+      "07-v8-engine",
+      "02-scope-and-closure",
+      "09-ts-narrowing",
+      "16-modules-esm-cjs",
+      "13-ts-type-theory"
+    ],
+    "referencedBy": [
+      "27-weird-behaviors-by-stage",
+      "28-js-ts-history",
+      "30-internals-vs-mainstream"
+    ]
+  },
+  {
+    "id": "28-js-ts-history",
+    "title": "28 · JS/TS 发展史：今天的每一个「怪」，都是当年的一次合理决定",
+    "linkTo": [
+      "16-modules-esm-cjs",
+      "03-this-and-prototype",
+      "07-v8-engine",
+      "23-reactivity-source-reading",
+      "26-compiler-perspective",
+      "13-ts-type-theory",
+      "00-environment-setup",
+      "04-async-programming",
+      "01-types-and-coercion"
+    ],
+    "referencedBy": []
+  }
+]

@@ -1,0 +1,20 @@
+# Grafana 数据源自动 provisioning：Loki
+# 文档：https://grafana.com/docs/grafana/latest/administration/provisioning/（访问日期：2026-11-04）
+apiVersion: 1
+
+datasources:
+  - name: Loki
+    type: loki
+    uid: loki                     # dashboard JSON 中以 uid 引用该数据源
+    access: proxy
+    url: http://loki:3100         # compose 网络内通过服务名访问
+    isDefault: true
+    editable: false
+    jsonData:
+      timeout: 60
+      maxLines: 1000              # 单次查询最多返回行数，防止浏览器被刷爆
+      derivedFields:
+        # 派生字段预览（阶段 4 详讲）：从日志中提取 trace_id 生成跳转链接
+        - name: TraceID
+          matcherRegex: '"trace_id":\s*"([0-9a-f]+)"'
+          url: 'http://localhost:3000/explore?orgId=1&left=%7B%22datasource%22:%22tempo%22,%22queries%22:%5B%7B%22queryType%22:%22traceql%22,%22query%22:%22$${__value.raw}%22%7D%5D%7D'

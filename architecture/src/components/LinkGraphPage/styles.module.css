@@ -1,0 +1,46 @@
+/* 图谱铺满导航栏以下的视口；图例浮在左上角且不拦截鼠标，避免挡住其下节点的拖拽与点击 */
+.page {
+  position: relative;
+  height: calc(100vh - var(--ifm-navbar-height));
+  overflow: hidden;
+}
+
+.graph {
+  position: absolute;
+  inset: 0;
+}
+
+.legend {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-background-surface-color);
+  box-shadow: var(--ifm-global-shadow-lw);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.legend ul {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 0.15rem 1rem;
+  margin: 0.5rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dot {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-right: 0.4rem;
+  border-radius: 50%;
+  vertical-align: -0.05rem;
+}
+
+.hint {
+  color: var(--ifm-color-emphasis-600);
+  font-size: 0.75rem;
+}

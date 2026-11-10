@@ -1,0 +1,11 @@
+# Dependencies
+/node_modules
+
+# Docusaurus build output
+/build
+/.docusaurus
+
+# Misc
+.DS_Store
+npm-debug.log*
+yarn-error.log

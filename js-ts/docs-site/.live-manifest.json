@@ -1,0 +1,1322 @@
+{
+  "generatedAt": "2026-11-06T13:48:52.932Z",
+  "manifest": [
+    {
+      "file": "stage-1-js-core/01-types-and-coercion.md",
+      "liveBlocks": [
+        {
+          "file": "stage-1-js-core/01-types-and-coercion.md",
+          "lang": "ts",
+          "line": 257,
+          "bodyPreview": "// A. hint 决定 valueOf / toString 谁先被问⏎const obj = { valueOf: () => 1, toString: () => \"10\" };⏎⏎console.log(obj + 1);   /"
+        },
+        {
+          "file": "stage-1-js-core/01-types-and-coercion.md",
+          "lang": "ts",
+          "line": 312,
+          "bodyPreview": "const t = {⏎  [Symbol.toPrimitive](hint: string) {⏎    return hint === \"number\" ? 9 : `I am ${hint}`;⏎  },⏎};⏎⏎console.l"
+        },
+        {
+          "file": "stage-1-js-core/01-types-and-coercion.md",
+          "lang": "ts",
+          "line": 327,
+          "bodyPreview": "console.log(new Boolean(false) == false);⏎console.log([[]] == \"\");⏎console.log(null >= 0, null == 0);⏎⏎const s = new Set"
+        }
+      ]
+    },
+    {
+      "file": "stage-1-js-core/02-scope-and-closure.md",
+      "liveBlocks": [
+        {
+          "file": "stage-1-js-core/02-scope-and-closure.md",
+          "lang": "js",
+          "line": 108,
+          "bodyPreview": "declared();                 // 正常执行 —— 声明实例化时已完整可用⏎function declared() {}⏎⏎expr();                     // TypeError: exp"
+        },
+        {
+          "file": "stage-1-js-core/02-scope-and-closure.md",
+          "lang": "js",
+          "line": 124,
+          "bodyPreview": "console.log(typeof neverDeclared); // \"undefined\"（字符串），不抛错⏎console.log(typeof tdzVar);        // ReferenceError: Cannot "
+        },
+        {
+          "file": "stage-1-js-core/02-scope-and-closure.md",
+          "lang": "js",
+          "line": 206,
+          "bodyPreview": "// IIFE：函数调用创建新环境，参数 k 是全新绑定，实参把「此刻的 i 值」传进去⏎for (var i = 0; i < 3; i++) {⏎  ((k) => setTimeout(() => console.log(k)))(i"
+        },
+        {
+          "file": "stage-1-js-core/02-scope-and-closure.md",
+          "lang": "js",
+          "line": 223,
+          "bodyPreview": "const counter = (function () {⏎  let count = 0;                       // 私有状态：外界没有任何语法路径能碰到它⏎  function validate(step) {"
+        },
+        {
+          "file": "stage-1-js-core/02-scope-and-closure.md",
+          "lang": "js",
+          "line": 250,
+          "bodyPreview": "let tag = \"global\";⏎⏎function outer() {⏎  let tag = \"outer\";⏎  let message = \"hello\";⏎  function inner() {⏎    return `$"
+        },
+        {
+          "file": "stage-1-js-core/02-scope-and-closure.md",
+          "lang": "js",
+          "line": 287,
+          "bodyPreview": "function probe() {⏎  return typeof x;   // 引用下方模块级 let —— 函数体内前向引用，运行时机决定生死⏎}⏎try {⏎  console.log(probe());⏎} catch (e) "
+        },
+        {
+          "file": "stage-1-js-core/02-scope-and-closure.md",
+          "lang": "js",
+          "line": 331,
+          "bodyPreview": "var x = 1;⏎function demo() {⏎  console.log(x);⏎  var x = 2;⏎  console.log(x);⏎}⏎demo();⏎⏎function tdzProbe() {⏎  console"
+        },
+        {
+          "file": "stage-1-js-core/02-scope-and-closure.md",
+          "lang": "js",
+          "line": 355,
+          "bodyPreview": "function make() {⏎  let n = 0;⏎  return {⏎    inc: () => ++n,⏎    get: () => n,⏎    set10: () => (n = 10),⏎  };⏎}⏎const "
+        }
+      ]
+    },
+    {
+      "file": "stage-1-js-core/03-this-and-prototype.md",
+      "liveBlocks": [
+        {
+          "file": "stage-1-js-core/03-this-and-prototype.md",
+          "lang": "ts",
+          "line": 60,
+          "bodyPreview": "const obj = { tag: \"obj\", show() { return this.tag; } };⏎const detached = obj.show; // 拿到的是「函数值」，属性引用消失⏎detached();     "
+        },
+        {
+          "file": "stage-1-js-core/03-this-and-prototype.md",
+          "lang": "ts",
+          "line": 178,
+          "bodyPreview": "\"use strict\";⏎⏎// ① getter/setter 的 this 是 receiver：方法在 proto 上，读写却发生在 child 上⏎const proto = {⏎  _name: \"proto\",⏎  get n"
+        },
+        {
+          "file": "stage-1-js-core/03-this-and-prototype.md",
+          "lang": "ts",
+          "line": 254,
+          "bodyPreview": "function showTag(this: { tag?: string } | void): string {⏎  return this?.tag ?? \"<lost>\";⏎}⏎const timer = { tag: \"timer\""
+        },
+        {
+          "file": "stage-1-js-core/03-this-and-prototype.md",
+          "lang": "ts",
+          "line": 272,
+          "bodyPreview": "class A {⏎  name = \"a\";⏎  constructor() {⏎    console.log(`A ctor: ${this.name}, ${this.kind()}`);⏎  }⏎  kind(): string "
+        }
+      ]
+    },
+    {
+      "file": "stage-1-js-core/04-async-programming.md",
+      "liveBlocks": [
+        {
+          "file": "stage-1-js-core/04-async-programming.md",
+          "lang": "js",
+          "line": 74,
+          "bodyPreview": "// async 版⏎async function f() {⏎  const a = await step(\"A\");   // ← 暂停点⏎  console.log(a);⏎}⏎// ≈ then 版⏎function f() {⏎ "
+        },
+        {
+          "file": "stage-1-js-core/04-async-programming.md",
+          "lang": "ts",
+          "line": 155,
+          "bodyPreview": "// 订阅前先查 aborted；取消时清理自己的副作用（clearTimeout），⏎// 再用 signal.reason reject，让等待方立刻拿到确定的结局"
+        },
+        {
+          "file": "stage-1-js-core/04-async-programming.md",
+          "lang": "js",
+          "line": 164,
+          "bodyPreview": "// node 直接跑：node 04-demo.js（或 npx tsx，去掉类型即可）⏎console.log(\"1 脚本同步开始\");⏎⏎setTimeout(() => console.log(\"7 setTimeout 回调（宏任"
+        },
+        {
+          "file": "stage-1-js-core/04-async-programming.md",
+          "lang": "js",
+          "line": 220,
+          "bodyPreview": "console.log(\"A\");⏎setTimeout(() => console.log(\"B\"), 0);⏎Promise.resolve().then(() => console.log(\"C\"));⏎⏎async function"
+        },
+        {
+          "file": "stage-1-js-core/04-async-programming.md",
+          "lang": "js",
+          "line": 238,
+          "bodyPreview": "Promise.resolve(1)⏎  .then((v) => {⏎    console.log(\"t1\", v);⏎    return Promise.resolve(v + 1);⏎  })⏎  .then((v) => {⏎ "
+        }
+      ]
+    },
+    {
+      "file": "stage-1-js-core/05-es2015-plus.md",
+      "liveBlocks": [
+        {
+          "file": "stage-1-js-core/05-es2015-plus.md",
+          "lang": "js",
+          "line": 47,
+          "bodyPreview": "const [a] = 123;        // TypeError：GetIterator(123) 失败 —— number 没有 [Symbol.iterator]⏎const { b } = null;     // TypeE"
+        },
+        {
+          "file": "stage-1-js-core/05-es2015-plus.md",
+          "lang": "js",
+          "line": 57,
+          "bodyPreview": "let x = 'outer';⏎function f(y = x) { let x = 'inner'; return y; }⏎f(); // 'outer'，不抛错！默认值看不到函数体环境里的 x⏎function g(a = b, "
+        },
+        {
+          "file": "stage-1-js-core/05-es2015-plus.md",
+          "lang": "js",
+          "line": 82,
+          "bodyPreview": "const proto = { get inherited() { console.log('原型 getter 被调用'); return 1; } };⏎const child = Object.create(proto);⏎child"
+        },
+        {
+          "file": "stage-1-js-core/05-es2015-plus.md",
+          "lang": "js",
+          "line": 114,
+          "bodyPreview": "const conf = { retries: 0, timeout: null };⏎const retries = conf.retries ?? 3;   // 0：?? 只把 null/undefined 当空⏎const time"
+        },
+        {
+          "file": "stage-1-js-core/05-es2015-plus.md",
+          "lang": "js",
+          "line": 130,
+          "bodyPreview": "const range = {⏎  from: 1,⏎  to: 3,⏎  [Symbol.iterator]() {          // iterable：提供「生产迭代器」的入口⏎    let cur = this.from;⏎ "
+        },
+        {
+          "file": "stage-1-js-core/05-es2015-plus.md",
+          "lang": "js",
+          "line": 155,
+          "bodyPreview": "function* ask() {⏎  const name = yield '你叫什么？';   // name ← 第 2 次 next('小明') 的参数⏎  return `hi ${name}`;⏎}⏎const it = ask"
+        },
+        {
+          "file": "stage-1-js-core/05-es2015-plus.md",
+          "lang": "js",
+          "line": 175,
+          "bodyPreview": "// 手写 asyncIterable：next 返回 Promise<IteratorResult>，仅此而已⏎const asyncRange = {⏎  [Symbol.asyncIterator]() {⏎    let i = 0"
+        },
+        {
+          "file": "stage-1-js-core/05-es2015-plus.md",
+          "lang": "ts",
+          "line": 247,
+          "bodyPreview": "const targetMap = new Map<object, Map<string, Set<() => void>>>(); // target → key → 依赖集合⏎let activeEffect: (() => void)"
+        },
+        {
+          "file": "stage-1-js-core/05-es2015-plus.md",
+          "lang": "js",
+          "line": 277,
+          "bodyPreview": "const seen = [];⏎const base = { first: 'F', second: 'S', get combined() { return `${this.first}-${this.second}`; } };⏎co"
+        },
+        {
+          "file": "stage-1-js-core/05-es2015-plus.md",
+          "lang": "js",
+          "line": 307,
+          "bodyPreview": "const log = [];⏎const rec = (v) => { log.push(v); return v; };⏎⏎const { a = rec('a'), b = rec('b'), c: alias = rec('c') "
+        },
+        {
+          "file": "stage-1-js-core/05-es2015-plus.md",
+          "lang": "js",
+          "line": 322,
+          "bodyPreview": "function* inner() {⏎  const got = yield 'i';⏎  console.log('inner got', got);⏎  return 'R';⏎}⏎function* outer() {⏎  cons"
+        }
+      ]
+    },
+    {
+      "file": "stage-1-js-core/06-memory-management.md",
+      "liveBlocks": [
+        {
+          "file": "stage-1-js-core/06-memory-management.md",
+          "lang": "js",
+          "line": 80,
+          "bodyPreview": "function handle(req) {⏎  const temp = { rows: [] };        // ① 新生代 from-space 分配⏎  temp.rows.push(...req.items);⏎  retu"
+        },
+        {
+          "file": "stage-1-js-core/06-memory-management.md",
+          "lang": "js",
+          "line": 97,
+          "bodyPreview": "function calc() {⏎  result = heavyComputation(); // 忘了 const/let → 挂到全局对象，活到页面关闭⏎}"
+        },
+        {
+          "file": "stage-1-js-core/06-memory-management.md",
+          "lang": "js",
+          "line": 107,
+          "bodyPreview": "function mountDashboard(el) {⏎  const bigCache = new Array(1e6).fill(0);   // 闭包持有的大对象⏎  const timer = setInterval(() =>"
+        },
+        {
+          "file": "stage-1-js-core/06-memory-management.md",
+          "lang": "js",
+          "line": 122,
+          "bodyPreview": "function createHandler(rows) {      // rows: 100MB 数据⏎  const id = rows[0].id;            // 只需要一个小字段⏎  return () => con"
+        },
+        {
+          "file": "stage-1-js-core/06-memory-management.md",
+          "lang": "js",
+          "line": 133,
+          "bodyPreview": "const btn = document.querySelector('#go');⏎document.body.removeChild(btn);     // 从文档移除⏎const handlers = { click: () => "
+        },
+        {
+          "file": "stage-1-js-core/06-memory-management.md",
+          "lang": "js",
+          "line": 147,
+          "bodyPreview": "const metaCache = new Map();               // Map 的键是强引用！⏎function track(user) {⏎  metaCache.set(user, { lastSeen: Date."
+        },
+        {
+          "file": "stage-1-js-core/06-memory-management.md",
+          "lang": "js",
+          "line": 220,
+          "bodyPreview": "// node --expose-gc⏎const makeWeakRef = () => {⏎  const obj = { payload: new Array(1000).fill(0) };⏎  return new WeakRef"
+        },
+        {
+          "file": "stage-1-js-core/06-memory-management.md",
+          "lang": "js",
+          "line": 253,
+          "bodyPreview": "function build() {⏎  let a = { name: 'a' };⏎  let b = { name: 'b', ref: a };⏎  a.ref = b;        // 循环引用⏎  const keep = "
+        },
+        {
+          "file": "stage-1-js-core/06-memory-management.md",
+          "lang": "js",
+          "line": 273,
+          "bodyPreview": "const sessions = new Map(); // key: 用户对象（每个请求新建），value: 会话数据⏎function onLogin(user) {⏎  sessions.set(user, { cart: new A"
+        }
+      ]
+    },
+    {
+      "file": "stage-1-js-core/25-milestone-implementations.md",
+      "liveBlocks": [
+        {
+          "file": "stage-1-js-core/25-milestone-implementations.md",
+          "lang": "js",
+          "line": 223,
+          "bodyPreview": "// 假设 MyPromise 是符合 Promises/A+ 的实现（回调 queueMicrotask 派发，⏎// thenable 采纳也走微任务，与原生一致）⏎console.log('start');⏎⏎const p = ne"
+        },
+        {
+          "file": "stage-1-js-core/25-milestone-implementations.md",
+          "lang": "js",
+          "line": 251,
+          "bodyPreview": "const base = { tag: 'base' };⏎⏎function Greet() {⏎  this.tag = 'instance';           // 会写到哪？⏎  return undefined;⏎}⏎Gree"
+        }
+      ]
+    },
+    {
+      "file": "stage-1-js-core/29-prototype-chain-supplement.md",
+      "liveBlocks": [
+        {
+          "file": "stage-1-js-core/29-prototype-chain-supplement.md",
+          "lang": "js",
+          "line": 66,
+          "bodyPreview": "const p = {};⏎const q = Object.create(p);        // p 已在 q 的链上⏎Object.setPrototypeOf(p, q);       // TypeError：会造成 p↔q 互"
+        },
+        {
+          "file": "stage-1-js-core/29-prototype-chain-supplement.md",
+          "lang": "js",
+          "line": 81,
+          "bodyPreview": "class Lens {⏎  static [Symbol.hasInstance](inst) {⏎    return inst != null && typeof inst.focus === \"function\";⏎  }⏎}⏎{ "
+        },
+        {
+          "file": "stage-1-js-core/29-prototype-chain-supplement.md",
+          "lang": "js",
+          "line": 105,
+          "bodyPreview": "const o = { b: 1, a: 1, 2: 1, [Symbol(\"s\")]: 1, 1: 1 };⏎Reflect.ownKeys(o)        // ['1','2','b','a', Symbol(s)] —— 三段全"
+        },
+        {
+          "file": "stage-1-js-core/29-prototype-chain-supplement.md",
+          "lang": "js",
+          "line": 131,
+          "bodyPreview": "// 第一步：JSON.parse 用 CreateDataProperty 建属性 → 绕过 accessor⏎Object.keys(JSON.parse('{\"__proto__\": 1}'))   // ['__proto__'] "
+        },
+        {
+          "file": "stage-1-js-core/29-prototype-chain-supplement.md",
+          "lang": "js",
+          "line": 164,
+          "bodyPreview": "Object.getPrototypeOf(() => {}) === Function.prototype   // true —— 箭头也在函数族⏎(() => {}).prototype                        "
+        },
+        {
+          "file": "stage-1-js-core/29-prototype-chain-supplement.md",
+          "lang": "js",
+          "line": 192,
+          "bodyPreview": "console.log(Object.getPrototypeOf(() => {}) === Function.prototype);⏎console.log((() => {}).prototype);⏎console.log((fun"
+        },
+        {
+          "file": "stage-1-js-core/29-prototype-chain-supplement.md",
+          "lang": "js",
+          "line": 205,
+          "bodyPreview": "const o = { y: 1, 10: 1, x: 1, 2: 1 };⏎console.log(Object.keys(o));⏎⏎const base = { e: \"proto\" };⏎const inst = Object.cr"
+        },
+        {
+          "file": "stage-1-js-core/29-prototype-chain-supplement.md",
+          "lang": "js",
+          "line": 219,
+          "bodyPreview": "const obj = JSON.parse('{\"__proto__\": {\"deep\": {\"v\": 1}}}');⏎console.log(Object.keys(obj)[0]);⏎⏎function merge(t, s) {⏎ "
+        }
+      ]
+    },
+    {
+      "file": "stage-1-js-core/31-async-supplement.md",
+      "liveBlocks": [
+        {
+          "file": "stage-1-js-core/31-async-supplement.md",
+          "lang": "ts",
+          "line": 64,
+          "bodyPreview": "function limit(concurrency: number) {⏎  let active = 0;⏎  const waiting: Array<() => void> = [];⏎  const release = (): v"
+        },
+        {
+          "file": "stage-1-js-core/31-async-supplement.md",
+          "lang": "ts",
+          "line": 104,
+          "bodyPreview": "// 旧：作用域被迫扩大 + 非空断言⏎let resolve!: (v: T) => void;⏎const promise = new Promise<T>((r) => { resolve = r; });⏎// 新：一行，resol"
+        },
+        {
+          "file": "stage-1-js-core/31-async-supplement.md",
+          "lang": "ts",
+          "line": 116,
+          "bodyPreview": "class Connection implements AsyncDisposable {⏎  [Symbol.asyncDispose](): Promise<void> { return this.close(); }⏎  // ..."
+        },
+        {
+          "file": "stage-1-js-core/31-async-supplement.md",
+          "lang": "js",
+          "line": 189,
+          "bodyPreview": "const slow = new Promise((resolve) =>⏎  setTimeout(() => { console.log(\"slow 完成\"); resolve(\"slow\"); }, 20)⏎);⏎const fast"
+        }
+      ]
+    },
+    {
+      "file": "stage-2-engine-runtime/07-v8-engine.md",
+      "liveBlocks": [
+        {
+          "file": "stage-2-engine-runtime/07-v8-engine.md",
+          "lang": "js",
+          "line": 199,
+          "bodyPreview": "// 混形状轮询 vs 单态 —— 只比较相对耗时，结论：慢版本更慢⏎function bench(objs) {⏎  let sink = 0;⏎  for (let i = 0; i < 1e6; i++) sink += objs[i"
+        },
+        {
+          "file": "stage-2-engine-runtime/07-v8-engine.md",
+          "lang": "js",
+          "line": 219,
+          "bodyPreview": "// 运行：node --allow-natives-syntax demo.mjs⏎function P(x, y) { this.x = x; this.y = y; }⏎const a = new P(1, 2);⏎const b ="
+        },
+        {
+          "file": "stage-2-engine-runtime/07-v8-engine.md",
+          "lang": "js",
+          "line": 253,
+          "bodyPreview": "function P(x, y) { this.x = x; this.y = y; }⏎const a = new P(1, 2);⏎const b = new P(3, 4);⏎b.z = 5;              // ①⏎co"
+        },
+        {
+          "file": "stage-2-engine-runtime/07-v8-engine.md",
+          "lang": "js",
+          "line": 266,
+          "bodyPreview": "const arr = [1, 2, 3];   // 起始 PACKED_SMI_ELEMENTS⏎arr.push(1.5);           // A 步后 kind？⏎arr.push('x');           // B "
+        }
+      ]
+    },
+    {
+      "file": "stage-2-engine-runtime/08-render-and-performance.md",
+      "liveBlocks": [
+        {
+          "file": "stage-2-engine-runtime/08-render-and-performance.md",
+          "lang": "js",
+          "line": 42,
+          "bodyPreview": "// 经典反模式：读写在循环里交替⏎for (const node of nodes) {⏎  node.style.height = '50px';       // 写：使布局「脏」⏎  console.log(box.offsetTo"
+        },
+        {
+          "file": "stage-2-engine-runtime/08-render-and-performance.md",
+          "lang": "js",
+          "line": 54,
+          "bodyPreview": "// 先集中读，再集中写⏎const tops = nodes.map(n => n.offsetTop);       // 读：只触发一次强制回流⏎nodes.forEach((n, i) => { n.style.height = ."
+        },
+        {
+          "file": "stage-2-engine-runtime/08-render-and-performance.md",
+          "lang": "js",
+          "line": 159,
+          "bodyPreview": "const io = new IntersectionObserver((entries) => {⏎  for (const e of entries) {⏎    if (e.isIntersecting) {⏎      e.targ"
+        },
+        {
+          "file": "stage-2-engine-runtime/08-render-and-performance.md",
+          "lang": "js",
+          "line": 225,
+          "bodyPreview": "// 1) 观察一帧内的顺序：task → microtask → rAF⏎setTimeout(() => console.log('timeout'));⏎Promise.resolve().then(() => console.log"
+        },
+        {
+          "file": "stage-2-engine-runtime/08-render-and-performance.md",
+          "lang": "js",
+          "line": 263,
+          "bodyPreview": "console.log('A: script start');⏎setTimeout(() => console.log('B: timeout 0'));⏎Promise.resolve().then(() => console.log("
+        },
+        {
+          "file": "stage-2-engine-runtime/08-render-and-performance.md",
+          "lang": "js",
+          "line": 274,
+          "bodyPreview": "// 使用练习 03 的实现：throttle(fn, 100, { leading: true, trailing: true })⏎// fn 会打印触发的参数。调用时刻表如下（时间单位 ms）：⏎//   t=0   调用('a') "
+        }
+      ]
+    },
+    {
+      "file": "stage-3-ts-types/09-ts-narrowing.md",
+      "liveBlocks": [
+        {
+          "file": "stage-3-ts-types/09-ts-narrowing.md",
+          "lang": "ts",
+          "line": 34,
+          "bodyPreview": "function f(x: string | number | null): string {⏎  //            x: string | number | null（声明类型）⏎  if (x === null) {⏎    "
+        },
+        {
+          "file": "stage-3-ts-types/09-ts-narrowing.md",
+          "lang": "ts",
+          "line": 212,
+          "bodyPreview": "// 谓词：只影响为真的分支⏎function isFish(pet: Fish | Bird): pet is Fish {⏎  return typeof (pet as Fish).swim === 'function';⏎}⏎⏎//"
+        },
+        {
+          "file": "stage-3-ts-types/09-ts-narrowing.md",
+          "lang": "ts",
+          "line": 249,
+          "bodyPreview": "function f(x: string | null): number | string {⏎  if (typeof x === 'object') {⏎    return 'object!';⏎  }⏎  return x.leng"
+        },
+        {
+          "file": "stage-3-ts-types/09-ts-narrowing.md",
+          "lang": "ts",
+          "line": 267,
+          "bodyPreview": "function greet(name: string | null, count?: number): string {⏎  const a = name || 'anon';⏎  const b = count ?? 10;⏎  con"
+        }
+      ]
+    },
+    {
+      "file": "stage-3-ts-types/10-ts-generics.md",
+      "liveBlocks": [
+        {
+          "file": "stage-3-ts-types/10-ts-generics.md",
+          "lang": "ts",
+          "line": 28,
+          "bodyPreview": "// 方案 A：any —— 编译通过、关系丢失⏎function firstAny(xs: any[]): any { return xs[0]; }⏎const s: string = firstAny([1, 2]); // 不报错！"
+        },
+        {
+          "file": "stage-3-ts-types/10-ts-generics.md",
+          "lang": "ts",
+          "line": 51,
+          "bodyPreview": "// 函数⏎function identity<T>(value: T): T { return value; }⏎⏎// 接口（函数类型的泛型接口）⏎interface Comparator<T> {⏎  compare(a: T, b:"
+        },
+        {
+          "file": "stage-3-ts-types/10-ts-generics.md",
+          "lang": "ts",
+          "line": 81,
+          "bodyPreview": "function prop<T, K extends keyof T>(obj: T, key: K): T[K] { return obj[key]; }⏎const person = { name: 'Yidafu', age: 30 "
+        },
+        {
+          "file": "stage-3-ts-types/10-ts-generics.md",
+          "lang": "ts",
+          "line": 97,
+          "bodyPreview": "function longest<T extends { length: number }>(a: T, b: T): T {⏎  return a.length >= b.length ? a : b;⏎}"
+        },
+        {
+          "file": "stage-3-ts-types/10-ts-generics.md",
+          "lang": "ts",
+          "line": 107,
+          "bodyPreview": "// a. keyof 约束：K 只能是 T 的键，返回 T[K] 与 K 联动⏎function prop<T, K extends keyof T>(obj: T, key: K): T[K] { return obj[key]; }⏎"
+        },
+        {
+          "file": "stage-3-ts-types/10-ts-generics.md",
+          "lang": "ts",
+          "line": 136,
+          "bodyPreview": "interface ApiResponse<T = unknown> {⏎  status: number;⏎  data: T;⏎}⏎⏎const health: ApiResponse = { status: 200, data: 'o"
+        },
+        {
+          "file": "stage-3-ts-types/10-ts-generics.md",
+          "lang": "ts",
+          "line": 169,
+          "bodyPreview": "// a. Response<T> 包装：API 响应的信封⏎type Response<T> = { status: number; data: T; error?: string };⏎⏎// b. Validator<T>：校验器 +"
+        },
+        {
+          "file": "stage-3-ts-types/10-ts-generics.md",
+          "lang": "ts",
+          "line": 200,
+          "bodyPreview": "const s1 = new Stack<number>();⏎const s2 = new Stack<string>();⏎console.log(s1.constructor === s2.constructor); // true："
+        },
+        {
+          "file": "stage-3-ts-types/10-ts-generics.md",
+          "lang": "ts",
+          "line": 220,
+          "bodyPreview": "// 错误直觉：new T() —— T 编译后就没了，运行时没有对应构造函数⏎// 正确做法：把构造器作为值传入，类型用 new () => T 表达⏎function create<T>(C: new () => T): T {⏎  r"
+        },
+        {
+          "file": "stage-3-ts-types/10-ts-generics.md",
+          "lang": "ts",
+          "line": 267,
+          "bodyPreview": "function pair<T>(a: T, b: T): [T, T] {⏎  return [a, b];⏎}⏎const p1 = pair(1, 'a');⏎const p2 = pair([1, 'a'], [2]);⏎const"
+        },
+        {
+          "file": "stage-3-ts-types/10-ts-generics.md",
+          "lang": "ts",
+          "line": 281,
+          "bodyPreview": "class Box<T> {⏎  value?: T;⏎  static make(x: T): T { return x; }   // ← A 行⏎}⏎const a = new Box<number>();⏎const b = new"
+        }
+      ]
+    },
+    {
+      "file": "stage-3-ts-types/11-ts-type-programming.md",
+      "liveBlocks": [
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 34,
+          "bodyPreview": "type Flags = { [K in \"x\" | \"y\"]: boolean }; // { x: boolean; y: boolean }⏎type Copies<T> = { [K in keyof T]: T[K] };  //"
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 51,
+          "bodyPreview": "interface Todo {⏎  readonly id: number; // readonly⏎  title: string;⏎  done?: boolean;      // 可选⏎}⏎⏎type PartialTodo = "
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 68,
+          "bodyPreview": "type Naive = { [K in keyof Todo]: Todo[K] };   // 同态（keyof T），保留 done?⏎type NonHom = { [K in Exclude<keyof Todo, never>]"
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 85,
+          "bodyPreview": "type Mutable<T> = { -readonly [K in keyof T]: T[K] }; // 摘掉所有 readonly（Mutable/Writeable 惯用实现）⏎type Required1<T> = { [K "
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 93,
+          "bodyPreview": "type Required<T> = { [P in keyof T]-?: T[P]; };⏎type Readonly<T> = { readonly [P in keyof T]: T[P]; };"
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 102,
+          "bodyPreview": "// ① 键改名：生成 getXxx 访问器表⏎type Getters<T> = {⏎  [K in keyof T & string as `get${Capitalize<K & string>}`]: () => T[K];⏎};⏎"
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 124,
+          "bodyPreview": "type Box<T> = T extends string ? \"str\" : \"not-str\";⏎type A = Box<number>; // \"not-str\"（已求值）⏎// Box<T> 在泛型上下文里显示为 Box<T> "
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 136,
+          "bodyPreview": "type ToArray<T> = T extends any ? T[] : never;⏎type R1 = ToArray<string | number>; // string[] | number[]，而不是 (string | "
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 144,
+          "bodyPreview": "type ToArrayBlocked<T> = [T] extends [any] ? T[] : never;⏎type R3 = ToArrayBlocked<string | number>; // (string | number"
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 155,
+          "bodyPreview": "type Cond<T> = T extends string ? 1 : 2;⏎type N1 = Cond<never>; // never —— 不是 1 也不是 2！"
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 162,
+          "bodyPreview": "type N2 = never extends string ? 1 : 2; // 1 —— never 可赋值给一切，走 true 分支"
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 168,
+          "bodyPreview": "type IsNever<T> = [T] extends [never] ? true : false;⏎IsNever<never>  // true⏎IsNever<string> // false"
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 176,
+          "bodyPreview": "type Exclude<T, U> = T extends U ? never : T;⏎// Exclude<\"a\" | \"b\" | \"c\", \"a\" | \"c\">⏎//   = (\"a\" extends \"a\"|\"c\" ? never"
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 228,
+          "bodyPreview": "type Flatten<T> = T extends readonly (infer E)[] ? Flatten<E> : T; // 数组递归拍平⏎type UnboxPromise<T> = T extends Promise<in"
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 235,
+          "bodyPreview": "// ① 递归解包嵌套 Promise（内置 Awaited 的简化版）⏎type UnboxPromise<T> = T extends Promise<infer V> ? UnboxPromise<V> : T;⏎type U1 = "
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 261,
+          "bodyPreview": "type Route = `/${\"\" | \"about\" | \"contact\"}`; // \"/\" | \"/about\" | \"/contact\"⏎type UserId = `users/${number}`;            "
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 268,
+          "bodyPreview": "type ParseEndpoint<S extends string> =⏎  S extends `${infer Method} /${infer Path}` ? { method: Method; path: Path } : n"
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 278,
+          "bodyPreview": "type Uppercase<S extends string> = intrinsic;⏎type Lowercase<S extends string> = intrinsic;⏎type Capitalize<S extends st"
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 291,
+          "bodyPreview": "type Props = { id: number; name: string };⏎⏎// get/set 前缀方法表：as 重映射造键名⏎type Accessors<T> = {⏎  [K in keyof T & string as"
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 320,
+          "bodyPreview": "type Concat<A extends readonly unknown[], B extends readonly unknown[]> = [...A, ...B];⏎type Prepend<E, T extends readon"
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 337,
+          "bodyPreview": "function safeCall<F extends (...args: any[]) => unknown>(fn: F, ...args: Parameters<F>): ReturnType<F> {⏎  return fn(..."
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 371,
+          "bodyPreview": "type Keep = { [K in keyof { readonly a: 1; b?: 2 }]: { readonly a: 1; b?: 2 }[K] }; // 同态⏎type Lose = { [K in Exclude<ke"
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 399,
+          "bodyPreview": "type Cond<T> = T extends string ? \"s\" : \"n\";⏎type A = Cond<\"a\" | 1 | never>;⏎type B = [never] extends [never] ? \"yes\" : "
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 408,
+          "bodyPreview": "interface Api {⏎  url: string;⏎  fetch(): Promise<void>;⏎  onDone(cb: () => void): void;⏎  retries: number;⏎}"
+        },
+        {
+          "file": "stage-3-ts-types/11-ts-type-programming.md",
+          "lang": "ts",
+          "line": 445,
+          "bodyPreview": "{⏎  fetch(): Promise<void>;⏎  onDone(cb: () => void): void;⏎}"
+        }
+      ]
+    },
+    {
+      "file": "stage-3-ts-types/12-ts-utility-types.md",
+      "liveBlocks": [
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 40,
+          "bodyPreview": "type Partial<T> = {⏎  [P in keyof T]?: T[P];⏎};⏎type Required<T> = {⏎  [P in keyof T]-?: T[P];⏎};⏎type Readonly<T> = {⏎ "
+        },
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 56,
+          "bodyPreview": "interface Todo { readonly id: number; title: string; done?: boolean }⏎type P = Partial<Todo>;⏎// { readonly id?: number "
+        },
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 76,
+          "bodyPreview": "type Pick<T, K extends keyof T> = {⏎  [P in K]: T[P];⏎};⏎type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>"
+        },
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 87,
+          "bodyPreview": "type NaiveOmit<T, K extends keyof any> = { [P in Exclude<keyof T, K>]: T[P] };⏎type N = NaiveOmit<{ readonly a: 1; b?: 2"
+        },
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 97,
+          "bodyPreview": "type T0 = Omit<Todo, \"titel\">; // 不报错！\"titel\" 拼错了，静默等于没删⏎type StrictOmit<T, K extends keyof T> = Pick<T, Exclude<keyof T"
+        },
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 109,
+          "bodyPreview": "type Record<K extends keyof any, T> = {⏎  [P in K]: T;⏎};"
+        },
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 117,
+          "bodyPreview": "type A = Record<\"a\" | \"b\", number>; // { a: number; b: number }：精确的两个必有键，缺一个都报错⏎type B = Record<never, string>;     // {"
+        },
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 129,
+          "bodyPreview": "type Exclude<T, U> = T extends U ? never : T;⏎type Extract<T, U> = T extends U ? T : never;"
+        },
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 136,
+          "bodyPreview": "type E1 = Exclude<\"a\" | \"b\" | \"c\", \"a\" | \"c\">;           // \"b\"⏎type E2 = Extract<\"a\" | \"b\" | \"c\", \"a\" | \"c\">;          "
+        },
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 146,
+          "bodyPreview": "// TS ≤ 5.x 的经典实现（大量资料引用的版本）：⏎type NonNullable<T> = T extends null | undefined ? never : T;⏎// 本机 TS 7.0.2 lib.es5.d.ts:"
+        },
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 159,
+          "bodyPreview": "type Parameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? P : never;⏎type ConstructorPara"
+        },
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 174,
+          "bodyPreview": "interface Ov { (x: string): number; (x: number, y?: boolean): string }⏎type P1 = Parameters<Ov>; // [x: number, y?: bool"
+        },
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 186,
+          "bodyPreview": "type ReturnType<T extends (...args: any) => any> = T extends (...args: any) => infer R ? R : any;⏎type InstanceType<T ex"
+        },
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 201,
+          "bodyPreview": "type Awaited<T> = T extends null | undefined ? T : // ① 非 strictNullChecks 下原样保留 null/undefined⏎  T extends object & { t"
+        },
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 222,
+          "bodyPreview": "type DeepReadonly<T> = { readonly [K in keyof T]: DeepReadonly<T[K]> };⏎// DeepReadonly<{ a: { b: 1 } }> = { readonly a:"
+        },
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 235,
+          "bodyPreview": "type ThisParameterType<T> = T extends (this: infer U, ...args: never) => any ? U : unknown; // 提取 this 参数；没有则 unknown⏎ty"
+        },
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 263,
+          "bodyPreview": "type NaiveOmit<T, K extends keyof any> = { [P in Exclude<keyof T, K>]: T[P] };⏎interface S { readonly a: 1; b?: 2 }⏎cons"
+        },
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 291,
+          "bodyPreview": "type A = Partial<User>;⏎type B = Required<Partial<User>>;⏎type C = Omit<User, \"email\">;⏎type D = { [P in Exclude<keyof U"
+        },
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 301,
+          "bodyPreview": "interface Load { (url: string): Promise<Response>; (url: string, init: RequestInit): Promise<Response> }⏎type F1 = Param"
+        },
+        {
+          "file": "stage-3-ts-types/12-ts-utility-types.md",
+          "lang": "ts",
+          "line": 328,
+          "bodyPreview": "// A：同态，叠加 ?，保留 readonly⏎type A = { readonly id?: number | undefined; name?: string | undefined; email?: string | undefi"
+        }
+      ]
+    },
+    {
+      "file": "stage-3-ts-types/13-ts-type-theory.md",
+      "liveBlocks": [
+        {
+          "file": "stage-3-ts-types/13-ts-type-theory.md",
+          "lang": "ts",
+          "line": 29,
+          "bodyPreview": "interface Point2D { x: number; y: number }⏎interface LatLon  { x: number; y: number }  // 名字不同，结构相同⏎const pt: Point2D = "
+        },
+        {
+          "file": "stage-3-ts-types/13-ts-type-theory.md",
+          "lang": "ts",
+          "line": 47,
+          "bodyPreview": "interface Window1 { title: string }⏎const w: Window1 = { title: 'a', extra: 1 };  // 报错 TS2353！extra 不在 Window1 里"
+        },
+        {
+          "file": "stage-3-ts-types/13-ts-type-theory.md",
+          "lang": "ts",
+          "line": 58,
+          "bodyPreview": "const indirect = { title: 'a', extra: 1 }; // 推断为 { title: string; extra: number }⏎const w2: Window1 = indirect;        "
+        },
+        {
+          "file": "stage-3-ts-types/13-ts-type-theory.md",
+          "lang": "ts",
+          "line": 73,
+          "bodyPreview": "interface Options { timeout?: number; retries?: number }⏎const o: Options = { duration: 100 };  // 报错：一个公共属性都没有，八成是拼错了"
+        },
+        {
+          "file": "stage-3-ts-types/13-ts-type-theory.md",
+          "lang": "ts",
+          "line": 84,
+          "bodyPreview": "type Brand<T, B extends string> = T & { readonly __brand: B };⏎type UserId  = Brand<number, 'UserId'>;⏎type OrderId = Br"
+        },
+        {
+          "file": "stage-3-ts-types/13-ts-type-theory.md",
+          "lang": "ts",
+          "line": 121,
+          "bodyPreview": "const dogs: Dog[] = [new Dog()];⏎const animals: Animal[] = dogs;   // OK：协变⏎animals.push(new Cat());          // 类型层完全合法"
+        },
+        {
+          "file": "stage-3-ts-types/13-ts-type-theory.md",
+          "lang": "ts",
+          "line": 154,
+          "bodyPreview": "const u: unknown = JSON.parse(raw);⏎u.answer;        // 报错：不能属性访问⏎u + 1;           // 报错：不能运算⏎if (typeof u === 'object' "
+        },
+        {
+          "file": "stage-3-ts-types/13-ts-type-theory.md",
+          "lang": "ts",
+          "line": 215,
+          "bodyPreview": "interface Config { url: string }⏎const fromVar = { url: 'https://a.dev', timeout: 3000 };⏎const c1: Config = fromVar;⏎co"
+        },
+        {
+          "file": "stage-3-ts-types/13-ts-type-theory.md",
+          "lang": "ts",
+          "line": 228,
+          "bodyPreview": "class Animal { name = 'a'; }⏎class Dog extends Animal { fetch() { return 1; } }⏎declare const makeDog: () => Dog;⏎declar"
+        }
+      ]
+    },
+    {
+      "file": "stage-3-ts-types/15-tsconfig.md",
+      "liveBlocks": [
+        {
+          "file": "stage-3-ts-types/15-tsconfig.md",
+          "lang": "ts",
+          "line": 35,
+          "bodyPreview": "let name: string = getUserName(); // getUserName() 运行时可能返回 null⏎name.length;                       // 编译通过，运行时 TypeError"
+        },
+        {
+          "file": "stage-3-ts-types/15-tsconfig.md",
+          "lang": "ts",
+          "line": 42,
+          "bodyPreview": "declare function getUserName(): string | null;⏎let name: string = getUserName();        // 报 TS2322: Type 'string | null"
+        },
+        {
+          "file": "stage-3-ts-types/15-tsconfig.md",
+          "lang": "ts",
+          "line": 55,
+          "bodyPreview": "const toFnProp: { sink: (x: unknown) => void } = { sink: (x: string) => {} };⏎// 关：通过（参数双变，两个方向都放行）；开：报 TS2322（string 参数"
+        },
+        {
+          "file": "stage-3-ts-types/15-tsconfig.md",
+          "lang": "ts",
+          "line": 69,
+          "bodyPreview": "function greet(name: string, times: number) { /* ... */ }⏎greet.call(null, 'a', 'b'); // 关：参数按 any 处理，不报；开：报 TS2345（'b' "
+        },
+        {
+          "file": "stage-3-ts-types/15-tsconfig.md",
+          "lang": "ts",
+          "line": 81,
+          "bodyPreview": "class User {⏎  name: string;            // 开：报 TS2564（没赋值）；关：通过，运行时 undefined⏎  constructor() { /* 忘了赋值 */ }⏎}"
+        },
+        {
+          "file": "stage-3-ts-types/15-tsconfig.md",
+          "lang": "ts",
+          "line": 102,
+          "bodyPreview": "try { risky(); } catch (e) {⏎  e.message;   // 关：通过（e 是 any）；开：报 TS18046 'e' is of type 'unknown'⏎  console.log(e instan"
+        },
+        {
+          "file": "stage-3-ts-types/15-tsconfig.md",
+          "lang": "ts",
+          "line": 117,
+          "bodyPreview": "const arr: number[] = [1, 2, 3];⏎const a: number = arr[0];   // 开：报 TS2322: Type 'number | undefined' is not assignable "
+        },
+        {
+          "file": "stage-3-ts-types/15-tsconfig.md",
+          "lang": "ts",
+          "line": 132,
+          "bodyPreview": "interface Opts { opt?: number }⏎const a: Opts = { opt: undefined };⏎// 关：通过（opt?: number ≈ number | undefined）；开：报 TS237"
+        },
+        {
+          "file": "stage-3-ts-types/15-tsconfig.md",
+          "lang": "ts",
+          "line": 287,
+          "bodyPreview": "declare function getUser(id: number): { name: string } | null;⏎const users = [{ name: 'a' }, { name: 'b' }];⏎const first"
+        }
+      ]
+    },
+    {
+      "file": "stage-4-engineering/18-testing-vitest.md",
+      "liveBlocks": [
+        {
+          "file": "stage-4-engineering/18-testing-vitest.md",
+          "lang": "ts",
+          "line": 174,
+          "bodyPreview": "class P { constructor(public v: number = 1) {} }⏎const a = new P();⏎const b = new P();⏎const c = { v: 1 };⏎const d = { v"
+        }
+      ]
+    },
+    {
+      "file": "stage-4-engineering/19-code-quality-eslint-prettier.md",
+      "liveBlocks": [
+        {
+          "file": "stage-4-engineering/19-code-quality-eslint-prettier.md",
+          "lang": "js",
+          "line": 86,
+          "bodyPreview": "'@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]"
+        },
+        {
+          "file": "stage-4-engineering/19-code-quality-eslint-prettier.md",
+          "lang": "ts",
+          "line": 173,
+          "bodyPreview": "async function save(u: User): Promise<void> { await api.put(u); }⏎function check(): Promise<boolean> { return api.valida"
+        }
+      ]
+    },
+    {
+      "file": "stage-5-topics/21-functional-programming.md",
+      "liveBlocks": [
+        {
+          "file": "stage-5-topics/21-functional-programming.md",
+          "lang": "ts",
+          "line": 103,
+          "bodyPreview": "// 有参（point-ful）⏎const shout = (s: string) => exclaim(upper(s));⏎// point-free⏎const shout2 = pipe(upper, exclaim);"
+        },
+        {
+          "file": "stage-5-topics/21-functional-programming.md",
+          "lang": "ts",
+          "line": 170,
+          "bodyPreview": "let reqCount = 0;⏎function getUser(id: number): string {⏎  reqCount += 1; // 模拟副作用：发请求⏎  return `user-${id}`;⏎}⏎const ca"
+        },
+        {
+          "file": "stage-5-topics/21-functional-programming.md",
+          "lang": "ts",
+          "line": 194,
+          "bodyPreview": "const inc = (x: number): number => x + 1;⏎const dbl = (x: number): number => x * 2;⏎const pipe =⏎  (...fns: Array<(x: nu"
+        }
+      ]
+    },
+    {
+      "file": "stage-5-topics/22-design-patterns.md",
+      "liveBlocks": [
+        {
+          "file": "stage-5-topics/22-design-patterns.md",
+          "lang": "ts",
+          "line": 171,
+          "bodyPreview": "interface Command {⏎  execute(): void;⏎  undo(): void;⏎}⏎class CommandStack {⏎  #done: Command[] = [];⏎  execute(cmd: Co"
+        },
+        {
+          "file": "stage-5-topics/22-design-patterns.md",
+          "lang": "js",
+          "line": 210,
+          "bodyPreview": "const bus = {⏎  subs: new Set(),⏎  on(fn) {⏎    this.subs.add(fn);⏎  },⏎  emit(v) {⏎    for (const f of [...this.subs]) "
+        }
+      ]
+    },
+    {
+      "file": "stage-5-topics/23-reactivity-source-reading.md",
+      "liveBlocks": [
+        {
+          "file": "stage-5-topics/23-reactivity-source-reading.md",
+          "lang": "ts",
+          "line": 82,
+          "bodyPreview": "class RefImpl<T> {⏎  get value() { trackRefValue(this); return this._value }⏎  set value(newVal) {⏎    if (hasChanged(ne"
+        },
+        {
+          "file": "stage-5-topics/23-reactivity-source-reading.md",
+          "lang": "ts",
+          "line": 194,
+          "bodyPreview": "const state = reactive({ ok: true, msg: 'A', alt: 'B' });⏎let shown = '';⏎let runs = 0;⏎effect(() => {⏎  runs += 1;⏎  sh"
+        },
+        {
+          "file": "stage-5-topics/23-reactivity-source-reading.md",
+          "lang": "ts",
+          "line": 214,
+          "bodyPreview": "const state = reactive({ n: 1 });⏎let runs = 0;⏎const ten = computed(() => {⏎  runs += 1;⏎  return state.n * 10;⏎});⏎con"
+        }
+      ]
+    },
+    {
+      "file": "stage-5-topics/24-interview-prediction-questions.md",
+      "liveBlocks": [
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 22,
+          "bodyPreview": "console.log([] == ![]);"
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 28,
+          "bodyPreview": "console.log([] + {});"
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 34,
+          "bodyPreview": "console.log(eval('{} + []')); // 语句位置⏎console.log(({} + []));       // 表达式位置"
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 41,
+          "bodyPreview": "console.log(1 + '2' - '2');"
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 47,
+          "bodyPreview": "console.log(typeof typeof 1);"
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 53,
+          "bodyPreview": "console.log(Object.is(NaN, NaN), NaN === NaN);"
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 59,
+          "bodyPreview": "console.log([] == '');"
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 81,
+          "bodyPreview": "for (var i = 0; i < 3; i++) setTimeout(() => console.log('B1', i), 0);⏎for (let j = 0; j < 3; j++) setTimeout(() => cons"
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 88,
+          "bodyPreview": "// 宽松（非模块）环境下：⏎console.log(typeof a);⏎function a() {}⏎var a;"
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 97,
+          "bodyPreview": "const count = (function counter(start = 0) {⏎  let n = start;⏎  return function () { return ++n; };⏎})(5);⏎count(); coun"
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 123,
+          "bodyPreview": "const obj = { tag: 'obj', get() { return this === undefined ? '<undefined>' : this.tag; } };⏎const f = obj.get;⏎console."
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 131,
+          "bodyPreview": "setTimeout(function () { console.log(Object.prototype.toString.call(this), this.constructor.name); }, 0);⏎setTimeout(() "
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 138,
+          "bodyPreview": "const box = { name: 'box', inner: { name: 'inner', who() { return this.name; } } };⏎console.log(box.inner.who());"
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 145,
+          "bodyPreview": "'use strict';⏎console.log((function () { return this === null; }).call(null));⏎console.log(new Function('return this ==="
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 153,
+          "bodyPreview": "const timer = {⏎  seconds: 42,⏎  start() {⏎    const arrow = () => this;⏎    function plain() { return this; }⏎    conso"
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 181,
+          "bodyPreview": "console.log(⏎  Function.prototype.__proto__ === Object.prototype,⏎  Object.prototype.__proto__ === null⏎);"
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 190,
+          "bodyPreview": "function A() {}⏎const a = new A();⏎console.log(a instanceof A, a instanceof Object);⏎A.prototype = { x: 1 }; // 换掉原型⏎con"
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 200,
+          "bodyPreview": "function A() {}⏎A.prototype = { x: 1 };⏎const o = {};⏎console.log(o.constructor === Object, A.prototype.constructor === "
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 209,
+          "bodyPreview": "class C {⏎  #s = 1;⏎  get() { return this.#s; }⏎}⏎const c = new C();⏎console.log(Object.keys(c), '#s' in c);⏎try { C.pro"
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 234,
+          "bodyPreview": "console.log(1);⏎setTimeout(() => console.log(2));⏎Promise.resolve().then(() => console.log(3));⏎console.log(4);"
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 243,
+          "bodyPreview": "async function a() {⏎  console.log('a-start');⏎  await 0;⏎  console.log('a-end');⏎}⏎console.log('script');⏎a();⏎Promise."
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 257,
+          "bodyPreview": "Promise.resolve()⏎  .then(() => { throw new Error('x'); })⏎  .then(() => console.log('skip'))⏎  .catch(() => console.log"
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 267,
+          "bodyPreview": "const thenable = { then(res) { console.log('then-body'); res(42); } };⏎Promise.resolve(1)⏎  .then(() => thenable)⏎  .the"
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 277,
+          "bodyPreview": "const list = [1, 2, 3];⏎list.forEach(async (n) => { await Promise.resolve(); console.log('item', n); });⏎console.log('en"
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 299,
+          "bodyPreview": "const oneToThree = {⏎  [Symbol.iterator]() {⏎    let i = 0;⏎    return { next: () => ({ value: ++i, done: i > 3 }) };⏎  "
+        },
+        {
+          "file": "stage-5-topics/24-interview-prediction-questions.md",
+          "lang": "js",
+          "line": 312,
+          "bodyPreview": "const p = new Proxy({ a: 1 }, { get(t, k) { return t[k] * 10; } });⏎console.log(p.a, p.b);"
+        }
+      ]
+    },
+    {
+      "file": "stage-5-topics/26-compiler-perspective.md",
+      "liveBlocks": [
+        {
+          "file": "stage-5-topics/26-compiler-perspective.md",
+          "lang": "js",
+          "line": 147,
+          "bodyPreview": "// 编译期(early error) vs 运行时错误的分类实验 —— 直接复制进 node REPL⏎console.log(\"case1:\", (() => { try { eval(\"if (false) { let a; let "
+        },
+        {
+          "file": "stage-5-topics/26-compiler-perspective.md",
+          "lang": "js",
+          "line": 175,
+          "bodyPreview": "const run = (code) => { try { eval(code); return \"ok\"; } catch (e) { return e.constructor.name; } };⏎console.log(run(\"if"
+        }
+      ]
+    },
+    {
+      "file": "stage-5-topics/27-weird-behaviors-by-stage.md",
+      "liveBlocks": [
+        {
+          "file": "stage-5-topics/27-weird-behaviors-by-stage.md",
+          "lang": "js",
+          "line": 67,
+          "bodyPreview": "console.log(eval(\"{} + []\")); // 0 —— 空块 + 一元加[]（[] → \"\" → 0），两条语句！⏎console.log(({} + []));       // \"[object Object]\" —"
+        },
+        {
+          "file": "stage-5-topics/27-weird-behaviors-by-stage.md",
+          "lang": "js",
+          "line": 76,
+          "bodyPreview": "eval(\"const o = { x = 1 };\");  // SyntaxError：对象字面量里没有默认值产生式⏎let x; ({ x = 1 } = {});        // 合法：同一串字符在解构上下文被 cover 产生"
+        },
+        {
+          "file": "stage-5-topics/27-weird-behaviors-by-stage.md",
+          "lang": "js",
+          "line": 93,
+          "bodyPreview": "console.log(typeof neverDeclared); // \"undefined\" —— 连 binding 都没有⏎try { console.log(typeof tdzVar); } catch (e) {}  // "
+        },
+        {
+          "file": "stage-5-topics/27-weird-behaviors-by-stage.md",
+          "lang": "js",
+          "line": 103,
+          "bodyPreview": "for (var i = 0; i < 3; i++) varFns.push(() => i); // 全部指向同一个 i → [3,3,3]⏎for (let j = 0; j < 3; j++) letFns.push(() => j"
+        },
+        {
+          "file": "stage-5-topics/27-weird-behaviors-by-stage.md",
+          "lang": "js",
+          "line": 114,
+          "bodyPreview": "[] + []        // \"\"                —— \"\" + \"\"⏎[] + {}        // \"[object Object]\" —— \"\" + \"[object Object]\"⏎true + true"
+        },
+        {
+          "file": "stage-5-topics/27-weird-behaviors-by-stage.md",
+          "lang": "js",
+          "line": 171,
+          "bodyPreview": "const ten = 10⏎const half = ten⏎/2/⏎console.log(half)"
+        },
+        {
+          "file": "stage-5-topics/27-weird-behaviors-by-stage.md",
+          "lang": "js",
+          "line": 183,
+          "bodyPreview": "console.log(eval(\"{} + []\"));            // ①⏎let a = 1, b = 2;⏎a⏎++⏎b⏎console.log(a, b);                       // ②⏎con"
+        }
+      ]
+    },
+    {
+      "file": "stage-5-topics/28-js-ts-history.md",
+      "liveBlocks": [
+        {
+          "file": "stage-5-topics/28-js-ts-history.md",
+          "lang": "js",
+          "line": 247,
+          "bodyPreview": "// a.cjs⏎var x = 010 + 1;⏎console.log(x);"
+        },
+        {
+          "file": "stage-5-topics/28-js-ts-history.md",
+          "lang": "js",
+          "line": 253,
+          "bodyPreview": "// a.mjs —— 与 a.cjs 内容完全相同⏎var x = 010 + 1;⏎console.log(x);"
+        },
+        {
+          "file": "stage-5-topics/28-js-ts-history.md",
+          "lang": "ts",
+          "line": 271,
+          "bodyPreview": "type GetterNames<T> = {⏎  [K in keyof T as `get${Capitalize<K & string>}`]: () => T[K];⏎};⏎type P = Partial<{ name: stri"
+        },
+        {
+          "file": "stage-5-topics/28-js-ts-history.md",
+          "lang": "js",
+          "line": 291,
+          "bodyPreview": "console.log(2 ** 53 === 2 ** 53 + 1);⏎console.log(new Uint8Array(new Uint32Array([1]).buffer)[0]);⏎console.log(typeof Sh"
+        }
+      ]
+    },
+    {
+      "file": "stage-5-topics/30-internals-vs-mainstream.md",
+      "liveBlocks": [
+        {
+          "file": "stage-5-topics/30-internals-vs-mainstream.md",
+          "lang": "js",
+          "line": 66,
+          "bodyPreview": "function makeCounter() {⏎  let n = 0;⏎  return { inc() { return ++n; }, get() { return n; } };⏎}"
+        },
+        {
+          "file": "stage-5-topics/30-internals-vs-mainstream.md",
+          "lang": "js",
+          "line": 135,
+          "bodyPreview": "2 ** 31 | 0                       // -2147483648：ToInt32 截断⏎Number.MAX_SAFE_INTEGER + 1 === Number.MAX_SAFE_INTEGER + 2 "
+        },
+        {
+          "file": "stage-5-topics/30-internals-vs-mainstream.md",
+          "lang": "js",
+          "line": 164,
+          "bodyPreview": "console.log(2 ** 32 | 0);⏎console.log(Number.MAX_SAFE_INTEGER + 1 === Number.MAX_SAFE_INTEGER + 2);⏎console.log(Object.i"
+        },
+        {
+          "file": "stage-5-topics/30-internals-vs-mainstream.md",
+          "lang": "js",
+          "line": 175,
+          "bodyPreview": "function make() {⏎  let n = 0;⏎  return [() => ++n, () => n, () => { n = 10; }];⏎}⏎const [inc, get, set] = make();⏎inc()"
+        },
+        {
+          "file": "stage-5-topics/30-internals-vs-mainstream.md",
+          "lang": "js",
+          "line": 191,
+          "bodyPreview": "class Repo { find() { return \"v1\"; } }⏎const r = new Repo();⏎Repo.prototype.find = () => \"v2\";⏎console.log(r.find());"
+        }
+      ]
+    }
+  ]
+}

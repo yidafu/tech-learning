@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tech-learning · 技术学习笔记站群</title>
+  <meta name="description" content="软件架构、React、安全、可观测性、JS/TS 五个学习站点的统一入口" />
+  <style>
+    :root {
+      --bg: #f6f8fa;
+      --card: #ffffff;
+      --text: #1f2328;
+      --muted: #59636e;
+      --accent: #0969da;
+      --border: #d1d9e0;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --card: #161b22;
+        --text: #e6edf3;
+        --muted: #9198a1;
+        --accent: #4493f8;
+        --border: #30363d;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 64px 24px 48px;
+    }
+    header { text-align: center; margin-bottom: 40px; }
+    h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; }
+    header p { color: var(--muted); margin-top: 10px; font-size: 1.05rem; }
+    main {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 380px));
+      gap: 20px;
+      width: 100%;
+      max-width: 1240px;
+    }
+    a.card {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color 0.15s ease, transform 0.15s ease;
+    }
+    a.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .card h2 { font-size: 1.15rem; font-weight: 650; }
+    .card .tag {
+      align-self: flex-start;
+      font-size: 0.78rem;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 10%, transparent);
+      border-radius: 999px;
+      padding: 2px 10px;
+    }
+    .card p { color: var(--muted); font-size: 0.92rem; line-height: 1.6; }
+    footer { margin-top: 48px; color: var(--muted); font-size: 0.85rem; }
+    footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>tech-learning · 技术学习笔记</h1>
+    <p>五个方向的系统性学习站点，统一托管于 GitHub Pages</p>
+  </header>
+  <main>
+    <a class="card" href="architecture/">
+      <span class="tag">软件架构</span>
+      <h2>软件架构学习笔记</h2>
+      <p>六阶段体系：架构思维与设计基础 → 经典架构模式 → 分布式核心技术 → 架构方法论，附 Kotlin 示例与全站知识图谱。</p>
+    </a>
+    <a class="card" href="react/">
+      <span class="tag">React</span>
+      <h2>React 高阶学习课程</h2>
+      <p>场景驱动的实战大纲：从基础编码到源码复刻，含文档关系图谱与可运行示例。</p>
+    </a>
+    <a class="card" href="security/">
+      <span class="tag">安全</span>
+      <h2>安全学习笔记</h2>
+      <p>防御导向的计算机安全学习工作区：从基础知识到 CTF 实战。</p>
+    </a>
+    <a class="card" href="observability/">
+      <span class="tag">可观测性</span>
+      <h2>可观测性学习站</h2>
+      <p>Metrics · Logging · Tracing——面向开发者的可观测性系统学习笔记与动手实验。</p>
+    </a>
+    <a class="card" href="js-ts/">
+      <span class="tag">JS / TS</span>
+      <h2>JS/TS 深度学习笔记</h2>
+      <p>从「会用」到「深度理解」：关键概念、可运行练习、易错点与面试高频，含浏览器内 TypeScript 在线 Playground。</p>
+    </a>
+  </main>
+  <footer>
+    Powered by Docusaurus · <a href="https://github.com/yidafu/tech-learning">yidafu/tech-learning</a>
+  </footer>
+</body>
+</html>

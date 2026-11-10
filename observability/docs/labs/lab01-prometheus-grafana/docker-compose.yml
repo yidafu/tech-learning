@@ -1,0 +1,94 @@
+# lab01：app → Prometheus → Grafana → Alertmanager 全链路指标监控
+# 镜像 tag 以官方发布为准：
+#   https://hub.docker.com/r/prom/prometheus  https://hub.docker.com/r/prom/alertmanager
+#   https://hub.docker.com/r/grafana/grafana  https://hub.docker.com/r/prom/node-exporter
+name: lab01-prometheus-grafana
+
+services:
+  # ── 示例应用：FastAPI + prometheus_client，暴露 /metrics 与模拟业务接口 ──
+  app:
+    build: ./app
+    image: lab01/app:latest
+    container_name: lab01-app
+    environment:
+      TRAFFIC_ENABLED: "true"     # 内置流量生成器，面板启动即有数据
+      ERROR_RATE: "0.02"          # 基础错误率 2%（< 告警阈值 5%）
+    ports:
+      - "8000:8000"               # /metrics、/api/*、/faults、/webhook/alerts
+    networks:
+      - lab01
+
+  # ── Prometheus：抓取 + TSDB + 规则评估 ────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v3.4.2
+    container_name: lab01-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=3d     # lab 只留 3 天（默认 15d）
+      - --web.enable-lifecycle               # 允许 POST /-/reload 热加载配置
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts:/etc/prometheus/alerts:ro
+      - prometheus-data:/prometheus          # TSDB 数据必须持久化，否则重启丢数据
+    ports:
+      - "9090:9090"               # UI：/targets /alerts /rules /graph
+    depends_on:
+      - app
+      - alertmanager
+    networks:
+      - lab01
+
+  # ── Alertmanager：告警分组/抑制/静默/路由 ──────────────────────────────
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    container_name: lab01-alertmanager
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports:
+      - "9093:9093"               # UI：告警列表 / Silence 管理
+    networks:
+      - lab01
+
+  # ── Grafana：provisioning 自动装数据源与 dashboard ────────────────────
+  grafana:
+    image: grafana/grafana:12.1.0
+    container_name: lab01-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin      # lab 弱口令仅本机演示用
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /opt/grafana/dashboards/lab01-overview.json
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/opt/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"               # UI：admin / admin
+    depends_on:
+      - prometheus
+    networks:
+      - lab01
+
+  # ── node_exporter：主机指标（可选组件）────────────────────────────────
+  # podman machine (Mac/Win) 下读到的是 Linux VM 的指标；Linux 下即宿主机指标
+  node-exporter:
+    image: prom/node-exporter:v1.9.1
+    container_name: lab01-node-exporter
+    command:
+      - --path.rootfs=/host       # 让容器读到宿主机（rootfs 下）的 /proc /sys
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+    ports:
+      - "9100:9100"
+    networks:
+      - lab01
+
+networks:
+  lab01:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:

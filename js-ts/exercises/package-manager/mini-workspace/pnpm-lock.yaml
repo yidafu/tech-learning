@@ -1,0 +1,23 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .: {}
+
+  packages/app:
+    dependencies:
+      '@mini/math-lib':
+        specifier: workspace:*
+        version: link:../math-lib
+
+  packages/math-lib:
+    dependencies:
+      '@mini/shared-utils':
+        specifier: workspace:*
+        version: link:../shared-utils
+
+  packages/shared-utils: {}

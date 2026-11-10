@@ -1,0 +1,75 @@
+# Grafana 数据源自动预置：Prometheus / Loki / Tempo + 三向关联配置
+# uid 固定为 prometheus / loki / tempo，dashboard 与关联配置相互引用。
+apiVersion: 1
+
+datasources:
+  # ------------------------------------------------------------------
+  # Prometheus：指标 + exemplar 跳转 Tempo
+  # ------------------------------------------------------------------
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    jsonData:
+      timeInterval: 15s          # 对齐 scrape_interval，$__rate_interval 更稳
+      # exemplar 里的 trace_id 标签 -> 一键跳转 Tempo（面板需开启 Show exemplars）
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: tempo
+          url: "${__value.raw}"
+          urlDisplayLabel: "在 Tempo 中查看"
+
+  # ------------------------------------------------------------------
+  # Loki：日志 + derivedFields（从日志行提取 trace_id 跳转 Tempo）
+  # ------------------------------------------------------------------
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    jsonData:
+      derivedFields:
+        - name: TraceID
+          # 应用侧保证日志为紧凑 JSON："trace_id":"<32位hex>"
+          matcherRegex: "\"trace_id\":\"([0-9a-f]+)\""
+          datasourceUid: tempo
+          url: "${__value.raw}"
+          urlDisplayLabel: "在 Tempo 中查看"
+      # 顺带把日志里最常用的 JSON 字段提升为"内部标签"（LogQL 可直接引用）
+      # 注意：这是 Grafana 侧的解析，不会真正写入 Loki label，无基数风险
+
+  # ------------------------------------------------------------------
+  # Tempo：trace + 跳转日志（tracesToLogsV2）+ 跳转指标（tracesToMetrics）+ 服务图
+  # ------------------------------------------------------------------
+  - name: Tempo
+    uid: tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    jsonData:
+      # 服务图（Explore -> Service Graph）依赖 metrics_generator 的
+      # traces_service_graph_* 指标，指向 Prometheus
+      serviceMap:
+        datasourceUid: prometheus
+      nodeGraph:
+        enabled: true
+      # Trace -> Logs：自定义 LogQL，按 span 的服务名 + trace 精确过滤
+      # （应用日志正文是 JSON，用 | json 提取 trace_id 字段后过滤）
+      tracesToLogsV2:
+        datasourceUid: loki
+        customQuery: true
+        query: '{service_name="${__service.name}"} | json | trace_id="${__trace.traceId}"'
+        spanStartTimeShift: 15m
+        spanEndTimeShift: 15m
+        filterByTraceID: false
+        filterBySpanID: false
+      # Trace -> Metrics：Tempo 派生指标（spanmetrics）
+      tracesToMetrics:
+        datasourceUid: prometheus
+        queries:
+          - name: "请求速率（span 维度）"
+            query: sum(rate(traces_spanmetrics_calls_total{service_name="${__service.name}"}[$__rate_interval]))
+          - name: "p99 延迟（span 维度）"
+            query: histogram_quantile(0.99, sum by (le) (rate(traces_spanmetrics_duration_seconds_bucket{service_name="${__service.name}"}[$__rate_interval])))

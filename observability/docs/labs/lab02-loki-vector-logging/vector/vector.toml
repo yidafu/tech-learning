@@ -1,0 +1,151 @@
+# =============================================================================
+# Lab02 Vector 配置：file source → 解析 JSON → 删除敏感字段 → Loki sink
+# 文档：https://vector.dev/docs/reference/configuration/（访问日期：2026-11-04）
+# VRL 语言参考：https://vector.dev/docs/reference/vrl/（访问日期：2026-11-04）
+#
+# 为什么不用 docker_logs source？
+#   Vector 官方 docker_logs source 依赖 Docker Engine API（docker.sock）。本实验
+#   运行在 podman 上：podman 虽可用 `podman system service` 暴露 docker 兼容
+#   socket，但路径/权限随 podman machine 环境漂移，稳定性一般。更稳的方案是：
+#   应用把 stdout 双写一份到共享卷日志文件（见 app/app.py 的 LOG_FILE），
+#   Vector 用 file source tail 该文件——这也正是生产 K8s 的形态
+#   （kubelet 落盘 + DaemonSet tail 宿主机日志文件）。
+# =============================================================================
+
+# file source 的 checkpoint（已读到哪个文件的哪个位置）存在这里；
+# docker-compose.yml 把该目录挂成独立卷 vector-data，vector 重启即可断点续传
+data_dir = "/var/lib/vector"
+
+# Vector 自身拓扑 API（可选，便于 `vector top` / vector-ui 观察事件流转）
+[api]
+enabled = true
+address = "0.0.0.0:8686"
+
+# 统一时区：now()/时间处理默认按 UTC
+timezone = "UTC"
+
+# -----------------------------------------------------------------------------
+# SOURCE：file —— tail 共享卷上应用双写出来的 JSON 日志文件
+# 文档：https://vector.dev/docs/reference/configuration/sources/file/
+# 事件结构：.message（原始日志行）、.timestamp（采集时间）、.file、.host、.source_type
+# -----------------------------------------------------------------------------
+[sources.app_file]
+type = "file"
+include = ["/var/log/lab02/app.log"]
+# 首次发现文件时从头读（实验重启后靠 data_dir checkpoint 续读，不会全量重放）
+read_from = "beginning"
+
+# -----------------------------------------------------------------------------
+# TRANSFORM 1：remap（VRL）—— 把 .message 中的 JSON 行解析为结构化字段
+# 关键点：
+#   - 用可失败的 parse_json + 显式错误处理，而不是 parse_json!（! 会在解析失败时
+#     整条丢弃事件，这里选择保留原始行并打标，避免静默丢失）
+#   - 解析成功后 merge 到事件根级；应用自带的 timestamp（字符串）覆盖采集时间，
+#     并立刻 parse_timestamp 转回时间戳类型（Loki sink 需要真正的 timestamp 类型）
+# -----------------------------------------------------------------------------
+[transforms.parse_app_json]
+type = "remap"
+inputs = ["app_file"]
+source = '''
+# file source 的 .message 一定是字符串
+raw, parse_err = parse_json(string!(.message))
+
+if parse_err == null && is_object(raw) {
+    # 解析成功：应用字段平铺到事件根级（应用字段覆盖 file source 元数据的同名冲突，如 timestamp）
+    . = merge(., raw)
+    del(.message)
+    .parsed_json = true
+} else {
+    # 解析失败（比如容器启动期输出、非 JSON 行、或 JSON 顶层不是对象）：
+    # 保留原始行，打标便于在 Loki 里排查
+    .parsed_json = false
+    .parse_error = true
+}
+
+# 应用时间戳是 RFC3339 字符串；Loki sink 需要时间戳类型，转回去。
+# 转换失败（字段缺失/格式坏）就删掉，让 Loki sink 用采集时间兜底。
+if is_string(.timestamp) {
+    ts, ts_err = parse_timestamp(string!(.timestamp), format: "%+")
+    if ts_err == null {
+        .timestamp = ts
+    } else {
+        del(.timestamp)
+    }
+}
+
+# Loki sink 的 label 模板引用 .service / .level；模板字段缺失时事件会被 sink 丢弃，
+# 所以这里兜底赋默认值（label 必须是低基数字段：服务名固定，安全）
+if !exists(.service) {
+    .service = "unknown"
+}
+if !exists(.level) {
+    .level = "unknown"
+}
+# level 统一转大写：让 {level="ERROR"} 这类 LogQL 精确匹配大小写一致
+.level = upcase(string!(.level))
+'''
+
+# -----------------------------------------------------------------------------
+# TRANSFORM 2：remap（VRL）—— 敏感字段治理演示
+# 应用故意输出了 user_email；真实生产中"从源头不打"永远优先，
+# 采集端删除/脱敏是纵深防御的第二道闸门（还能兜住第三方库打进来的敏感信息）。
+# -----------------------------------------------------------------------------
+[transforms.redact_sensitive]
+type = "remap"
+inputs = ["parse_app_json"]
+source = '''
+# 1) 直接删除：非排查必需的 PII，整体删掉
+if exists(.user_email) {
+    del(.user_email)
+}
+
+# 2) 打码保留：知道"有这个字段"但不看内容
+if exists(.authorization) {
+    .authorization = "REDACTED"
+}
+if exists(.password) {
+    .password = "REDACTED"
+}
+if exists(.credit_card) {
+    .credit_card = "REDACTED"
+}
+
+# 3) 部分保留：手机号 / 卡号常见做法是只留前缀（这里演示字符串截断）
+if exists(.phone) {
+    p = string!(.phone)
+    .phone = truncate(p, length: 3) + "****"
+}
+'''
+
+# -----------------------------------------------------------------------------
+# SINK：loki —— 以 snappy 压缩批量推送到 Loki /loki/api/v1/push
+# 文档：https://vector.dev/docs/reference/configuration/sinks/loki/
+# label 规则（Loki 的核心设计）：只放低基数、可枚举的字段！
+#   - job / env：静态字符串
+#   - service / level：模板引用事件字段（值有限：服务名固定、level 只有几档）
+# 严禁把 user_id / request_id / order_id 放进 label（高基数 → 流爆炸，见 notes/02-logging/loki.md）
+# -----------------------------------------------------------------------------
+[sinks.loki]
+type = "loki"
+inputs = ["redact_sensitive"]
+endpoint = "http://loki:3100"
+compression = "snappy"
+# Loki 的流（stream）按 timestamp 严格排序写入；
+# accept 表示容忍少量乱序（Loki 3.x 默认支持），避免偶发时间戳回拨导致整批拒绝
+out_of_order_action = "accept"
+# 注意：刻意不设置 remove_label_fields（保持默认 false）——
+# service/level 同时存在于 label 与日志行 JSON 中，方便实验对比两种查询写法：
+#   {job="lab02", level="ERROR"}          （label 直接过滤，最快）
+#   {job="lab02"} | json | level="ERROR"  （解析器取字段，更通用）
+
+[sinks.loki.labels]
+job = "lab02"                # 静态 label
+env = "local"                # 静态 label
+service = "{{ service }}"    # 模板 label（低基数）
+level = "{{ level }}"        # 模板 label（低基数：经 upcase 后为 DEBUG/INFO/WARNING/ERROR）
+
+# 日志行本体以 JSON 编码发送 → 在 Loki 中可用 `| json` 解析器提取字段
+[sinks.loki.encoding]
+codec = "json"
+
+# 批处理与重试默认值对本实验够用；生产请按吞吐调整 batch.max_bytes / request.timeout_secs 等

@@ -1,0 +1,4 @@
+# lab00 示例应用依赖（版本固定以保证实验可复现；升级请参考各项目 release 页）
+flask==3.1.0
+opentelemetry-sdk==1.29.0
+opentelemetry-exporter-otlp-proto-grpc==1.29.0

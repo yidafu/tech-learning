@@ -1,0 +1,13 @@
+# Dashboard 预置：从挂载目录加载 JSON
+apiVersion: 1
+
+providers:
+  - name: lab04
+    folder: "Lab04 · 三支柱"
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

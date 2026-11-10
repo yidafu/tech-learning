@@ -1,0 +1,90 @@
+# Live Playground：可运行的嵌入代码示例
+
+本页验证 live codeblock 功能：代码块在浏览器里**可直接编辑并重新运行**。
+
+## 已接入范围（2026-11 批量转换）
+
+- 全部笔记中 **26 篇 / 179 个** `js` / `ts` 围栏已转为 `live noInline`（审计脚本 `docs-site/scripts/live-audit.mjs` 盘点，`apply-live.mjs` 应用；清单见 `docs-site/.live-manifest.json`）。
+- 保持静态的围栏：bash / text / json、依赖 Node 环境（`import`、`require`、`node:`、vitest 等）的块（如 16 模块演示、18 vitest、19 eslint 配置），以及人工排除的跨块引用片段（清单见 `apply-live.mjs` 头部 `EXCLUSIONS`）。
+- 入选笔记 front matter 已加 `mdx: { format: mdx }`（`live` 围栏仅在 MDX 编译路径生效）。
+
+## 使用须知（先读再玩）
+
+- **输出面板**：每块下方有「输出（console）」面板。scope 里注入了捕获版 console，笔记源码的 `console.log` **原样运行、无需改写**，输出格式对齐 Node（对象/数组按 Node inspect 风格显示）。
+- **js / ts 围栏统一用 `live noInline`**：noInline 模式允许语句；系统在求值时自动补 `render(null)` 并隐藏空的 Result 区，源码保持原样。单表达式 JSX 演示（如下方示例 1）仍可用 `live`（inline 模式）。
+- **运行时错误直接显示**：故意抛错的演示块（如 02 的提升 / TDZ）错误信息显示在代码块下方的红色错误条里。
+- **ts 块的「类型检查（strict）」按钮**：点击后在浏览器内跑真实 tsc（`strict`、`target ES2022`、`lib es2022+dom`，与工作区单文件类型检查命令同口径），诊断按 `第 N 行 TSxxxx` 列出。首次点击加载编译器（约 10 MB，本地静态文件，之后有缓存）。
+  - 编译错误演示（如 10 的 `pair(1, 'a')`）→ 显示预期 TSxxxx
+  - 纯类型代码（如 12 的工具类型手写）→ `✔ 无类型错误`
+  - 片段引用了其他代码块声明的名字 → 显示 `Cannot find name`，属预期（在编辑器里补上声明即可继续验证）
+- **只能跑 JS/JSX（+ TS 语法自动擦除）**：react-live 在浏览器求值，`enableTypeScript` 默认开启——ts 块的类型标注在求值时被 Sucrase 擦除后执行，**只转译不检查**；类型正确性看「类型检查」按钮。
+- **React 在作用域内，不许 `import`**：直接用 `React.useState` 等。
+- **react-live 三条硬规则**（inline 模式；noInline 模式已由站点自动处理）：
+
+| 规则 | 原因 |
+| --- | --- |
+| inline 模式（默认）把整段代码当一个表达式（`return (整段)`） | 函数声明、`const` 语句直接报错；多语句用 IIFE 包住 |
+| 多语句/组件声明用 ```` ```jsx live noInline ````，末尾显式 `render(<组件 />)` | noInline 模式才允许语句和定义 |
+| 求值结果必须是 React 元素 | 返回字符串/数字渲染为空白，包一层 JSX |
+
+## 示例 1 · inline 模式：IIFE 包多语句（事件循环顺序）
+
+点击「运行」重新执行。对照笔记 04：同步段 → 清空微任务 → 宏任务。
+
+```js live
+(() => {
+  const out = [];
+  const log = (m) => out.push(m);
+  log("sync start");
+  Promise.resolve().then(() => log("micro 1"));
+  setTimeout(() => log("macro (next task)"), 0);
+  log("sync end");
+  Promise.resolve().then(() => log("micro 2"));
+  return <pre style={{background: 'none'}}>{out.join("\n")}</pre>;
+})()
+```
+
+## 示例 2 · noInline 模式：声明组件 + render()
+
+```jsx live noInline
+function Counter() {
+  const [n, setN] = React.useState(0);
+  return (
+    <button onClick={() => setN(n + 1)}>
+      闭包里的 n：{n}
+    </button>
+  );
+}
+render(<Counter />);
+```
+
+## 示例 3 · 反例：为什么不能直接写语句（inline 模式）
+
+下面这段**故意不加 IIFE**，点击运行会看到 SyntaxError——这就是规则 1：
+
+```js live
+const x = 1; // ← inline 模式下，整段被当作 `return (const x = 1)`，语法错误
+return x;
+```
+
+正确的单表达式写法：`(() => { const x = 1; return <b>{x}</b>; })()`
+
+## 示例 4 · ts 块：类型标注擦除运行 + 类型检查
+
+```ts live noInline
+interface Point {
+  x: number;
+  y: number;
+}
+function len(p: Point): number {
+  return Math.hypot(p.x, p.y);
+}
+const p: Point = { x: 3, y: 4 };
+console.log(len(p), p.x === 3);
+```
+
+输出面板显示 `5 true`（类型标注被擦除后正常求值）；点「类型检查（strict）」应显示 `✔ 无类型错误`。
+
+## 定制实现
+
+swizzle 了 `@docusaurus/theme-live-codeblock` 的 `Playground`（`src/theme/Playground/`）：console 捕获（`liveConsole.ts`，React 层经 `context.ts` 共享）、输出面板（`ConsolePanel`）、错误条（`LiveErrorStrip`）、浏览器内 tsc 类型检查（`TypeCheck`，编译器与 lib 声明由 `scripts/gen-ts-libs.mjs` 生成到 `static/ts/`）。`npm run build` 产物含全部功能。

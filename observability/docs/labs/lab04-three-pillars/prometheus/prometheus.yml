@@ -1,0 +1,25 @@
+# Prometheus v2.54.1 —— Lab04 配置
+# - 每 15s 拉取 otel-collector 的 :8889（OpenMetrics，含 exemplar 能力）
+# - 每 15s 评估一次告警规则（rules/ 目录挂载到 /etc/prometheus/rules）
+# - 开启 remote-write receiver：接收 Tempo metrics_generator 推来的
+#   spanmetrics / service-graph 指标（"从 trace 派生指标"）
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+
+scrape_configs:
+  - job_name: otel-collector
+    static_configs:
+      - targets: ["otel-collector:8889"]
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

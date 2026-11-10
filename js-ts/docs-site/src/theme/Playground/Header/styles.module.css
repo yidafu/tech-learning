@@ -1,0 +1,22 @@
+.playgroundHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  letter-spacing: 0.08rem;
+  padding: 0.75rem;
+  text-transform: uppercase;
+  font-weight: bold;
+  background: var(--ifm-color-emphasis-200);
+  color: var(--ifm-color-content);
+  font-size: var(--ifm-code-font-size);
+}
+
+.playgroundHeaderContent {
+  font-weight: var(--ifm-font-weight-bold);
+  font-size: 0.875rem;
+}
+
+.playgroundHeaderButtons {
+  display: flex;
+  gap: 0.5rem;
+}

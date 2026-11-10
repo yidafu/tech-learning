@@ -1,0 +1,2 @@
+# structlog：结构化日志库（版本以官方发布为准 https://github.com/hynek/structlog/releases）
+structlog==24.4.0

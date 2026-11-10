@@ -1,0 +1,7 @@
+# Docusaurus 阅读站点（站点根 = 仓库根）：忽略依赖与生成产物，保留 docs/ 符号链接与配置
+# （webpack 已配 resolve.symlinks:false，符号链接按 docs/ 路径解析，不受本文件影响，勿忽略 docs/）
+/node_modules/
+/build/
+/.docusaurus/
+/static/
+.DS_Store

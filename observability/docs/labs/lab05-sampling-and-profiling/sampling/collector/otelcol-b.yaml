@@ -1,0 +1,67 @@
+# Collector B —— 实验组：tail_sampling 尾部采样。
+# 策略（OR 组合）：
+#   1) status_code=ERROR     -> 错误 trace 100% 保留
+#   2) latency > 800ms       -> 慢 trace  100% 保留（应用慢分支 sleep 1.2s，必命中）
+#   3) probabilistic 10%     -> 其余正常 trace 按 trace_id 确定性采 10%
+# 预期最终保留率 ≈ 错误率(5%) + 慢率(5%) + 10%×正常(90%) ≈ 19%
+#
+# 参数解释：
+#   decision_wait: 最后一个 span 到达后再等 10s 才决策，容忍迟到 span；
+#                  本实验最长链路 ~1.2s，10s 绰绰有余。
+#   num_traces:    内存缓冲 trace 上限（实验流量很小，1 万足够）。
+#   decision_cache: 已决策 trace 的缓存，迟到 span 按缓存结果处理，
+#                  防止"决策后丢弃的 trace 又漏进来"。
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 10000
+    expected_new_traces_per_sec: 20
+    decision_cache:
+      sampled_cache_size: 20000
+      non_sampled_cache_size: 20000
+    policies:
+      - name: errors
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+      - name: slow-traces
+        type: latency
+        latency:
+          threshold_ms: 800
+      - name: baseline-10pct
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 10
+  batch:
+    timeout: 2s
+    send_batch_size: 256
+
+exporters:
+  otlp/jaeger-b:
+    endpoint: jaeger-b:4317
+    tls:
+      insecure: true
+
+extensions:
+  health_check:
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      # 注意顺序：tail_sampling 在 batch 之前
+      processors: [tail_sampling, batch]
+      exporters: [otlp/jaeger-b]
+  telemetry:
+    metrics:
+      # 0.112.0 支持 telemetry.metrics.address（已标记废弃，未来版本将改用 servers 字段）
+      address: 0.0.0.0:8888   # 暴露 otelcol_processor_tail_sampling_* 指标，验证用

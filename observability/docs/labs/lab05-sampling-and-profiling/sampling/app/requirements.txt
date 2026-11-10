@@ -1,0 +1,8 @@
+# 版本以 PyPI 官方发布为准（以下为 2024-11 前后经过验证的稳定组合）
+fastapi==0.115.5
+uvicorn==0.32.1
+requests==2.32.3
+opentelemetry-sdk==1.28.2
+opentelemetry-exporter-otlp-proto-grpc==1.28.2
+opentelemetry-instrumentation-fastapi==0.49b2
+opentelemetry-instrumentation-requests==0.49b2

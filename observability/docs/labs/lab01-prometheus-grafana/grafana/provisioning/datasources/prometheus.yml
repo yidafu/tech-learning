@@ -1,0 +1,16 @@
+# Grafana 数据源 provisioning：启动时自动配置 Prometheus 数据源
+# 文档：https://grafana.com/docs/grafana/latest/administration/provisioning/（访问日期：2026-11-04）
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prometheus          # 固定 uid：dashboard JSON 里用 {"uid":"prometheus"} 引用，不依赖名称
+    type: prometheus
+    access: proxy            # 由 Grafana 后端代理请求
+    url: http://prometheus:9090   # 容器网络内的 Prometheus 服务名
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: 5s       # 告知抓取间隔，$__rate_interval 依赖它计算安全窗口
+      httpMethod: POST
+      manageAlerts: false    # lab 使用 Prometheus 侧告警，不用 Grafana Alerting

@@ -1,0 +1,14 @@
+# Node 依赖（各站独立安装，不做 workspaces）
+**/node_modules/
+
+# Docusaurus 构建产物与缓存
+**/build/
+**/.docusaurus/
+
+# js-ts 在线 Playground 的 TS 编译器生成物（build 时由 scripts/gen-ts-libs.mjs 重新生成，约 11MB）
+js-ts/docs-site/static/ts/
+
+.DS_Store
+
+# ZCode 会话内部状态（计划文件等）
+.zcode/

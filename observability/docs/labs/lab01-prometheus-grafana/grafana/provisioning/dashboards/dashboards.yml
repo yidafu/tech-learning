@@ -1,0 +1,14 @@
+# Grafana dashboard provisioning：从磁盘目录自动加载 dashboard JSON
+# 文档：https://grafana.com/docs/grafana/latest/administration/provisioning/（访问日期：2026-11-04）
+apiVersion: 1
+
+providers:
+  - name: lab01
+    folder: Lab01                       # 界面上归入的文件夹
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10           # JSON 文件变化后自动重载
+    allowUiUpdates: true                # 允许在 UI 上修改（修改不会写回文件）
+    options:
+      path: /opt/grafana/dashboards     # 与 compose 挂载路径一致
+      foldersFromFilesStructure: false

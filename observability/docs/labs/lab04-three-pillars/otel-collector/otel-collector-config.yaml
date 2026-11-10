@@ -1,0 +1,104 @@
+# ============================================================================
+# OTel Collector（contrib 0.109.0）—— Lab04 三信号分发核心
+#
+#   app/inventory --OTLP HTTP :4318--> collector
+#     ├─ traces  --> otlphttp --> tempo:4318
+#     ├─ metrics --> prometheus exporter :8889（Prometheus 来拉取，OpenMetrics 格式）
+#     └─ logs    --> loki exporter --> loki:3100
+#
+# 版本提示：loki exporter 在更高版本的 contrib 发行版中已被弃用（上游推荐
+# 改用 Loki 3.x 原生 OTLP 接口 /loki/v1/otlp 或 OTel 转发），本实验固定
+# 0.109.0，行为稳定；生产请以官方发布为准。
+# ============================================================================
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+
+  # ---- Loki 标签提示（hints）----
+  # loki exporter 通过两类提示属性决定"哪些属性提升为 Loki label"：
+  #   loki.resource.labels ：资源属性  -> label（service.name -> service_name）
+  #   loki.attribute.labels：日志属性  -> label（trace_id / span_id）
+  # 提示本身放在资源属性上，对所有日志记录生效。
+  resource/loki_hints:
+    attributes:
+      - key: loki.resource.labels
+        value: service.name
+        action: upsert
+      # ⚠️ 把 trace_id 当 label 是"教学专用"（方便 LogQL 直接过滤）；生产中属于
+      # 高基数反模式，应仅保留在日志正文中用 derivedFields / | json 提取。
+      - key: loki.attribute.labels
+        value: trace_id,span_id
+        action: upsert
+
+  # ---- 把 OTLP LogRecord 自带的 trace_id/span_id（hex 字符串）拷贝为日志属性 ----
+  # 这样配合上面的 hint，Loki 里每条日志就带 trace_id 标签；
+  # 日志正文（body）中的应用侧 trace_id 则用于 Grafana derivedFields 跳转。
+  transform/loki_trace_attrs:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - set(attributes["trace_id"], trace_id) where trace_id != nil
+          - set(attributes["span_id"], span_id) where span_id != nil
+
+exporters:
+  # ---- Prometheus exporter：被 Prometheus 拉取（pull 模式）----
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    # OpenMetrics 格式是 exemplar 透传的前提（即便当前 Python SDK 暂不产出
+    # exemplar，链路保持打开，换 Java/.NET 应用即可生效）
+    enable_open_metrics: true
+    # 把资源属性（service.name）下沉为指标标签 -> PromQL 里可用 service_name="demo-app"
+    resource_to_telemetry_conversion:
+      enabled: true
+    metric_expiration: 5m
+
+  # ---- Loki exporter：日志推送到 Loki ----
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+    default_labels_enabled:
+      exporter: false
+      instance: false
+      job: true
+
+  # ---- Tempo exporter：trace 经 OTLP HTTP 送 Tempo ----
+  otlphttp/tempo:
+    endpoint: http://tempo:4318
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  telemetry:
+    logs:
+      level: info
+  extensions:
+    - health_check
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/tempo]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource/loki_hints, transform/loki_trace_attrs, batch]
+      exporters: [loki]

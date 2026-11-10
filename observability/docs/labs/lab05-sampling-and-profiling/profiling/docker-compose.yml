@@ -1,0 +1,32 @@
+# lab05 · 主题 B：Pyroscope 持续性能剖析实验
+#
+# 拓扑：
+#   hotspot-app --(push /ingest, 10s 聚合窗口)--> pyroscope server (UI :4080)
+#
+# 镜像说明（支持 linux/amd64 与 linux/arm64，Apple Silicon 可直接运行）：
+#   grafana/pyroscope:1.7.0   单二进制（server 模式），默认端口 4080，版本以官方发布为准
+name: lab05-profiling
+
+services:
+  pyroscope:
+    image: grafana/pyroscope:1.7.0
+    ports:
+      - "4080:4080"   # UI 与 API: http://localhost:4080
+    volumes:
+      - pyroscope-data:/data   # 单机模式用内嵌 badger 存储在 /data
+
+  hotspot-app:
+    build: ./app
+    environment:
+      PYROSCOPE_SERVER: http://pyroscope:4080
+      PYROSCOPE_SAMPLE_RATE: "100"
+      P_CPU: "0.7"        # 70% CPU 型请求 / 30% 等待型请求
+      LOAD_INTERVAL: "0.3"
+      CPU_BURN_MS: "250"
+    ports:
+      - "5000:5000"       # 可手动 curl http://localhost:5000/stats
+    depends_on:
+      - pyroscope
+
+volumes:
+  pyroscope-data:

@@ -1,0 +1,223 @@
+# ============================================================================
+# Lab04 · SLO 多窗口多燃烧率（multi-window multi-burn-rate）告警
+#
+# SLO 定义（28 天滚动窗口）：
+#   可用性：demo-app 非 5xx 响应占比 >= 99.9%   -> 错误预算 0.1%（0.001）
+#   延迟  ：demo-app 请求耗时 < 1s 的占比 >= 99% -> 错误预算 1%（0.01）
+#
+# 燃烧率档位（Google SRE Workbook《Alerting on SLOs》）：
+#   burn rate = 实际错误率 / 允许错误率（预算消耗速度）
+#   | 档位 | 预算消耗 | 长窗口 | 短窗口 | burn | severity | 动作 |
+#   | 1    | 2% / 1h  | 1h     | 5m     | 14.4 | critical | 电话/页呼 |
+#   | 2    | 5% / 6h  | 6h     | 30m    | 6    | warning  | 页呼      |
+#   | 3    | 10% / 1d | 1d     | 2h     | 3    | info     | 工单      |
+#   | 4    | 10% / 3d | 3d     | 6h     | 1    | info     | 工单      |
+# 双窗口必须同时超阈值才告警：短窗口保证灵敏度，长窗口抑制抖动。
+# ============================================================================
+
+groups:
+  # ------------------------------------------------------------------
+  # 一、SLI 录制规则（recording rules）：预计算各窗口错误比例
+  # ------------------------------------------------------------------
+  - name: slo-demo-app-recording
+    interval: 30s
+    rules:
+      # 可用性 SLI：5xx 比例（clamp_min 防止零流量时除零）
+      - record: slo:demo_app_availability:error_ratio_rate5m
+        expr: |
+          sum(rate(app_http_requests_total{service_name="demo-app", status=~"5.."}[5m]))
+          /
+          clamp_min(sum(rate(app_http_requests_total{service_name="demo-app"}[5m])), 1e-9)
+      - record: slo:demo_app_availability:error_ratio_rate30m
+        expr: |
+          sum(rate(app_http_requests_total{service_name="demo-app", status=~"5.."}[30m]))
+          /
+          clamp_min(sum(rate(app_http_requests_total{service_name="demo-app"}[30m])), 1e-9)
+      - record: slo:demo_app_availability:error_ratio_rate1h
+        expr: |
+          sum(rate(app_http_requests_total{service_name="demo-app", status=~"5.."}[1h]))
+          /
+          clamp_min(sum(rate(app_http_requests_total{service_name="demo-app"}[1h])), 1e-9)
+      - record: slo:demo_app_availability:error_ratio_rate2h
+        expr: |
+          sum(rate(app_http_requests_total{service_name="demo-app", status=~"5.."}[2h]))
+          /
+          clamp_min(sum(rate(app_http_requests_total{service_name="demo-app"}[2h])), 1e-9)
+      - record: slo:demo_app_availability:error_ratio_rate6h
+        expr: |
+          sum(rate(app_http_requests_total{service_name="demo-app", status=~"5.."}[6h]))
+          /
+          clamp_min(sum(rate(app_http_requests_total{service_name="demo-app"}[6h])), 1e-9)
+      - record: slo:demo_app_availability:error_ratio_rate1d
+        expr: |
+          sum(rate(app_http_requests_total{service_name="demo-app", status=~"5.."}[1d]))
+          /
+          clamp_min(sum(rate(app_http_requests_total{service_name="demo-app"}[1d])), 1e-9)
+      - record: slo:demo_app_availability:error_ratio_rate3d
+        expr: |
+          sum(rate(app_http_requests_total{service_name="demo-app", status=~"5.."}[3d]))
+          /
+          clamp_min(sum(rate(app_http_requests_total{service_name="demo-app"}[3d])), 1e-9)
+
+      # 延迟 SLI：耗时 >= 1s 的比例（"坏"事件占比；le="1" 对应直方图 1s 桶）
+      - record: slo:demo_app_latency:bad_ratio_rate5m
+        expr: |
+          1 - (
+            sum(rate(app_http_request_duration_seconds_bucket{service_name="demo-app", le="1"}[5m]))
+            /
+            clamp_min(sum(rate(app_http_request_duration_seconds_count{service_name="demo-app"}[5m])), 1e-9)
+          )
+      - record: slo:demo_app_latency:bad_ratio_rate30m
+        expr: |
+          1 - (
+            sum(rate(app_http_request_duration_seconds_bucket{service_name="demo-app", le="1"}[30m]))
+            /
+            clamp_min(sum(rate(app_http_request_duration_seconds_count{service_name="demo-app"}[30m])), 1e-9)
+          )
+      - record: slo:demo_app_latency:bad_ratio_rate1h
+        expr: |
+          1 - (
+            sum(rate(app_http_request_duration_seconds_bucket{service_name="demo-app", le="1"}[1h]))
+            /
+            clamp_min(sum(rate(app_http_request_duration_seconds_count{service_name="demo-app"}[1h])), 1e-9)
+          )
+      - record: slo:demo_app_latency:bad_ratio_rate6h
+        expr: |
+          1 - (
+            sum(rate(app_http_request_duration_seconds_bucket{service_name="demo-app", le="1"}[6h]))
+            /
+            clamp_min(sum(rate(app_http_request_duration_seconds_count{service_name="demo-app"}[6h])), 1e-9)
+          )
+
+  # ------------------------------------------------------------------
+  # 二、可用性 SLO · 多窗口燃烧率告警
+  # ------------------------------------------------------------------
+  - name: slo-demo-app-burn-rate-alerts
+    interval: 30s
+    rules:
+      # 档位 1：burn > 14.4（1h 烧掉 2% 预算）-> critical
+      - alert: SLOAvailabilityBurnRateFast
+        expr: |
+          (
+            slo:demo_app_availability:error_ratio_rate1h > (14.4 * 0.001)
+            and
+            slo:demo_app_availability:error_ratio_rate5m > (14.4 * 0.001)
+          )
+        for: 2m
+        labels:
+          severity: critical
+          service: demo-app
+          slo: availability
+        annotations:
+          summary: "可用性 SLO 预算高速燃烧（burn rate > 14.4，约每小时烧掉 2% 的 28d 预算）"
+          description: >-
+            近 1h 错误比例 {{ $value | humanizePercentage }}，SLO 目标 99.9%
+            （预算 0.1%）。双窗口 5m 与 1h 同时超过 14.4 倍燃烧率。
+            下钻：http://localhost:3000/d/lab04-three-pillars
+      # 档位 2：burn > 6（6h 烧掉 5% 预算）-> warning
+      - alert: SLOAvailabilityBurnRateSlow
+        expr: |
+          (
+            slo:demo_app_availability:error_ratio_rate6h > (6 * 0.001)
+            and
+            slo:demo_app_availability:error_ratio_rate30m > (6 * 0.001)
+          )
+        for: 15m
+        labels:
+          severity: warning
+          service: demo-app
+          slo: availability
+        annotations:
+          summary: "可用性 SLO 预算中速燃烧（burn rate > 6，约每 6h 烧掉 5% 的 28d 预算）"
+          description: >-
+            近 6h 错误比例 {{ $value | humanizePercentage }}。双窗口 30m 与 6h
+            同时超过 6 倍燃烧率。下钻：http://localhost:3000/d/lab04-three-pillars
+      # 档位 3：burn > 3（1d 烧掉 10% 预算）-> info / 工单
+      - alert: SLOAvailabilityBurnRateTicket1d
+        expr: |
+          (
+            slo:demo_app_availability:error_ratio_rate1d > (3 * 0.001)
+            and
+            slo:demo_app_availability:error_ratio_rate2h > (3 * 0.001)
+          )
+        for: 1h
+        labels:
+          severity: info
+          service: demo-app
+          slo: availability
+        annotations:
+          summary: "可用性 SLO 预算慢速燃烧（burn rate > 3，1d 窗口已烧 10% 预算）"
+          description: "建议建工单跟踪，安排容量/依赖治理。"
+      # 档位 4：burn > 1（3d 烧掉 10% 预算）-> info / 工单
+      - alert: SLOAvailabilityBurnRateTicket3d
+        expr: |
+          (
+            slo:demo_app_availability:error_ratio_rate3d > (1 * 0.001)
+            and
+            slo:demo_app_availability:error_ratio_rate6h > (1 * 0.001)
+          )
+        for: 3h
+        labels:
+          severity: info
+          service: demo-app
+          slo: availability
+        annotations:
+          summary: "可用性 SLO 预算持续消耗（burn rate > 1，3d 窗口已烧 10% 预算）"
+          description: "长期消耗偏快，值得在周会上过一眼错误预算曲线。"
+
+      # 延迟 SLO：档位 1 + 档位 2（bad = 耗时 >= 1s）
+      - alert: SLOLatencyBurnRateFast
+        expr: |
+          (
+            slo:demo_app_latency:bad_ratio_rate1h > (14.4 * 0.01)
+            and
+            slo:demo_app_latency:bad_ratio_rate5m > (14.4 * 0.01)
+          )
+        for: 2m
+        labels:
+          severity: critical
+          service: demo-app
+          slo: latency
+        annotations:
+          summary: "延迟 SLO 预算高速燃烧（>1s 请求占比超 14.4 倍燃烧率）"
+          description: >-
+            近 1h 慢请求比例 {{ $value | humanizePercentage }}，SLO 目标 99% < 1s。
+            下钻：http://localhost:3000/d/lab04-three-pillars
+      - alert: SLOLatencyBurnRateSlow
+        expr: |
+          (
+            slo:demo_app_latency:bad_ratio_rate6h > (6 * 0.01)
+            and
+            slo:demo_app_latency:bad_ratio_rate30m > (6 * 0.01)
+          )
+        for: 15m
+        labels:
+          severity: warning
+          service: demo-app
+          slo: latency
+        annotations:
+          summary: "延迟 SLO 预算中速燃烧（>1s 请求占比超 6 倍燃烧率）"
+
+  # ------------------------------------------------------------------
+  # 三、基础存活告警（非 SLO 类，用于对比与兜底）
+  # ------------------------------------------------------------------
+  - name: lab04-basic-alerts
+    rules:
+      - alert: OtelCollectorScrapeDown
+        expr: up{job="otel-collector"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: otel-collector
+        annotations:
+          summary: "otel-collector 指标端点抓取失败（可能影响全部三信号）"
+          description: "检查 collector 容器与 :8889 端口。"
+
+      - alert: DemoAppNoTraffic
+        expr: sum(rate(app_http_requests_total{service_name="demo-app"}[5m])) < 0.01
+        for: 5m
+        labels:
+          severity: info
+          service: demo-app
+        annotations:
+          summary: "demo-app 近 5 分钟几乎无流量（背景流量发生器可能挂了）"

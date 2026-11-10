@@ -1,0 +1,4 @@
+# 版本以 PyPI 官方发布为准（https://pypi.org/project/fastapi/ 等）
+fastapi==0.115.6
+uvicorn==0.32.1
+prometheus-client==0.22.0

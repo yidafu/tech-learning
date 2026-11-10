@@ -1,0 +1,83 @@
+# 单 GitHub Pages 多站点部署：
+# 5 个 Docusaurus 站各自构建（baseUrl = /tech-learning/<站名>/），
+# 合并到一个 Pages 工件——落地页在根，各站挂 <站名>/ 子路径。
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-site:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: architecture, dir: architecture }
+          - { name: react, dir: react }
+          - { name: security, dir: security }
+          - { name: observability, dir: observability }
+          - { name: js-ts, dir: js-ts/docs-site }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ${{ matrix.dir }}/package-lock.json
+
+      - name: Build ${{ matrix.name }}
+        working-directory: ${{ matrix.dir }}
+        run: |
+          npm ci
+          npm run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-${{ matrix.name }}
+          path: ${{ matrix.dir }}/build/
+          retention-days: 1
+          if-no-files-found: error
+
+  assemble-deploy:
+    needs: build-site
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Assemble site
+        run: |
+          mkdir -p site
+          cp landing/index.html site/
+          touch site/.nojekyll
+          mv artifacts/site-architecture  site/architecture
+          mv artifacts/site-react         site/react
+          mv artifacts/site-security      site/security
+          mv artifacts/site-observability site/observability
+          mv artifacts/site-js-ts         site/js-ts
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

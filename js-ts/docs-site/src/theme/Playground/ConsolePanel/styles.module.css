@@ -1,0 +1,41 @@
+.consoleOutput {
+  margin-bottom: var(--ifm-leading);
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-top: 0;
+  border-radius: 0 0 var(--ifm-global-radius) var(--ifm-global-radius);
+  background: var(--ifm-background-color);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  overflow-x: auto;
+  max-height: 24rem;
+  overflow-y: auto;
+}
+
+.line {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--ifm-font-color-base);
+}
+
+.lineWarn {
+  composes: line;
+  color: var(--ifm-color-warning-dark);
+}
+
+.lineError {
+  composes: line;
+  color: var(--ifm-color-danger-dark);
+}
+
+.lineEmpty {
+  color: var(--ifm-color-emphasis-500);
+  font-style: italic;
+}
+
+.hint {
+  margin-left: 0.75rem;
+  font-size: 0.72rem;
+  color: var(--ifm-color-emphasis-600);
+}

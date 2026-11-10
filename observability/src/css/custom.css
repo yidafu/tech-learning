@@ -1,0 +1,8 @@
+/* 显式钉住根背景：新版 Infima 亮色主题默认 transparent，
+   在嵌入式 webview / 部分安卓内核上会透出底层黑色 */
+html {
+  background-color: #fff;
+}
+html[data-theme='dark'] {
+  background-color: #1b1b1d;
+}

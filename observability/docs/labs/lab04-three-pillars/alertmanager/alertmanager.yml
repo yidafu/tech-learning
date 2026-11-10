@@ -1,0 +1,84 @@
+# ============================================================================
+# Alertmanager v0.27.0 —— Lab04 配置
+# 核心流水线：去重(Dedup) -> 分组(Grouping) -> 路由(Route 树) -> 抑制(Inhibition)
+#           -> 静默(Silence) -> 定时器(group_wait/group_interval/repeat) -> 通知
+#
+# 通知目标：demo-app 的 /webhook/alerts（浏览器打开 http://localhost:8000/alerts
+# 即可看到分组/恢复效果）。Slack / Email / PagerDuty 配置以注释给出。
+# ============================================================================
+
+global:
+  resolve_timeout: 1m
+
+templates:
+  - /etc/alertmanager/templates.tmpl
+
+route:
+  # 根路由：没有子路由匹配的告警都走这里
+  receiver: webhook-default
+  # 按"告警名 + 服务"分组：同 SLO 同服务的多条告警合并成一封通知
+  group_by: ["alertname", "service"]
+  group_wait: 10s        # 新分组首条通知前等待（凑齐同组告警）
+  group_interval: 30s    # 同组有新告警时，两次通知的最小间隔
+  repeat_interval: 3m    # 无新告警时的重发间隔（实验调短，生产通常 4h+）
+  routes:
+    # P 级告警：几乎零等待、更快重发
+    - receiver: webhook-critical
+      matchers:
+        - 'severity = "critical"'
+      group_wait: 5s
+      group_interval: 30s
+      repeat_interval: 2m
+    - receiver: webhook-warning
+      matchers:
+        - 'severity = "warning"'
+      group_wait: 10s
+      repeat_interval: 10m
+    - receiver: webhook-info
+      matchers:
+        - 'severity = "info"'
+      group_wait: 30s
+      repeat_interval: 4h
+
+inhibit_rules:
+  # critical 触发时，抑制同告警同服务的 warning/info，避免重复打扰
+  - source_matchers:
+      - 'severity = "critical"'
+    target_matchers:
+      - 'severity =~ "warning|info"'
+    equal: ["alertname", "service"]
+
+receivers:
+  - name: webhook-default
+    webhook_configs:
+      - url: http://app:8000/webhook/alerts
+        send_resolved: true
+
+  - name: webhook-critical
+    webhook_configs:
+      - url: http://app:8000/webhook/alerts
+        send_resolved: true
+
+  - name: webhook-warning
+    webhook_configs:
+      - url: http://app:8000/webhook/alerts
+        send_resolved: true
+  # 生产可替换为（示例，非注释时需配好 token/地址）：
+  #   slack_configs:
+  #     - api_url: https://hooks.slack.com/services/XXX/YYY/ZZZ
+  #       channel: "#oncall"
+  #       title: '{{ template "slack.custom.title" . }}'
+  #       text: '{{ template "slack.custom.body" . }}'
+  #       send_resolved: true
+  #   email_configs:
+  #     - to: "oncall@example.com"
+  #       from: "alertmanager@example.com"
+  #       smarthost: "smtp.example.com:587"
+  #       auth_username: "alertmanager@example.com"
+  #       auth_password: "${SMTP_PASSWORD}"
+  #       send_resolved: true
+
+  - name: webhook-info
+    webhook_configs:
+      - url: http://app:8000/webhook/alerts
+        send_resolved: true

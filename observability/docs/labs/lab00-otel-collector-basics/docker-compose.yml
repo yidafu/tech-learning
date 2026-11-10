@@ -1,0 +1,67 @@
+# =============================================================================
+# lab00 · 第一次跑通 OpenTelemetry Collector
+# =============================================================================
+# 启动:  podman compose up -d --build
+# 验证:  curl http://127.0.0.1:8000/order  然后看 collector 日志
+# 清理:  podman compose down（data/ 目录是 bind mount，数据保留在宿主机）
+# =============================================================================
+
+name: lab00-otel-collector-basics
+
+services:
+  # ---------------------------------------------------------------------------
+  # OpenTelemetry Collector（contrib 发行版，含 debug/file exporter 与
+  # health_check extension；版本 tag 以官方 release 页为准：
+  # https://github.com/open-telemetry/opentelemetry-collector-releases/releases
+  # ---------------------------------------------------------------------------
+  otel-collector:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.164.0
+    container_name: lab00-otel-collector
+    # 镜像 entrypoint 已是 /otelcol-contrib，这里只需传参
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      # 只读挂载配置文件
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+      # file exporter 的输出目录（JSONL 落盘，充当“最简后端”）
+      - ./data:/var/lib/otelcol
+    ports:
+      # 绑定 127.0.0.1，避免把遥测端口暴露到局域网（生产按需调整）
+      - "127.0.0.1:4317:4317"    # OTLP/gRPC：app 的上报端口
+      - "127.0.0.1:4318:4318"    # OTLP/HTTP：宿主机 SDK/ curl 直发实验可用
+      - "127.0.0.1:13133:13133"  # health_check extension
+    healthcheck:
+      # 镜像内置 wget（详见 README“常见坑”），探测 health_check 扩展端点
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:13133/"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # 示例应用：Flask + 手动 OTel SDK，产生 traces / metrics / logs 三种信号
+  # ---------------------------------------------------------------------------
+  app:
+    build: ./app
+    image: lab00-app:0.1.0
+    container_name: lab00-app
+    environment:
+      # 容器网络内用服务名寻址 Collector 的 gRPC 端口
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_SERVICE_NAME: lab00-app
+      # 想观察“慢支付/失败支付”更多次可调大这两个概率
+      SLOW_PAYMENT_PROB: "0.10"
+      FAIL_PAYMENT_PROB: "0.05"
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      # 先等 Collector 健康再启动 app，避免首批导出失败带来的困惑
+      otel-collector:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=2)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    restart: unless-stopped

@@ -1,0 +1,13 @@
+/* 钉住根背景：新版 Infima 亮色主题默认 --ifm-background-color: transparent，
+   嵌入式 webview / 部分安卓内核会透出底层黑色（普通浏览器画布是白，看不出） */
+html {
+  background-color: #fff;
+}
+html[data-theme='dark'] {
+  background-color: #1b1b1d;
+}
+
+/* 首页阶段卡片 */
+.stage-card {
+  height: 100%;
+}

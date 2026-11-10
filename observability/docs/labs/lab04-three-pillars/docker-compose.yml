@@ -1,0 +1,145 @@
+# ============================================================================
+# Lab04 · 三支柱整合实验：一个应用 → OTel Collector → Prometheus/Loki/Tempo
+#         → Grafana 统一关联下钻 + Alertmanager SLO burn-rate 告警
+#
+# 资源建议：内存 >= 4GB（7 个容器，无负载时约 1.5GB）
+# 镜像版本写作本文时均以官方发布为准；如需升级请同步核对配置兼容性。
+# ============================================================================
+name: lab04-three-pillars
+
+services:
+  # ------------------------------------------------------------------
+  # demo-app（web 角色）：/api/orders 主接口 + 混沌开关 + 告警展示页
+  # ------------------------------------------------------------------
+  app:
+    build: ./app
+    image: lab04/app:1.0.0
+    environment:
+      APP_ROLE: web
+      OTEL_SERVICE_NAME: demo-app
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      INVENTORY_URL: http://inventory:8001/api/inventory
+      ERROR_RATE: "0.02"        # 初始错误率 2%
+      TRAFFIC_INTERVAL: "0.4"   # 背景流量 ~2.5 rps
+    ports:
+      - "8000:8000"
+    depends_on:
+      - otel-collector
+      - inventory
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  # demo-inventory（inventory 角色，同一镜像）：下游服务，制造跨服务 trace
+  # ------------------------------------------------------------------
+  inventory:
+    build: ./app
+    image: lab04/app:1.0.0
+    command: uvicorn app:app --host 0.0.0.0 --port 8001 --no-access-log
+    environment:
+      APP_ROLE: inventory
+      OTEL_SERVICE_NAME: demo-inventory
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      ERROR_RATE: "0.01"
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  # OTel Collector：OTLP 接入，三信号分 pipeline 分发
+  # ------------------------------------------------------------------
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.109.0
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./otel-collector/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "8889:8889"   # Prometheus 拉取端点（4317/4318 仅容器网络内使用）
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  # Prometheus：拉取 collector 指标 + 接收 Tempo remote-write + 告警规则
+  # ------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=2d
+      - --web.enable-lifecycle
+      - --web.enable-remote-write-receiver   # 供 Tempo metrics_generator 推送派生指标
+      - --enable-feature=exemplar-storage    # exemplar 持久化（链路保持打开）
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  # Loki：日志后端
+  # ------------------------------------------------------------------
+  loki:
+    image: grafana/loki:3.1.1
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - loki-data:/loki
+    ports:
+      - "3100:3100"
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  # Tempo：trace 后端 + metrics_generator 派生指标
+  # ------------------------------------------------------------------
+  tempo:
+    image: grafana/tempo:2.6.0
+    command: ["-config.file=/etc/tempo/tempo.yml"]
+    volumes:
+      - ./tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+      - tempo-data:/var/tempo
+    ports:
+      - "3200:3200"   # Grafana 查询接口；4317/4318 仅容器网络内使用
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  # Alertmanager：分组/路由/抑制/静默 + webhook 通知到 demo-app 展示页
+  # ------------------------------------------------------------------
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --cluster.listen-address=   # 单实例，禁用集群端口
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./alertmanager/templates.tmpl:/etc/alertmanager/templates.tmpl:ro
+    ports:
+      - "9093:9093"
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  # Grafana：三数据源 + 关联配置 + 统一 dashboard（全部 provisioning 预置）
+  # ------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:11.2.0
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:
+  loki-data:
+  tempo-data:
+  grafana-data:

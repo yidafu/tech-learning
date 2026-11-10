@@ -1,0 +1,68 @@
+# lab05 · 主题 A：tail_sampling 双路对照实验
+#
+# 拓扑：
+#   demo-app --(OTLP gRPC 双路导出)--> collector-a(无采样) --> jaeger-a (UI :16686)
+#                                    |-> collector-b(tail_sampling) --> jaeger-b (UI :16687)
+#
+# 镜像说明（均支持 linux/amd64 与 linux/arm64，Apple Silicon 可直接运行）：
+#   otel/opentelemetry-collector-contrib:0.112.0  tail_sampling 在 contrib 发行版中，版本以官方发布为准
+#   jaegertracing/all-in-one:1.62.0              v1.43+ 默认开启 OTLP 接收，版本以官方发布为准
+name: lab05-sampling
+
+services:
+  # ---------- 示例应用（自带负载发生器，~5 QPS）----------
+  demo-app:
+    build: ./app
+    environment:
+      OTEL_SERVICE_NAME: demo-app
+      COLLECTOR_A_ENDPOINT: http://collector-a:4317
+      COLLECTOR_B_ENDPOINT: http://collector-b:4317
+      # 流量构成（可改，改完对照 README 预期重新推算）
+      P_NORMAL: "0.90"
+      P_SLOW: "0.05"
+      P_ERROR: "0.05"
+      SLOW_SLEEP_SECONDS: "1.2"   # 必须 > collector-b 的 latency 阈值 800ms
+      LOAD_INTERVAL: "0.2"
+    ports:
+      - "8000:8000"   # 可手动 curl http://localhost:8000/stats 查看本地计数
+    depends_on:
+      - collector-a
+      - collector-b
+
+  # ---------- Collector A：基准（无采样）----------
+  collector-a:
+    image: otel/opentelemetry-collector-contrib:0.112.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./collector/otelcol-a.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "8888:8888"   # 自身指标：http://localhost:8888/metrics
+    depends_on:
+      - jaeger-a
+
+  # ---------- Collector B：tail_sampling ----------
+  collector-b:
+    image: otel/opentelemetry-collector-contrib:0.112.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./collector/otelcol-b.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "8889:8888"   # 自身指标：http://localhost:8889/metrics（含 tail_sampling_* 指标）
+    depends_on:
+      - jaeger-b
+
+  # ---------- Jaeger A：全量后端 ----------
+  jaeger-a:
+    image: jaegertracing/all-in-one:1.62.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"   # UI: http://localhost:16686
+
+  # ---------- Jaeger B：采样后端 ----------
+  jaeger-b:
+    image: jaegertracing/all-in-one:1.62.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16687:16686"   # UI: http://localhost:16687

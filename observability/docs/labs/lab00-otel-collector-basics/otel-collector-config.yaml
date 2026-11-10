@@ -1,0 +1,96 @@
+# =============================================================================
+# lab00 · OpenTelemetry Collector 配置
+# =============================================================================
+# 镜像: ghcr.io/open-telemetry/opentelemetry-collector-releases/
+#       opentelemetry-collector-contrib:<tag>（版本以官方 release 为准）
+#
+# 数据流（三种信号共用同一套路数）:
+#   app --OTLP(gRPC :4317 / HTTP :4318)--> receivers.otlp
+#        --> processors.batch --> exporters.debug(打印到日志) + exporters.file(落盘)
+#
+# 配置语法要点:
+#   * 组件在顶层“声明”，组件名=类型名（如 otlp/batch/debug/file/health_check）；
+#   * 组件在 service.pipelines.<signal> 中“引用”；引用了没声明 → 启动报错退出；
+#     声明了不引用 → 组件静默不启用（不报错，注意这不是错误而是“没生效”）。
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Extensions：管道之外的辅助能力（不参与数据处理）
+# -----------------------------------------------------------------------------
+extensions:
+  # 健康检查端点：GET :13133/ 返回 200（容器 healthcheck / K8s 探针用）
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+# -----------------------------------------------------------------------------
+# Receivers：数据入口
+# -----------------------------------------------------------------------------
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317   # OTLP/gRPC 标准端口
+      http:
+        endpoint: 0.0.0.0:4318   # OTLP/HTTP 标准端口（POST /v1/traces|metrics|logs）
+
+# -----------------------------------------------------------------------------
+# Processors：管道内加工
+# -----------------------------------------------------------------------------
+processors:
+  # batch：把到达的数据攒批发送，显著降低导出开销（官方建议默认必配）。
+  # 含义：攒够 timeout=5s 或攒满 send_batch_size=512 条（span/log/metric 点）先到先发；
+  # send_batch_max_size=1024 是单批硬上限。（send_batch_size 默认值是 8192，本实验调小便于观察）
+  batch:
+    timeout: 5s
+    send_batch_size: 512
+    send_batch_max_size: 1024
+
+  # 生产环境强烈建议再加 memory_limiter（放管道最前），本实验流量极小，从简未启用。
+  # memory_limiter:
+  #   check_interval: 1s
+  #   limit_mib: 512
+
+# -----------------------------------------------------------------------------
+# Exporters：数据出口（一条管道可以同时配多个，数据会被复制到每个出口）
+# -----------------------------------------------------------------------------
+exporters:
+  # debug：把数据以人可读格式打印到 Collector 自身日志（学习/调试神器）。
+  # verbosity: detailed 会打印每条 span/log/metric 的全部字段。
+  debug:
+    verbosity: detailed
+    sampling_initial: 5      # 初始每秒最多打印 5 条（防止刷屏）
+    sampling_thereafter: 20  # 之后每秒最多 20 条
+  # 把原始数据按行写入 JSON Lines 文件（本实验充当“最简后端”，可离线翻看）
+  file:
+    path: /var/lib/otelcol/lab00-telemetry.jsonl
+    rotation:
+      max_megabytes: 50
+      max_days: 3
+      max_backups: 2
+
+# -----------------------------------------------------------------------------
+# Service：把上面声明的组件装配成管道
+# -----------------------------------------------------------------------------
+service:
+  # Collector 自身的日志级别（info 即可看到 debug exporter 的输出）
+  telemetry:
+    logs:
+      level: info
+
+  # 引用 extensions（声明了就必须在这里引用）
+  extensions: [health_check]
+
+  pipelines:
+    # 三种信号各一条管道；它们互不影响，可分别配置组件组合
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug, file]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug, file]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug, file]

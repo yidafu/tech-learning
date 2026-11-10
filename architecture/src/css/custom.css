@@ -1,0 +1,12 @@
+/* 自定义样式（必须在 preset-classic 选项里注册 theme.customCss 才会打包，
+ * 见 docusaurus.config.mjs——不注册不报错、静默失效）。
+ *
+ * 背景钉色：新版 Infima 亮色主题的 --ifm-background-color 是 transparent，
+ * 普通浏览器画布是白色看不出，但嵌入式 webview / 部分安卓内核会透出底层黑色。
+ * 显式钉住根背景；暗色取 Infima 默认的 #1b1b1d。 */
+html {
+  background-color: #fff;
+}
+html[data-theme='dark'] {
+  background-color: #1b1b1d;
+}

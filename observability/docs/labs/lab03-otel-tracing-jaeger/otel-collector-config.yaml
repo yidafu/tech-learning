@@ -1,0 +1,44 @@
+# OTel Collector 配置：otlp receiver → batch processor → otlp exporter（Jaeger）+ debug exporter
+# 组件文档：https://opentelemetry.io/docs/collector/configuration/（访问日期：2026-11-04）
+# 镜像：otel/opentelemetry-collector-contrib:0.112.0（版本以官方发布为准）
+
+extensions:
+  # 健康检查扩展：暴露 GET /health（compose 里不依赖它做 healthcheck，
+  # 但 k8s/生产部署里通常用它做存活探针）
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317   # OTLP/gRPC（本实验未用，保留以便扩展）
+      http:
+        endpoint: 0.0.0.0:4318   # OTLP/HTTP，三个 Python 服务走这里（/v1/traces）
+
+processors:
+  # 批处理：攒批（最多 512 条或 2 秒）再写 Jaeger，生产必开
+  batch:
+    send_batch_size: 512
+    timeout: 2s
+
+exporters:
+  # Jaeger 1.35+ 原生支持 OTLP 接收（all-in-one 同时监听 4317/4318），
+  # 因此 Collector → Jaeger 用标准 otlp exporter 即可，无需任何 Jaeger 专用组件
+  # （Jaeger 官方已废弃其专用 exporter，OTLP 是推荐通道）
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+  # 控制台输出：`podman compose logs otel-collector` 可直接看到 span 流（学习期友好）
+  # verbosity=basic 每批输出 span 摘要；detailed 会打印完整属性
+  debug:
+    verbosity: basic
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/jaeger, debug]

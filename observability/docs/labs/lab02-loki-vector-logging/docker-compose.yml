@@ -1,0 +1,82 @@
+# Lab02：结构化日志采集与查询全链路（podman compose 一键运行）
+# app（JSON 日志 stdout + tee 双写共享卷文件）→ Vector（file source + VRL 解析/脱敏）→ Loki（本地模式）→ Grafana（预置数据源与仪表盘）
+#
+# 镜像版本（编写时最新稳定版，实际可用版本以官方发布为准；podman 默认从 docker.io 拉取）：
+#   - grafana/loki:3.7.9        https://github.com/grafana/loki/releases
+#   - timberio/vector:0.61.0    https://github.com/vectordotdev/vector/releases
+#   - grafana/grafana:13.3.0    https://github.com/grafana/grafana/releases
+name: lab02-loki-vector-logging
+
+services:
+  # ---------------------------------------------------------------
+  # 演示应用：模拟订单服务，输出带 level/service/user_id/request_id 的 JSON 日志。
+  # podman 环境没有 docker.sock 供 Vector docker_logs source 使用，
+  # 应用在 stdout 之外把同一份 JSON 双写到共享卷日志文件（LOG_FILE），作为采集通道。
+  # ---------------------------------------------------------------
+  app:
+    build: ./app
+    container_name: lab02-app
+    environment:
+      LOG_LEVEL: INFO          # DEBUG / INFO / WARNING，应用内过滤
+      ERROR_RATE: "0.12"       # 模拟 5xx 异常请求比例
+      WARN_RATE: "0.15"        # 模拟慢请求/业务失败比例
+      LOG_FILE: /var/log/lab02/app.log   # stdout 之外的双写目标，供 Vector file source 采集
+    volumes:
+      - app-logs:/var/log/lab02
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------
+  # Vector：file source tail 共享卷日志文件 → 解析 JSON → 删除敏感字段 → 写入 Loki
+  # ---------------------------------------------------------------
+  vector:
+    image: timberio/vector:0.61.0-alpine
+    container_name: lab02-vector
+    command: ["--config", "/etc/vector/vector.toml"]
+    volumes:
+      - ./vector/vector.toml:/etc/vector/vector.toml:ro
+      # 只读挂载共享日志卷（app 双写出来的文件），无需任何容器运行时 socket
+      - app-logs:/var/log/lab02:ro
+      # checkpoint 持久化（file source 断点续传）：vector 重启后从上次位置续读，不重读不漏读
+      - vector-data:/var/lib/vector
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------
+  # Loki：本地单机模式（filesystem 存储 + TSDB 索引 + compactor retention）
+  # ---------------------------------------------------------------
+  loki:
+    image: grafana/loki:3.7.9
+    container_name: lab02-loki
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki/loki-config.yaml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    ports:
+      - "3100:3100"            # 便于用 curl 直接查询验证
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------
+  # Grafana：启动时自动 provisioning Loki 数据源 + Lab02 仪表盘
+  # ---------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:13.3.0
+    container_name: lab02-grafana
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    ports:
+      - "3000:3000"
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+volumes:
+  loki-data:
+  app-logs:      # app ↔ vector 共享的日志文件卷（podman 环境的采集通道）
+  vector-data:   # Vector checkpoint（data_dir），保证断点续传
