@@ -1,12 +1,293 @@
-/* 自定义样式（必须在 preset-classic 选项里注册 theme.customCss 才会打包，
- * 见 docusaurus.config.mjs——不注册不报错、静默失效）。
- *
- * 背景钉色：新版 Infima 亮色主题的 --ifm-background-color 是 transparent，
- * 普通浏览器画布是白色看不出，但嵌入式 webview / 部分安卓内核会透出底层黑色。
- * 显式钉住根背景；暗色取 Infima 默认的 #1b1b1d。 */
-html {
-  background-color: #fff;
+/* ============================================================
+ * tech-learning 站群统一主题（唯一源头：shared/theme/custom.css）
+ * 由 shared/sync-theme.mjs 同步到各站 src/css/custom.css，勿手改各站副本。
+ * 基准：react 站定制 + landing 蓝（#2e7cf6），五站观感一致。
+ * ============================================================ */
+
+:root {
+  --ifm-color-primary: #2e7cf6;
+  --ifm-color-primary-dark: #1e6de9;
+  --ifm-color-primary-darker: #1c66dc;
+  --ifm-color-primary-darkest: #1754b5;
+  --ifm-color-primary-light: #468cf7;
+  --ifm-color-primary-lighter: #5395f8;
+  --ifm-color-primary-lightest: #77adf9;
 }
+
+/* Infima 新版默认 light 背景 transparent，内嵌 webview（底层黑）会透出来，显式钉死 */
+html {
+  background-color: #ffffff;
+}
+
 html[data-theme='dark'] {
   background-color: #1b1b1d;
+}
+
+/* ============ 首页（站群统一模板） ============ */
+
+.hero--landing {
+  padding: 4.5rem 0 4rem;
+  background: linear-gradient(160deg, var(--ifm-color-primary-darkest) 0%, var(--ifm-color-primary-dark) 45%, var(--ifm-color-primary) 100%);
+}
+
+.hero__subtitle {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.15rem;
+}
+
+.hero__buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.hero__button-ghost {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.hero__button-ghost:hover {
+  color: #fff;
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 首页主内容区 section（首段 / 末段留白不同） */
+.home-section {
+  padding: 3rem 0 1.5rem;
+}
+
+.home-section--last {
+  padding: 1.5rem 0 4rem;
+}
+
+/* 阅读顺序：步骤行（可选区块） */
+.reading-order {
+  list-style: none;
+  padding: 0;
+  margin: 1.75rem 0 0;
+}
+
+.reading-order__item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  padding: 0.8rem 0.25rem;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.reading-order__item:last-child {
+  border-bottom: none;
+}
+
+.reading-order__step {
+  flex: none;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  background: var(--ifm-color-primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(0.35rem);
+}
+
+.reading-order__label {
+  flex: none;
+  font-weight: 700;
+  color: var(--ifm-color-primary-dark);
+}
+
+.reading-order__text {
+  color: var(--ifm-color-emphasis-800);
+}
+
+html[data-theme='dark'] .reading-order__label {
+  color: var(--ifm-color-primary-light);
+}
+
+/* 卡片网格 */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.75rem;
+}
+
+.feature-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 1.35rem 1.35rem 1.15rem;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 14px;
+  background: var(--ifm-card-background-color);
+  color: inherit;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--card-accent, var(--ifm-color-primary));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.feature-card:hover {
+  text-decoration: none;
+  border-color: var(--card-accent, var(--ifm-color-primary));
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  transform: translateY(-3px);
+}
+
+.feature-card:hover::before {
+  opacity: 1;
+}
+
+.feature-card__tag {
+  align-self: flex-start;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.12rem 0.6rem;
+  border-radius: 999px;
+  color: var(--card-accent, var(--ifm-color-primary));
+  background: color-mix(in srgb, var(--card-accent, var(--ifm-color-primary)) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--card-accent, var(--ifm-color-primary)) 45%, transparent);
+}
+
+.feature-card__title {
+  margin: 0.2rem 0 0;
+}
+
+.feature-card:hover .feature-card__title {
+  color: var(--card-accent, var(--ifm-color-primary));
+}
+
+.feature-card__desc {
+  margin: 0;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.925rem;
+  line-height: 1.55;
+}
+
+.feature-card__path {
+  margin-top: auto;
+  padding-top: 0.7rem;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.78rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+/* 分类配色（卡片 ::before / 标签 / 悬停统一取 --card-accent） */
+.feature-card--primary { --card-accent: #2e7cf6; }
+.feature-card--purple { --card-accent: #8b5cf6; }
+.feature-card--cyan { --card-accent: #0ea5e9; }
+.feature-card--orange { --card-accent: #f59e0b; }
+.feature-card--green { --card-accent: #10b981; }
+.feature-card--rose { --card-accent: #f43f5e; }
+
+html[data-theme='dark'] .feature-card {
+  border-color: var(--ifm-color-emphasis-200);
+  box-shadow: none;
+}
+
+html[data-theme='dark'] .feature-card:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+/* ============ MDX 组件：Callout（react 站 MDX 文档使用） ============ */
+
+.callout {
+  --callout-accent: var(--ifm-color-info);
+  border: 1px solid color-mix(in srgb, var(--callout-accent) 40%, transparent);
+  border-left-width: 5px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--callout-accent) 6%, var(--ifm-background-color));
+  padding: 0.9rem 1.1rem;
+  margin: 1.25rem 0;
+}
+
+.callout__title {
+  font-weight: 700;
+  color: var(--callout-accent);
+  margin-bottom: 0.35rem;
+}
+
+.callout__body > :last-child {
+  margin-bottom: 0;
+}
+
+.callout--info { --callout-accent: var(--ifm-color-info); }
+.callout--tip { --callout-accent: var(--ifm-color-success); }
+.callout--warning { --callout-accent: var(--ifm-color-warning); }
+.callout--danger { --callout-accent: var(--ifm-color-danger); }
+
+/* ============ 文档正文排版 ============ */
+
+/* 标题：层级间距 + h2 分隔线 */
+.markdown h2 {
+  margin-top: 2.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.markdown h3 {
+  margin-top: 2rem;
+}
+
+/* 引用块：主题色左线 + 淡底 */
+.markdown blockquote {
+  border-left: 4px solid var(--ifm-color-primary);
+  background: var(--ifm-color-primary-contrast-background);
+  border-radius: 0 8px 8px 0;
+  padding: 0.6rem 1.1rem;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.markdown blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+/* 表格：表头底色 + 行悬停 */
+.markdown table {
+  display: table;
+  width: 100%;
+}
+
+.markdown thead th {
+  background: var(--ifm-color-emphasis-100);
+  border-bottom: 2px solid var(--ifm-color-emphasis-300);
+}
+
+.markdown tbody tr {
+  border-top: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.markdown tbody tr:hover {
+  background: var(--ifm-color-emphasis-75, rgba(0, 0, 0, 0.02));
+}
+
+/* 行内代码：淡底胶囊（排除代码块内的 code） */
+.markdown :not(pre) > code {
+  border: none;
+  padding: 0.15em 0.4em;
+  border-radius: 6px;
+  background: var(--ifm-color-emphasis-100);
+}
+
+/* 分隔线更轻 */
+.markdown hr {
+  border-top: 1px solid var(--ifm-color-emphasis-200);
+  margin: 2.5rem 0;
 }

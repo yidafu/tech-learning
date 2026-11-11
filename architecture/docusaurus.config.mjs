@@ -1,17 +1,19 @@
 // 软件架构学习笔记阅读站点配置（Docusaurus，迁移自 VitePress 2026-11-04；
 // 2026-11-07 站点根上移至仓库根，与笔记同层，不再有 docusaurus/ 子目录）
 //
-// 笔记源文件在仓库根（软件架构学习大纲.md、示例项目场景.md、章节1~章节6/），
+// 笔记源文件在仓库根（软件架构学习大纲.md、示例项目场景/、01-第一阶段/ ~ 06-第六阶段/），
 // 以相对符号链接挂入 docs/，站点只做挂载与渲染；docs/ 只放符号链接，勿把笔记写入。
-// `NN-` 数字前缀由 Docusaurus 自动解析为侧边栏顺序，并从 id/标题/URL 中剥离。
+// `NN-` 数字前缀由 Docusaurus 自动解析为侧边栏顺序，并从 id/标题/URL 中剥离
+// （目录名同理：01-第一阶段/ 的 URL 段是 /第一阶段/）。
 //
 // 五个关键点（①②③ 原设计决策，④⑤ 迁移排坑实录）：
 // ① markdown.format: 'md' —— 全部笔记按纯 Markdown 解析（不走 MDX），
 //    87 万字正文免受 JSX 花括号/尖括号影响；GFM（表格/删除线等）默认开启；
 // ② onBrokenLinks: 'warn' —— 笔记中存在指向 .kt 示例、示例目录等非页面资源的链接，
 //    宽容处理（等价旧站 ignoreDeadLinks）；
-// ③ docs.routeBasePath: '/' —— 文档挂在站点根（/章节1/…），与 copy-samples.mjs
-//    拷入 static/ 的 Kotlin 示例路径（/章节1/NNa-示例-…/*.kt）对齐，站内 .kt 链接可直接下载。
+// ③ docs.routeBasePath: '/' —— 文档挂在站点根（/第一阶段/…），与 copy-samples.mjs
+//    拷入 static/ 的 Kotlin 示例路径（/第一阶段/NNa-示例-…/*.kt）对齐，站内 .kt 链接可直接下载；
+//    static/ 下的目录名必须是剥离 `NN-` 前缀后的 URL 段，否则相对链接解析不到。
 // ④ package.json 不要写 "type": "module" —— Docusaurus 构建管线按 CJS 加载项目内生成物
 //    （.docusaurus/registry.js 含 require.resolveWeak），写了会报
 //    "require.resolveWeak is not a function"（官方已知问题，facebook/docusaurus#11326）；
@@ -32,14 +34,15 @@
 
 import linkGraph from './plugins/link-graph.mjs'
 
-// 六章导航入口（目录名 ↔ 导览页 slug，导览页文件为 01-<slug>.md，前缀剥离后即 slug）
-const chapters = [
-  ['章节1', '第一阶段', '第一阶段-架构思维与设计基础'],
-  ['章节2', '第二阶段', '第二阶段-经典架构模式'],
-  ['章节3', '第三阶段', '第三阶段-分布式系统核心技术'],
-  ['章节4', '第四阶段', '第四阶段-架构方法论'],
-  ['章节5', '第五阶段', '第五阶段-工程化与运维视角'],
-  ['章节6', '第六阶段', '第六阶段-实战与案例分析'],
+// 六阶段导航入口（阶段名 ↔ 导览页 slug）：目录为 NN-<阶段名>/、导览页文件为 01-<slug>.md，
+// 两者的 `NN-` 前缀都会被剥离，所以 URL 是 /<阶段名>/<slug>
+const stages = [
+  ['第一阶段', '架构思维与设计基础'],
+  ['第二阶段', '经典架构模式'],
+  ['第三阶段', '分布式系统核心技术'],
+  ['第四阶段', '架构方法论'],
+  ['第五阶段', '工程化与运维视角'],
+  ['第六阶段', '实战与案例分析'],
 ]
 
 /** @type {import('@docusaurus/types').Config} */
@@ -111,14 +114,14 @@ const config = {
         { to: '/软件架构学习大纲', label: '大纲', position: 'left' },
         {
           type: 'dropdown',
-          label: '六章笔记',
+          label: '六阶段笔记',
           position: 'left',
-          items: chapters.map(([dir, , slug]) => ({
-            to: `/${dir}/${slug}`,
-            label: dir,
+          items: stages.map(([stage, slug]) => ({
+            to: `/${stage}/${slug}`,
+            label: `${stage}：${slug}`,
           })),
         },
-        { to: '/示例项目场景', label: '示例项目场景', position: 'left' },
+        { to: '/示例项目场景/导览', label: '示例项目场景', position: 'left' },
         { to: '/graph', label: '知识图谱', position: 'left' },
       ],
     },

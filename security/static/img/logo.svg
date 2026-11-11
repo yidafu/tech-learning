@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="tech-learning">
+  <defs>
+    <linearGradient id="tl-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2e7cf6"/>
+      <stop offset="1" stop-color="#1754b5"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="6" width="56" height="52" rx="13" fill="url(#tl-bg)"/>
+  <path d="M32 20c-2.6-2.6-6.2-4-10.5-4H17v28h4.5c4.3 0 7.9 1.4 10.5 4 2.6-2.6 6.2-4 10.5-4H47V16h-4.5c-4.3 0-7.9 1.4-10.5 4z" fill="#ffffff"/>
+  <path d="M32 20v28" stroke="#2e7cf6" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M23 26h5M23 31h5M36 26h5M36 31h5" stroke="#9dc2fb" stroke-width="2" stroke-linecap="round"/>
+</svg>

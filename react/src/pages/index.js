@@ -1,9 +1,9 @@
 import React from 'react';
-import clsx from 'clsx';
-import Link from '@docusaurus/Link';
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
+import SiteHero from '@site/src/components/site/SiteHero';
+import FeatureCardGrid from '@site/src/components/site/FeatureCardGrid';
+import { useDocusaurusContext } from '@docusaurus/useDocusaurusContext';
 
 const outlines = [
   {
@@ -58,7 +58,7 @@ const readingOrder = [
   { step: '5', label: '懂原理', text: '《源码复刻大纲》可随时穿插，复刻完回头看前五份会更透。' },
 ];
 
-const tagColor = {
+const tagAccent = {
   打基础: 'primary',
   上难度: 'purple',
   扩视野: 'cyan',
@@ -67,44 +67,16 @@ const tagColor = {
   做项目: 'rose',
 };
 
-function OutlineCard({ outline }) {
-  return (
-    <Link
-      className={`outline-card outline-card--${tagColor[outline.tag] ?? 'primary'}`}
-      to={`/docs/${outline.dir}`}
-    >
-      <div className="outline-card__tag">{outline.tag}</div>
-      <Heading as="h3" className="outline-card__title">
-        {outline.title}
-      </Heading>
-      <p className="outline-card__desc">{outline.desc}</p>
-      <div className="outline-card__path">{outline.dir}/</div>
-    </Link>
-  );
-}
-
 export default function Home() {
   const { siteConfig } = useDocusaurusContext();
   return (
     <Layout title="首页" description={siteConfig.tagline}>
-      <header className="hero hero--primary hero--landing">
-        <div className="container">
-          <Heading as="h1" className="hero__title">
-            {siteConfig.title}
-          </Heading>
-          <p className="hero__subtitle">{siteConfig.tagline}</p>
-          <div className="hero__buttons">
-            <Link className="button button--secondary button--lg" to="/docs/react-学习大纲">
-              从基础开始 →
-            </Link>
-            <Link className="button button--outline button--lg hero__button-ghost" to="/docs/react-高阶场景全景图">
-              浏览场景全景图
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHero
+        primary={{ to: '/docs/react-学习大纲', label: '从基础开始 →' }}
+        secondary={{ to: '/docs/react-高阶场景全景图', label: '浏览场景全景图' }}
+      />
       <main>
-        <section className="container section-reading-order">
+        <section className="container home-section">
           <Heading as="h2">建议阅读顺序</Heading>
           <ol className="reading-order">
             {readingOrder.map((item) => (
@@ -116,13 +88,18 @@ export default function Home() {
             ))}
           </ol>
         </section>
-        <section className="container section-outlines">
+        <section className="container home-section--last">
           <Heading as="h2">七份大纲</Heading>
-          <div className="outline-grid">
-            {outlines.map((outline) => (
-              <OutlineCard key={outline.dir} outline={outline} />
-            ))}
-          </div>
+          <FeatureCardGrid
+            cards={outlines.map((outline) => ({
+              title: outline.title,
+              desc: outline.desc,
+              tag: outline.tag,
+              accent: tagAccent[outline.tag] ?? 'primary',
+              to: `/docs/${outline.dir}`,
+              path: `${outline.dir}/`,
+            }))}
+          />
         </section>
       </main>
     </Layout>

@@ -351,7 +351,7 @@ sequenceDiagram
     U->>O: 1. 用户支付 → pay()
     Note over O: 状态 CREATED→PAID，<br/>登记 OrderPaid 事件<br/>[事务一：只改订单聚合]
     O->>BUS: 2. 事务提交后，<br/>OrderPaid 交给事件总线
-    Note over O,BUS: 生产环境用本地消息表/Outbox 保证<br/>"库提交了，消息一定在"，见章节 3
+    Note over O,BUS: 生产环境用本地消息表/Outbox 保证<br/>"库提交了，消息一定在"，见第三阶段
     BUS->>D: 3. 押金上下文订阅 OrderPaid<br/>→ activateOnOrderPaid()
     Note over D: 状态 PENDING_PAYMENT→ACTIVE<br/>[事务二：只改押金聚合]
     Note over D: 4. 押金聚合整体保存
@@ -776,7 +776,7 @@ fun main() {
 
 收尾提醒：五步可以与日常迭代并行——第 2、3 步本来就是讨论与模块化，第 4 步的押金改造可以按“新需求顺带重构”推进：接到押金相关需求，就按 DDD 写这一块，绞杀者式渐进（见[微服务架构](../02-第二阶段/03-微服务架构.md)）。DDD 落地的真正验收标准从来不是“用了几个模式”，而是半年后回答三个问题：业务词汇和代码词汇还对得上吗？改押金规则是不是只动一个模块？新人能不能一周读懂押金上下文？
 
-## 本节自测
+## 【本节自测】
 
 1. 限界上下文和微服务的区别是什么？把桶装水的 8 个上下文部署成一个单体，算错吗？
 2. 为什么押金单只能存 `userId`/`orderId` 而不能持有 User/Order 对象？从一致性与吞吐两方面回答。

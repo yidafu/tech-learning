@@ -1,3 +1,9 @@
+/* ============================================================
+ * tech-learning 站群统一主题（唯一源头：shared/theme/custom.css）
+ * 由 shared/sync-theme.mjs 同步到各站 src/css/custom.css，勿手改各站副本。
+ * 基准：react 站定制 + landing 蓝（#2e7cf6），五站观感一致。
+ * ============================================================ */
+
 :root {
   --ifm-color-primary: #2e7cf6;
   --ifm-color-primary-dark: #1e6de9;
@@ -17,7 +23,7 @@ html[data-theme='dark'] {
   background-color: #1b1b1d;
 }
 
-/* ============ 首页 ============ */
+/* ============ 首页（站群统一模板） ============ */
 
 .hero--landing {
   padding: 4.5rem 0 4rem;
@@ -48,15 +54,16 @@ html[data-theme='dark'] {
   background: rgba(255, 255, 255, 0.1);
 }
 
-.section-reading-order {
-  padding: 3rem 0 1rem;
+/* 首页主内容区 section（首段 / 末段留白不同） */
+.home-section {
+  padding: 3rem 0 1.5rem;
 }
 
-.section-outlines {
-  padding: 1rem 0 4rem;
+.home-section--last {
+  padding: 1.5rem 0 4rem;
 }
 
-/* 阅读顺序：步骤行 */
+/* 阅读顺序：步骤行（可选区块） */
 .reading-order {
   list-style: none;
   padding: 0;
@@ -100,15 +107,19 @@ html[data-theme='dark'] {
   color: var(--ifm-color-emphasis-800);
 }
 
-/* 大纲卡片网格 */
-.outline-grid {
+html[data-theme='dark'] .reading-order__label {
+  color: var(--ifm-color-primary-light);
+}
+
+/* 卡片网格 */
+.card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
   gap: 1.25rem;
   margin-top: 1.75rem;
 }
 
-.outline-card {
+.feature-card {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -123,7 +134,7 @@ html[data-theme='dark'] {
   overflow: hidden;
 }
 
-.outline-card::before {
+.feature-card::before {
   content: "";
   position: absolute;
   inset: 0 0 auto 0;
@@ -133,18 +144,18 @@ html[data-theme='dark'] {
   transition: opacity 0.2s ease;
 }
 
-.outline-card:hover {
+.feature-card:hover {
   text-decoration: none;
   border-color: var(--card-accent, var(--ifm-color-primary));
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
   transform: translateY(-3px);
 }
 
-.outline-card:hover::before {
+.feature-card:hover::before {
   opacity: 1;
 }
 
-.outline-card__tag {
+.feature-card__tag {
   align-self: flex-start;
   font-size: 0.75rem;
   font-weight: 600;
@@ -155,22 +166,22 @@ html[data-theme='dark'] {
   border: 1px solid color-mix(in srgb, var(--card-accent, var(--ifm-color-primary)) 45%, transparent);
 }
 
-.outline-card__title {
+.feature-card__title {
   margin: 0.2rem 0 0;
 }
 
-.outline-card:hover .outline-card__title {
+.feature-card:hover .feature-card__title {
   color: var(--card-accent, var(--ifm-color-primary));
 }
 
-.outline-card__desc {
+.feature-card__desc {
   margin: 0;
   color: var(--ifm-color-emphasis-700);
   font-size: 0.925rem;
   line-height: 1.55;
 }
 
-.outline-card__path {
+.feature-card__path {
   margin-top: auto;
   padding-top: 0.7rem;
   font-family: var(--ifm-font-family-monospace);
@@ -179,27 +190,23 @@ html[data-theme='dark'] {
 }
 
 /* 分类配色（卡片 ::before / 标签 / 悬停统一取 --card-accent） */
-.outline-card--primary { --card-accent: #2e7cf6; }
-.outline-card--purple { --card-accent: #8b5cf6; }
-.outline-card--cyan { --card-accent: #0ea5e9; }
-.outline-card--orange { --card-accent: #f59e0b; }
-.outline-card--green { --card-accent: #10b981; }
-.outline-card--rose { --card-accent: #f43f5e; }
+.feature-card--primary { --card-accent: #2e7cf6; }
+.feature-card--purple { --card-accent: #8b5cf6; }
+.feature-card--cyan { --card-accent: #0ea5e9; }
+.feature-card--orange { --card-accent: #f59e0b; }
+.feature-card--green { --card-accent: #10b981; }
+.feature-card--rose { --card-accent: #f43f5e; }
 
-html[data-theme='dark'] .outline-card {
+html[data-theme='dark'] .feature-card {
   border-color: var(--ifm-color-emphasis-200);
   box-shadow: none;
 }
 
-html[data-theme='dark'] .outline-card:hover {
+html[data-theme='dark'] .feature-card:hover {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
 }
 
-html[data-theme='dark'] .reading-order__label {
-  color: var(--ifm-color-primary-light);
-}
-
-/* ============ MDX 组件：Callout ============ */
+/* ============ MDX 组件：Callout（react 站 MDX 文档使用） ============ */
 
 .callout {
   --callout-accent: var(--ifm-color-info);
@@ -226,7 +233,7 @@ html[data-theme='dark'] .reading-order__label {
 .callout--warning { --callout-accent: var(--ifm-color-warning); }
 .callout--danger { --callout-accent: var(--ifm-color-danger); }
 
-/* ============ 文档正文排版（150+ 章节的主要阅读面） ============ */
+/* ============ 文档正文排版 ============ */
 
 /* 标题：层级间距 + h2 分隔线 */
 .markdown h2 {

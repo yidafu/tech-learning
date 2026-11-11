@@ -4,7 +4,7 @@
 // 为何不用跨项目手册 DOCUSAURUS-SETUP.md §4.3 推荐的 docusaurus-graph（2.0.0 源码核查结论）：
 // ① 边只认 frontmatter 的 references/sources——得给全部笔记注入与正文链接重复的派生元数据，
 //    违背“笔记零改动、站点只做挂载与渲染”，也会与并行会话改笔记相互覆盖；
-// ② 节点 id 取文件 basename——章节1、章节2 两份 99-自测答案与点评 会被合并成一个节点；
+// ② 节点 id 取文件 basename——第一阶段、第二阶段两份 99-自测答案与点评 会被合并成一个节点；
 // ③ 往每页 <head> 同步插入三个 jsdelivr 脚本（其中 note-graph@latest 为浮动版本），CDN 一慢全站阻塞；
 // ④ 节点不可点击、界面为英文。
 // 本插件在 allContentLoaded 阶段直接复用 docs 插件解析好的元数据：permalink 作节点 id（唯一、可跳转），
@@ -66,13 +66,17 @@ export default function linkGraphPlugin(context) {
       const nodes = []
       const links = new Map() // “源→目标”去重：同一页多次链接同一目标只算一条边
       for (const [file, doc] of byPath) {
-        // docs/ 下相对路径的首段作分组（章节1~6 / 示例项目场景 / 软件架构学习大纲），供页面配色；
-        // 枢纽页 = 根目录两份索引（大纲、示例项目场景）+ 各章 01- 导览页，页面上常显标题
+        // docs/ 下相对路径的首段作分组（大纲 / 六个阶段目录 / 示例项目场景），供页面配色；
+        // 剥掉 `NN-` 前缀后的目录名即 URL 首段，作 group 值（第一阶段、示例项目场景…）
         const segments = relative(docsDir, file).split(sep)
-        const group = segments[0].replace(/\.md$/, '')
+        const group = segments[0].replace(/\.md$/, '').replace(/^\d+-/, '')
+        // 枢纽页 = 根目录的大纲 + 各目录的导览页，页面上常显标题：
+        // 六个阶段目录是 01-<主题>.md；示例项目场景目录因 01~14 已是场景编号，导览页用 00-导览.md
+        const isStageDir = /第.阶段$/.test(group)
         const hub =
           segments.length === 1 ||
-          (segments.length === 2 && group.startsWith('章节') && segments[1].startsWith('01-'))
+          (segments.length === 2 &&
+            (segments[1].startsWith('00-') || (isStageDir && segments[1].startsWith('01-'))))
         nodes.push({ id: doc.permalink, title: doc.title, group, hub })
 
         for (const [, raw] of prose(readFileSync(file, 'utf8')).matchAll(LINK_RE)) {
