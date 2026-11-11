@@ -1,7 +1,9 @@
 import React from 'react';
-import Link from '@docusaurus/Link';
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
+import Heading from '@theme/Heading';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import SiteHero from '@site/src/components/site/SiteHero';
+import FeatureCardGrid from '@site/src/components/site/FeatureCardGrid';
 
 const stages = [
   { n: '01', title: '基础', desc: '网络 / 操作系统 / Linux / Python·C 基础加固', to: '/docs/fundamentals' },
@@ -16,44 +18,23 @@ const stages = [
   { n: '10', title: '资源索引', desc: '书单 / 课程 / CTF 平台与工具 / Android 安全资源', to: '/docs/resources' },
 ];
 
-function StageCard({ n, title, desc, to }) {
-  return (
-    <div className="col col--3 margin-bottom--md">
-      <Link to={to} className="card card--variant-default stage-card">
-        <div className="card__header">
-          <span className="badge badge--primary margin-right--sm">{n}</span>
-          <strong>{title}</strong>
-        </div>
-        <div className="card__body">
-          <p>{desc}</p>
-        </div>
-      </Link>
-    </div>
-  );
-}
-
 export default function Home() {
   const { siteConfig } = useDocusaurusContext();
   return (
     <Layout title="首页" description={siteConfig.tagline}>
-      <header className="hero hero--primary">
-        <div className="container">
-          <h1 className="hero__title">{siteConfig.title}</h1>
-          <p className="hero__subtitle">{siteConfig.tagline}</p>
-          <div>
-            <Link className="button button--secondary button--lg margin--sm" to="/docs">
-              从总索引开始 →
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHero primary={{ to: '/docs', label: '从总索引开始 →' }} />
       <main>
-        <section className="container margin-vert--lg">
-          <div className="row">
-            {stages.map((props) => (
-              <StageCard key={props.to} {...props} />
-            ))}
-          </div>
+        <section className="container home-section--last">
+          <Heading as="h2">学习路线</Heading>
+          <FeatureCardGrid
+            cards={stages.map((stage) => ({
+              title: stage.title,
+              desc: stage.desc,
+              tag: stage.n,
+              accent: 'primary',
+              to: stage.to,
+            }))}
+          />
           <div className="alert alert--warning margin-top--lg" role="alert">
             <strong>合规红线：</strong>所有实验仅限本地隔离靶场（VM / Docker / DVWA / WebGoat 等）或明确授权的环境，不触碰真实第三方系统。
           </div>

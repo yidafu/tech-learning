@@ -6,6 +6,7 @@ const sitePlugins = [];
 const config = {
   title: '安全学习笔记',
   tagline: '计算机安全学习工作区 · 防御导向 · 从基础到 CTF 实战',
+  favicon: 'img/favicon.svg',
   // 部署到 GitHub Pages 项目站：https://yidafu.github.io/tech-learning/security/
   url: 'https://yidafu.github.io',
   baseUrl: '/tech-learning/security/',
@@ -13,7 +14,8 @@ const config = {
   // 中文内容站点：默认语言即中文，无需 i18n 目录
   i18n: { defaultLocale: 'zh-Hans', locales: ['zh-Hans'] },
 
-  onBrokenLinks: 'throw',
+  // 站群统一约定：链接失效只告警不阻断（见 shared/README.md）
+  onBrokenLinks: 'warn',
 
   presets: [
     [
@@ -42,6 +44,7 @@ const config = {
   themeConfig: /** @type {import('@docusaurus/preset-classic').ThemeConfig} */ ({
     navbar: {
       title: '安全学习笔记',
+      logo: { alt: 'tech-learning 站群 logo', src: 'img/logo.svg' },
       items: [
         { to: '/', label: '首页', position: 'left' },
         { to: '/docs', label: '总索引', position: 'left' },
@@ -63,11 +66,35 @@ const config = {
             { to: '/docs/resources', label: '资源索引' },
           ],
         },
+        {
+          type: 'dropdown',
+          label: '站群',
+          position: 'right',
+          items: [
+            { label: '站群首页', href: 'https://yidafu.github.io/tech-learning/' },
+            { label: '软件架构学习笔记', href: 'https://yidafu.github.io/tech-learning/architecture/' },
+            { label: 'React 高阶学习课程', href: 'https://yidafu.github.io/tech-learning/react/' },
+            { label: 'JS/TS 深度学习笔记', href: 'https://yidafu.github.io/tech-learning/js-ts/' },
+            { label: '可观测性学习站', href: 'https://yidafu.github.io/tech-learning/observability/' },
+          ],
+        },
       ],
     },
     footer: {
       style: 'dark',
-      copyright: '© 安全学习笔记 · 仅用于本地隔离靶场或明确授权环境的防御性学习',
+      links: [
+        {
+          title: '站群导航',
+          items: [
+            { label: '站群首页', href: 'https://yidafu.github.io/tech-learning/' },
+            { label: '软件架构学习笔记', href: 'https://yidafu.github.io/tech-learning/architecture/' },
+            { label: 'React 高阶学习课程', href: 'https://yidafu.github.io/tech-learning/react/' },
+            { label: 'JS/TS 深度学习笔记', href: 'https://yidafu.github.io/tech-learning/js-ts/' },
+            { label: '可观测性学习站', href: 'https://yidafu.github.io/tech-learning/observability/' },
+          ],
+        },
+      ],
+      copyright: `© ${new Date().getFullYear()} yidafu · 安全学习笔记 · 用 Docusaurus 构建 · 仅用于本地隔离靶场或明确授权环境的防御性学习`,
     },
   }),
 };

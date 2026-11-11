@@ -21,6 +21,7 @@ if (process.env.RSDOCTOR === 'true') {
 const config: Config = {
   title: 'JS/TS 深度学习笔记',
   tagline: '从「会用」到「深度理解」',
+  favicon: 'img/favicon.svg',
 
   // 部署到 GitHub Pages 项目站：https://yidafu.github.io/tech-learning/js-ts/
   url: 'https://yidafu.github.io',
@@ -63,7 +64,7 @@ const config: Config = {
           // 每个子目录成为一个分类；文件名数字前缀（00-、01-…）只决定排序，
           // 不进入 doc id / URL（Docusaurus 自动剥离）。
           // 各阶段分类在此统一改中文标签，并挂一个该阶段的目录索引页；
-          // 最外层再包一层「全部笔记」，其索引页用 slug: '/' 作为站点首页。
+          // 最外层再包一层「全部笔记」（站点首页由 src/pages/index.js 提供）。
           // 新增笔记放进对应阶段子目录即自动出现。
           sidebarItemsGenerator: async ({
             defaultSidebarItemsGenerator,
@@ -135,9 +136,10 @@ const config: Config = {
                 label: '全部笔记',
                 collapsible: false,
                 items: stageCategories,
+                // 站点首页由 src/pages/index.js 提供（站群统一模板），
+                // 这里不再用 slug: '/' 抢占根路由
                 link: {
                   type: 'generated-index',
-                  slug: '/',
                   title: 'JS/TS 深度学习笔记',
                 },
               },
@@ -146,22 +148,54 @@ const config: Config = {
         },
         // 不需要博客
         blog: false,
+        // 站群统一主题（源头 shared/theme/custom.css，由 sync-theme.mjs 同步）
+        theme: { customCss: './src/css/custom.css' },
       } satisfies Preset.Options,
     ],
   ] as Config['presets'],
 
   themeConfig: {
     navbar: {
-      title: 'JS/TS 学习笔记',
+      title: 'JS/TS 深度学习笔记',
+      logo: { alt: 'tech-learning 站群 logo', src: 'img/logo.svg' },
       items: [
-        { to: '/live-playground', label: ' Playground', position: 'right' },
+        { to: '/', label: '首页', position: 'left' },
+        { to: '/live-playground', label: 'Playground', position: 'left' },
+        {
+          type: 'dropdown',
+          label: '站群',
+          position: 'right',
+          items: [
+            { label: '站群首页', href: 'https://yidafu.github.io/tech-learning/' },
+            { label: '软件架构学习笔记', href: 'https://yidafu.github.io/tech-learning/architecture/' },
+            { label: 'React 高阶学习课程', href: 'https://yidafu.github.io/tech-learning/react/' },
+            { label: '可观测性学习站', href: 'https://yidafu.github.io/tech-learning/observability/' },
+            { label: '安全学习笔记', href: 'https://yidafu.github.io/tech-learning/security/' },
+          ],
+        },
       ],
+    },
+    footer: {
+      style: 'dark',
+      links: [
+        {
+          title: '站群导航',
+          items: [
+            { label: '站群首页', href: 'https://yidafu.github.io/tech-learning/' },
+            { label: '软件架构学习笔记', href: 'https://yidafu.github.io/tech-learning/architecture/' },
+            { label: 'React 高阶学习课程', href: 'https://yidafu.github.io/tech-learning/react/' },
+            { label: '可观测性学习站', href: 'https://yidafu.github.io/tech-learning/observability/' },
+            { label: '安全学习笔记', href: 'https://yidafu.github.io/tech-learning/security/' },
+          ],
+        },
+      ],
+      copyright: `© ${new Date().getFullYear()} yidafu · JS/TS 深度学习笔记 · 用 Docusaurus 构建`,
     },
     prism: {
       // 代码块高亮补充 TypeScript 语言
       additionalLanguages: ['typescript'],
     },
-  } satisfies Preset.ThemeConfig,
+  } satisfies Config.ThemeConfig,
 };
 
 export default config;

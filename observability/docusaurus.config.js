@@ -6,6 +6,7 @@ const sitePlugins = [];
 const config = {
   title: '可观测性学习站',
   tagline: 'Metrics · Logging · Tracing —— 面向开发者的可观测性系统学习笔记与动手实验',
+  favicon: 'img/favicon.svg',
   // 部署到 GitHub Pages 项目站：https://yidafu.github.io/tech-learning/observability/
   url: 'https://yidafu.github.io',
   baseUrl: '/tech-learning/observability/',
@@ -13,7 +14,8 @@ const config = {
   // 中文内容站点：默认语言即中文，无需 i18n 目录
   i18n: { defaultLocale: 'zh-Hans', locales: ['zh-Hans'] },
 
-  onBrokenLinks: 'throw',
+  // 站群统一约定：链接失效只告警不阻断（见 shared/README.md）
+  onBrokenLinks: 'warn',
 
   presets: [
     [
@@ -43,6 +45,7 @@ const config = {
   themeConfig: /** @type {import('@docusaurus/preset-classic').ThemeConfig} */ ({
     navbar: {
       title: '可观测性学习站',
+      logo: { alt: 'tech-learning 站群 logo', src: 'img/logo.svg' },
       items: [
         { to: '/', label: '首页', position: 'left' },
         {
@@ -73,11 +76,35 @@ const config = {
             { to: '/docs/labs/lab05-sampling-and-profiling', label: 'lab05 · 采样与剖析' },
           ],
         },
+        {
+          type: 'dropdown',
+          label: '站群',
+          position: 'right',
+          items: [
+            { label: '站群首页', href: 'https://yidafu.github.io/tech-learning/' },
+            { label: '软件架构学习笔记', href: 'https://yidafu.github.io/tech-learning/architecture/' },
+            { label: 'React 高阶学习课程', href: 'https://yidafu.github.io/tech-learning/react/' },
+            { label: 'JS/TS 深度学习笔记', href: 'https://yidafu.github.io/tech-learning/js-ts/' },
+            { label: '安全学习笔记', href: 'https://yidafu.github.io/tech-learning/security/' },
+          ],
+        },
       ],
     },
     footer: {
       style: 'dark',
-      copyright: `© ${new Date().getFullYear()} 可观测性学习工作区 · 用 Docusaurus 构建`,
+      links: [
+        {
+          title: '站群导航',
+          items: [
+            { label: '站群首页', href: 'https://yidafu.github.io/tech-learning/' },
+            { label: '软件架构学习笔记', href: 'https://yidafu.github.io/tech-learning/architecture/' },
+            { label: 'React 高阶学习课程', href: 'https://yidafu.github.io/tech-learning/react/' },
+            { label: 'JS/TS 深度学习笔记', href: 'https://yidafu.github.io/tech-learning/js-ts/' },
+            { label: '安全学习笔记', href: 'https://yidafu.github.io/tech-learning/security/' },
+          ],
+        },
+      ],
+      copyright: `© ${new Date().getFullYear()} yidafu · 可观测性学习站 · 用 Docusaurus 构建`,
     },
   }),
 };

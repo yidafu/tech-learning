@@ -3,7 +3,7 @@ import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
 import SiteHero from '@site/src/components/site/SiteHero';
 import FeatureCardGrid from '@site/src/components/site/FeatureCardGrid';
-import { useDocusaurusContext } from '@docusaurus/useDocusaurusContext';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 
 const outlines = [
   {
