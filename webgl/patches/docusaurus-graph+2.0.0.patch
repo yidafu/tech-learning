@@ -1,0 +1,24 @@
+diff --git a/node_modules/docusaurus-graph/src/index.ts b/node_modules/docusaurus-graph/src/index.ts
+index d59fe8c..5826922 100644
+--- a/node_modules/docusaurus-graph/src/index.ts
++++ b/node_modules/docusaurus-graph/src/index.ts
+@@ -57,10 +57,15 @@ export default async function docusaurusGraph(context: any, options: any) {
+ 						tagName: "div",
+ 						innerHTML: templates.containerGraph,
+ 					},
+-					{
+-						tagName: "script",
+-						innerHTML: templates.scriptGraph,
+-					},
++				{
++					tagName: "script",
++					// patched (patch-package): 注入的脚本原样写死 fetch('/docusaurus-graph.json')，
++					// 部署到子路径（baseUrl 非 /）时 404；构建时用 context.baseUrl 替换为绝对全路径。
++					innerHTML: templates.scriptGraph.replaceAll(
++						"'/docusaurus-graph.json'",
++						`'${context.baseUrl}docusaurus-graph.json'`,
++					),
++				},
+ 				],
+ 			};
+ 		},

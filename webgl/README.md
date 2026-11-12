@@ -1,0 +1,42 @@
+# WebGL 与 3D 框架学习站（文档站）
+
+从零掌握 WebGL 渲染原理，最终自研一个迷你 3D 框架（数学库 + 场景图 + 渲染器 + 材质/资源系统）的六阶段学习笔记，终点是 Three.js 源码对标与毕业项目。使用 **Docusaurus 3** 构建。
+
+## 本地运行
+
+```bash
+npm install    # 首次安装依赖
+npm run dev    # 开发模式，http://localhost:3006
+npm run build  # 构建静态站点到 build/
+npm run serve  # 本地预览构建产物
+```
+
+## 目录结构
+
+| 路径 | 说明 |
+|------|------|
+| `docusaurus.config.js` | 站点配置（标题 / 六阶段导航 / 站群互链） |
+| `sidebars.js` | 侧边栏顶层显式声明（大纲 → 六阶段），阶段内部按目录自动生成 |
+| `docs/` | 学习大纲 + 六个阶段（每阶段 `01-导览.md` 为入口，笔记保持无 frontmatter） |
+| `src/pages/index.js` | 站群统一模板首页（阅读顺序 + 阶段卡片） |
+| `src/css/custom.css`、`src/components/site/`、`static/img/` | 站群统一主题（由 `shared/sync-theme.mjs` 同步，勿手改） |
+
+## 六个阶段
+
+| # | 阶段 | 定位 | 站内路径 |
+|---|------|------|----------|
+| 1 | 渲染管线与 WebGL 入门 | 管线全局观、GLSL、图形学数学 | [/docs/第一阶段/导览](/docs/第一阶段/导览) |
+| 2 | WebGL 核心渲染技术 | 纹理、光照、FBO、WebGL2 | [/docs/第二阶段/导览](/docs/第二阶段/导览) |
+| 3 | 自研数学库与引擎雏形 | minmath、引擎最小核心 | [/docs/第三阶段/导览](/docs/第三阶段/导览) |
+| 4 | 框架架构与工程化 | 场景图、材质系统、发布 npm（重点） | [/docs/第四阶段/导览](/docs/第四阶段/导览) |
+| 5 | 进阶渲染与性能 | 阴影、后处理、PBR、性能优化 | [/docs/第五阶段/导览](/docs/第五阶段/导览) |
+| 6 | 源码对标与毕业项目 | Three.js 源码、毕业项目 | [/docs/第六阶段/导览](/docs/第六阶段/导览) |
+| 附 | 数学专题 | 线性代数、频域、蒙特卡洛等补充 | [/docs/数学专题/线性代数深化](/docs/数学专题/线性代数深化) |
+
+学习大纲（含逐条勾选的进度清单）：[docs/WebGL与3D框架学习大纲.md](docs/WebGL与3D框架学习大纲.md)。
+
+## 约定
+
+- 笔记为纯 Markdown（`.md`）、无 frontmatter，架构图 / 流程图优先使用 ` ```mermaid ` 代码块。
+- 文件名 `NN-` 数字前缀决定侧边栏顺序，URL 中由 Docusaurus 自动剥离。
+- 站群统一主题改动请编辑 `shared/theme/` 后运行 `node shared/sync-theme.mjs`，不要直接改本站的主题产物。

@@ -1,0 +1,43 @@
+diff --git a/node_modules/docusaurus-graph/src/index.ts b/node_modules/docusaurus-graph/src/index.ts
+index d59fe8c..5826922 100644
+--- a/node_modules/docusaurus-graph/src/index.ts
++++ b/node_modules/docusaurus-graph/src/index.ts
+@@ -57,10 +57,15 @@ export default async function docusaurusGraph(context: any, options: any) {
+ 						tagName: "div",
+ 						innerHTML: templates.containerGraph,
+ 					},
+-					{
+-						tagName: "script",
+-						innerHTML: templates.scriptGraph,
+-					},
++				{
++					tagName: "script",
++					// patched (patch-package): 注入的脚本原样写死 fetch('/docusaurus-graph.json')，
++					// 部署到子路径（baseUrl 非 /）时 404；构建时用 context.baseUrl 替换为绝对全路径。
++					innerHTML: templates.scriptGraph.replaceAll(
++						"'/docusaurus-graph.json'",
++						`'${context.baseUrl}docusaurus-graph.json'`,
++					),
++				},
+ 				],
+ 			};
+ 		},
+diff --git a/node_modules/docusaurus-graph/src/theme/mdUtils.ts b/node_modules/docusaurus-graph/src/theme/mdUtils.ts
+index 74fa8cd..da60607 100644
+--- a/node_modules/docusaurus-graph/src/theme/mdUtils.ts
++++ b/node_modules/docusaurus-graph/src/theme/mdUtils.ts
+@@ -59,7 +59,13 @@ export function readMarkdownFiles(
+ 			} else if (isMdOrMdxFile(itemPath)) {
+ 				const fileContent = fs.readFileSync(itemPath, "utf-8");
+ 				const { data } = matter(fileContent);
+-				const id = extractTitleFromPath(itemPath);
++				// patched (patch-package): README/index 基名会让多目录索引页塌成同一个节点
++				// （上游 getNode 命中只覆盖 title、丢弃 linkTo），改用父目录名作为 id。
++				const baseId = extractTitleFromPath(itemPath);
++				const id =
++					baseId === "README" || baseId === "index"
++						? path.basename(path.dirname(itemPath))
++						: baseId;
+ 				const title = (extractTitleFromMarkdown(fileContent) as string) ?? id;
+ 
+ 				if (typeof data[referenceTag] === "string")

@@ -1,0 +1,423 @@
+[
+  {
+    "id": "01-Bridge本质与消息队列",
+    "title": "Bridge 本质与消息队列",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-Bridge通信原理"
+    ]
+  },
+  {
+    "id": "02-NativeModules调用链",
+    "title": "Native Modules 调用链",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-Bridge通信原理"
+    ]
+  },
+  {
+    "id": "03-Bridge瓶颈量化",
+    "title": "Bridge 瓶颈量化",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-Bridge通信原理"
+    ]
+  },
+  {
+    "id": "04-跨语言通信的通用设计",
+    "title": "跨语言通信的通用设计",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-Bridge通信原理"
+    ]
+  },
+  {
+    "id": "rn-Bridge通信原理",
+    "title": "模块四 · Bridge 通信原理（旧架构）",
+    "linkTo": [
+      "01-Bridge本质与消息队列",
+      "02-NativeModules调用链",
+      "03-Bridge瓶颈量化",
+      "04-跨语言通信的通用设计"
+    ],
+    "referencedBy": []
+  },
+  {
+    "id": "01-JS引擎对比与Hermes原理",
+    "title": "JS 引擎对比与 Hermes 原理",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-JS引擎与线程模型"
+    ]
+  },
+  {
+    "id": "02-四线程模型",
+    "title": "四线程模型",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-JS引擎与线程模型"
+    ]
+  },
+  {
+    "id": "03-Hermes深潜：字节码与GC",
+    "title": "Hermes 深潜：字节码与 GC",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-JS引擎与线程模型"
+    ]
+  },
+  {
+    "id": "04-同步与异步的边界",
+    "title": "同步与异步的边界",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-JS引擎与线程模型"
+    ]
+  },
+  {
+    "id": "rn-JS引擎与线程模型",
+    "title": "模块三 · JS 引擎与线程模型",
+    "linkTo": [
+      "01-JS引擎对比与Hermes原理",
+      "02-四线程模型",
+      "03-Hermes深潜：字节码与GC",
+      "04-同步与异步的边界"
+    ],
+    "referencedBy": []
+  },
+  {
+    "id": "01-Metro三阶段与Bundle结构",
+    "title": "Metro 三阶段与 Bundle 结构",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-Metro打包与热更新"
+    ]
+  },
+  {
+    "id": "02-热更新原理",
+    "title": "热更新原理（CodePush / expo-updates）",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-Metro打包与热更新"
+    ]
+  },
+  {
+    "id": "03-Metro配置与工程化",
+    "title": "Metro 配置与工程化",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-Metro打包与热更新"
+    ]
+  },
+  {
+    "id": "rn-Metro打包与热更新",
+    "title": "模块八 · Metro 打包与热更新",
+    "linkTo": [
+      "01-Metro三阶段与Bundle结构",
+      "02-热更新原理",
+      "03-Metro配置与工程化"
+    ],
+    "referencedBy": []
+  },
+  {
+    "id": "01-触摸事件链路与手势仲裁",
+    "title": "触摸事件链路与手势仲裁",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-事件系统原理"
+    ]
+  },
+  {
+    "id": "02-GestureHandler原理化",
+    "title": "Gesture Handler 原理化",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-事件系统原理"
+    ]
+  },
+  {
+    "id": "03-滚动与列表事件",
+    "title": "滚动与列表事件",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-事件系统原理"
+    ]
+  },
+  {
+    "id": "rn-事件系统原理",
+    "title": "模块六 · 事件系统原理",
+    "linkTo": [
+      "01-触摸事件链路与手势仲裁",
+      "02-GestureHandler原理化",
+      "03-滚动与列表事件"
+    ],
+    "referencedBy": []
+  },
+  {
+    "id": "01-RN全景与技术本质",
+    "title": "RN 全景与技术本质",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-全景与演进"
+    ]
+  },
+  {
+    "id": "02-从View到像素的旅程",
+    "title": "从 View 到像素的旅程",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-全景与演进"
+    ]
+  },
+  {
+    "id": "03-版本演进时间线",
+    "title": "版本演进时间线",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-全景与演进"
+    ]
+  },
+  {
+    "id": "04-RN生态与选型建议",
+    "title": "RN 生态与选型建议",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-全景与演进"
+    ]
+  },
+  {
+    "id": "rn-全景与演进",
+    "title": "模块一 · 全景与演进",
+    "linkTo": [
+      "01-RN全景与技术本质",
+      "02-从View到像素的旅程",
+      "03-版本演进时间线",
+      "04-RN生态与选型建议"
+    ],
+    "referencedBy": []
+  },
+  {
+    "id": "01-mini-react-native总览",
+    "title": "mini-react-native 总览",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-原理实战"
+    ]
+  },
+  {
+    "id": "02-自定义TurboModule全流程",
+    "title": "自定义 TurboModule 全流程",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-原理实战"
+    ]
+  },
+  {
+    "id": "03-Fabric原生组件开发",
+    "title": "Fabric 原生组件开发",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-原理实战"
+    ]
+  },
+  {
+    "id": "04-调试工具链原理",
+    "title": "调试工具链原理",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-原理实战"
+    ]
+  },
+  {
+    "id": "rn-原理实战",
+    "title": "模块十 · 原理实战",
+    "linkTo": [
+      "01-mini-react-native总览",
+      "02-自定义TurboModule全流程",
+      "03-Fabric原生组件开发",
+      "04-调试工具链原理"
+    ],
+    "referencedBy": []
+  },
+  {
+    "id": "01-Android启动链路",
+    "title": "Android 启动链路",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-启动流程原理"
+    ]
+  },
+  {
+    "id": "02-iOS启动链路与runApplication",
+    "title": "iOS 启动链路与 runApplication",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-启动流程原理"
+    ]
+  },
+  {
+    "id": "03-Bundle加载策略",
+    "title": "Bundle 加载策略",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-启动流程原理"
+    ]
+  },
+  {
+    "id": "04-启动优化原理",
+    "title": "启动优化原理",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-启动流程原理"
+    ]
+  },
+  {
+    "id": "rn-启动流程原理",
+    "title": "模块二 · 启动流程原理",
+    "linkTo": [
+      "01-Android启动链路",
+      "02-iOS启动链路与runApplication",
+      "03-Bundle加载策略",
+      "04-启动优化原理"
+    ],
+    "referencedBy": []
+  },
+  {
+    "id": "01-性能定位方法论",
+    "title": "性能定位方法论",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-性能优化原理"
+    ]
+  },
+  {
+    "id": "02-列表虚拟化原理",
+    "title": "列表虚拟化原理",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-性能优化原理"
+    ]
+  },
+  {
+    "id": "03-渲染与状态优化",
+    "title": "渲染与状态优化",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-性能优化原理"
+    ]
+  },
+  {
+    "id": "04-内存与稳定性",
+    "title": "内存与稳定性",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-性能优化原理"
+    ]
+  },
+  {
+    "id": "rn-性能优化原理",
+    "title": "模块九 · 性能优化原理",
+    "linkTo": [
+      "01-性能定位方法论",
+      "02-列表虚拟化原理",
+      "03-渲染与状态优化",
+      "04-内存与稳定性"
+    ],
+    "referencedBy": []
+  },
+  {
+    "id": "01-JSI原理",
+    "title": "JSI 原理",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-新架构"
+    ]
+  },
+  {
+    "id": "02-Fabric渲染管线",
+    "title": "Fabric 渲染管线",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-新架构"
+    ]
+  },
+  {
+    "id": "03-TurboModules",
+    "title": "TurboModules",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-新架构"
+    ]
+  },
+  {
+    "id": "04-Codegen",
+    "title": "Codegen",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-新架构"
+    ]
+  },
+  {
+    "id": "05-新旧架构对比与迁移",
+    "title": "新旧架构对比与迁移",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-新架构"
+    ]
+  },
+  {
+    "id": "rn-新架构",
+    "title": "模块七 · 新架构（JSI / Fabric / TurboModules）",
+    "linkTo": [
+      "01-JSI原理",
+      "02-Fabric渲染管线",
+      "03-TurboModules",
+      "04-Codegen",
+      "05-新旧架构对比与迁移"
+    ],
+    "referencedBy": []
+  },
+  {
+    "id": "01-三棵树与Reconciler",
+    "title": "三棵树与 Reconciler",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-渲染原理"
+    ]
+  },
+  {
+    "id": "02-Yoga布局引擎",
+    "title": "Yoga 布局引擎",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-渲染原理"
+    ]
+  },
+  {
+    "id": "03-视图提交与批量挂载",
+    "title": "视图提交与批量挂载",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-渲染原理"
+    ]
+  },
+  {
+    "id": "04-样式DPI与平台适配",
+    "title": "样式、DPI 与平台适配",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-渲染原理"
+    ]
+  },
+  {
+    "id": "rn-渲染原理",
+    "title": "模块五 · 渲染原理",
+    "linkTo": [
+      "01-三棵树与Reconciler",
+      "02-Yoga布局引擎",
+      "03-视图提交与批量挂载",
+      "04-样式DPI与平台适配"
+    ],
+    "referencedBy": []
+  }
+]
