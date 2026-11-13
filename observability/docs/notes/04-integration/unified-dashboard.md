@@ -313,6 +313,8 @@ lab04 的做法即生产做法：
 排障结束不是终点，**postmortem（事后复盘）是把这次 MTTR 投资变成下次
 MTTR 缩短**的复利机制。
 
+## 7. postmortem 文化要点
+
 ### 7.1 好的 postmortem 长什么样
 
 ```markdown

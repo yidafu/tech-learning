@@ -28,8 +28,8 @@
 
 ## 动手实验
 
-暂无专属 lab（规划中：lab06 实现一个 mini 可观测平台后端——OTLP 接收 + 内存/SQLite 存储 + 查询 API + 简易页面，对应 [sdk-design-server](sdk-design-server.md) 第 9 节的骨架）。
-在此之前的最佳实践：把阶段 4 的 [lab04-three-pillars](../../labs/lab04-three-pillars/README.md) 当作"迷你平台"逐层拆解对照本系列笔记。
+专属 lab：[lab06-mini-platform](../../labs/lab06-mini-platform/README.md)——零依赖 Node.js 实现"OTLP/JSON 接收 + 内存/SQLite 存储 + 查询 API + 瀑布图页面"的 mini 可观测平台后端，对应 [sdk-design-server](sdk-design-server.md) 第 9 节的骨架；demo 应用使用 [llm-observability](../07-topics/llm-observability.md) §3.3 的手写埋点（含 gen_ai span）。
+另一个好练习：把阶段 4 的 [lab04-three-pillars](../../labs/lab04-three-pillars/README.md) 当作"迷你平台"逐层拆解对照本系列笔记。
 
 ## 与其他阶段的关系
 

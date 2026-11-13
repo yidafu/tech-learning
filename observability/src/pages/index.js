@@ -53,7 +53,7 @@ const phases = [
     title: '系统设计（收官）',
     desc: '从零设计一个可观测系统：总体架构与容量、SDK 设计、接入管道、存储后端、查询与告警',
     to: '/docs/notes/system-design',
-    lab: 'lab06 规划中',
+    lab: 'lab06 · mini 可观测平台',
   },
 ];
 
