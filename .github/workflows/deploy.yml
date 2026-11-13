@@ -1,5 +1,5 @@
 # 单 GitHub Pages 多站点部署：
-# 7 个 Docusaurus 站各自构建（baseUrl = /tech-learning/<站名>/），
+# 8 个 Docusaurus 站各自构建（baseUrl = /tech-learning/<站名>/），
 # 合并到一个 Pages 工件——落地页在根，各站挂 <站名>/ 子路径。
 name: Deploy to GitHub Pages
 
@@ -31,6 +31,7 @@ jobs:
           - { name: observability, dir: observability }
           - { name: js-ts, dir: js-ts/docs-site }
           - { name: webgl, dir: webgl }
+          - { name: compiler, dir: compiler }
     steps:
       - uses: actions/checkout@v4
 
@@ -78,6 +79,7 @@ jobs:
           mv artifacts/site-observability site/observability
           mv artifacts/site-js-ts         site/js-ts
           mv artifacts/site-webgl         site/webgl
+          mv artifacts/site-compiler      site/compiler
 
       - uses: actions/upload-pages-artifact@v3
         with:
