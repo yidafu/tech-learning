@@ -118,7 +118,7 @@ diff low.php impossible.php
 | **Brute Force** | 爆破无防护 vs 有 token/限速的攻击成本差异 | 《16-认证与会话管理》 |
 | **Command Injection** | 管道/分号拼接命令，Medium 黑名单为何形同虚设 | 系统安全篇（命令注入主题，编号见 notes/ 目录） |
 | **CSRF** | 跨站请求伪造的构造与 token/同源校验 | 《13-CSRF-与-SSRF》 |
-| **File Inclusion (LFI/RFI)** | 路径拼接包含任意文件、协议包装器 | 文件包含笔记（编号见目录，暂缺时以 OWASP 资料替代） |
+| **File Inclusion (LFI/RFI)** | 路径拼接包含任意文件、协议包装器 | 《48-文件包含-LFI-RFI》 |
 | **File Upload** | 上传校验（MIME/扩展名/内容）各层绕过与最终「重命名+隔离存储」 | 《14-文件上传漏洞》 |
 | **Insecure CAPTCHA** | 验证码只做前端/可重放时形同虚设 | 《16-认证与会话管理》 |
 | **SQL Injection / Blind** | union/报错/布尔盲注/时间盲注，参数化查询对照 | 《11-SQL-注入》 |

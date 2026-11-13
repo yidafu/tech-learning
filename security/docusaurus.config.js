@@ -62,6 +62,7 @@ const config = {
             { to: '/docs/security-engineering', label: '6 · 安全工程' },
             { to: '/docs/ctf', label: '7 · CTF 实战' },
             { to: '/docs/android-security', label: '8 · Android 安全' },
+            { to: '/docs/cloud-native-security', label: '9 · 云原生安全' },
             { to: '/docs/topics', label: '横向专题篇' },
             { to: '/docs/resources', label: '资源索引' },
           ],

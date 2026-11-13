@@ -219,6 +219,8 @@ php://filter/read=convert.base64-encode/resource=flag.php
 | 关键字过滤 `../` | `....//` 双写、url 编码 `%2e%2e%2f` | 视过滤实现 |
 | 都不行 | 伪协议绕过后缀（filter 读源码） | `resource` 不受后缀影响时 |
 
+> 本节是速查版；原理、六条 RCE 升级路径、DVWA 四级源码审计与防御专章见阶段 3 的《48-文件包含-LFI-RFI》。
+
 ### 3.9 disable_functions 绕过与 open_basedir（概念级）
 
 拿到代码执行（如 `eval`）但命令函数被 `disable_functions` 禁掉（system/exec/shell_exec/passthru/popen/proc_open 全禁）时：
