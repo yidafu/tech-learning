@@ -4,7 +4,7 @@
     "title": "公共底座复刻手册",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-复杂场景-项目复刻"
     ]
   },
   {
@@ -12,7 +12,7 @@
     "title": "项目一：Schema 动态表单复刻手册",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-复杂场景-项目复刻"
     ]
   },
   {
@@ -20,7 +20,7 @@
     "title": "项目二：拖拽式表单设计器（Form Builder）复刻手册",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-复杂场景-项目复刻"
     ]
   },
   {
@@ -28,7 +28,7 @@
     "title": "项目三：Grafana 式拖拽仪表盘复刻手册",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-复杂场景-项目复刻"
     ]
   },
   {
@@ -36,7 +36,7 @@
     "title": "项目四：JSON 编辑器复刻手册",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-复杂场景-项目复刻"
     ]
   },
   {
@@ -44,12 +44,12 @@
     "title": "项目五：低代码平台整合复刻手册",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-复杂场景-项目复刻"
     ]
   },
   {
-    "id": "README",
-    "title": "前端高阶场景全景图",
+    "id": "react-复杂场景-项目复刻",
+    "title": "React 复杂业务场景 · 项目复刻手册",
     "linkTo": [
       "00-公共底座-复刻手册",
       "01-项目一-Schema-动态表单-复刻手册",
@@ -65,7 +65,7 @@
     "title": "01-如何使用本大纲",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -73,7 +73,7 @@
     "title": "02-阶段-0-环境与工具-0-5-周",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -81,7 +81,7 @@
     "title": "03-阶段-1-渲染基础-1-周",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -89,7 +89,7 @@
     "title": "04-阶段-2-状态与副作用-核心-2-周",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "title": "05-useEffect-场景",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "title": "06-闭包陷阱专题-必练",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "title": "07-useRef-场景",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -121,7 +121,7 @@
     "title": "08-useMemo-useCallback-memo",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -129,7 +129,7 @@
     "title": "09-自定义-Hook-从模仿到手写",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -137,7 +137,7 @@
     "title": "10-产出-TodoMVC-增删改查-状态过滤-localStorage-持久化-useDebounce",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -145,7 +145,7 @@
     "title": "11-阶段-3-组件设计模式-1-5-周",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -153,7 +153,7 @@
     "title": "12-阶段-4-高频业务场景-实战核心-3-周",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -161,7 +161,7 @@
     "title": "13-4-2-数据请求与服务器状态",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "title": "14-4-3-列表场景",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "title": "15-4-4-路由-React-Router-v6-v7",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "title": "16-4-5-弹层体系",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -193,7 +193,7 @@
     "title": "17-4-6-实时与异步",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -201,7 +201,7 @@
     "title": "18-4-7-其他高频场景",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -209,7 +209,7 @@
     "title": "19-2-拖拽排序-dnd-kit-列表拖拽-多容器移动",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -217,7 +217,7 @@
     "title": "20-3-动画-CSS-transition-状态机-framer-motion-进出场",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -225,7 +225,7 @@
     "title": "21-4-主题切换-CSS-变量-data-theme-持久化",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -233,7 +233,7 @@
     "title": "22-5-国际化-i18n-语言包组织-切换-格式化",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "title": "23-6-权限系统-路由级权限-按钮级权限-权限组件-usePermission",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -249,7 +249,7 @@
     "title": "24-7-错误边界-ErrorBoundary-降级-UI-组件级上报",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "title": "25-8-骨架屏-空态-错误态-加载态的统一设计",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -265,7 +265,7 @@
     "title": "26-9-复制到剪贴板-全屏-通知等浏览器-API-在-React-中的封装",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -273,7 +273,7 @@
     "title": "27-阶段-5-状态管理-1-周",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -281,7 +281,7 @@
     "title": "28-阶段-6-性能优化与调试-1-周",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -289,7 +289,7 @@
     "title": "29-阶段-7-TypeScript-React-1-周",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -297,7 +297,7 @@
     "title": "30-阶段-8-测试与质量-1-周",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -305,7 +305,7 @@
     "title": "31-阶段-9-React-19-与服务端-2-周",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -313,7 +313,7 @@
     "title": "32-阶段-10-进阶原理-可选-面试导向",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -321,7 +321,7 @@
     "title": "33-贯穿全程的项目线",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "title": "34-解决实际编码问题的工作流",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -337,7 +337,7 @@
     "title": "35-核心资源",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -345,7 +345,7 @@
     "title": "36-每周节奏建议",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -353,7 +353,7 @@
     "title": "37-延伸篇-React-与其他框架的对比",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
   },
   {
@@ -361,15 +361,60 @@
     "title": "38-进阶篇-复杂业务场景",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-学习大纲"
     ]
+  },
+  {
+    "id": "react-学习大纲",
+    "title": "React 实战编码学习大纲（场景驱动版）",
+    "linkTo": [
+      "01-如何使用本大纲",
+      "02-阶段-0-环境与工具-0-5-周",
+      "03-阶段-1-渲染基础-1-周",
+      "04-阶段-2-状态与副作用-核心-2-周",
+      "05-useEffect-场景",
+      "06-闭包陷阱专题-必练",
+      "07-useRef-场景",
+      "08-useMemo-useCallback-memo",
+      "09-自定义-Hook-从模仿到手写",
+      "10-产出-TodoMVC-增删改查-状态过滤-localStorage-持久化-useDebounce",
+      "11-阶段-3-组件设计模式-1-5-周",
+      "12-阶段-4-高频业务场景-实战核心-3-周",
+      "13-4-2-数据请求与服务器状态",
+      "14-4-3-列表场景",
+      "15-4-4-路由-React-Router-v6-v7",
+      "16-4-5-弹层体系",
+      "17-4-6-实时与异步",
+      "18-4-7-其他高频场景",
+      "19-2-拖拽排序-dnd-kit-列表拖拽-多容器移动",
+      "20-3-动画-CSS-transition-状态机-framer-motion-进出场",
+      "21-4-主题切换-CSS-变量-data-theme-持久化",
+      "22-5-国际化-i18n-语言包组织-切换-格式化",
+      "23-6-权限系统-路由级权限-按钮级权限-权限组件-usePermission",
+      "24-7-错误边界-ErrorBoundary-降级-UI-组件级上报",
+      "25-8-骨架屏-空态-错误态-加载态的统一设计",
+      "26-9-复制到剪贴板-全屏-通知等浏览器-API-在-React-中的封装",
+      "27-阶段-5-状态管理-1-周",
+      "28-阶段-6-性能优化与调试-1-周",
+      "29-阶段-7-TypeScript-React-1-周",
+      "30-阶段-8-测试与质量-1-周",
+      "31-阶段-9-React-19-与服务端-2-周",
+      "32-阶段-10-进阶原理-可选-面试导向",
+      "33-贯穿全程的项目线",
+      "34-解决实际编码问题的工作流",
+      "35-核心资源",
+      "36-每周节奏建议",
+      "37-延伸篇-React-与其他框架的对比",
+      "38-进阶篇-复杂业务场景"
+    ],
+    "referencedBy": []
   },
   {
     "id": "01-1-前置-真实-React-的架构地图-1-天-先有地图再上路",
     "title": "01-1-前置-真实-React-的架构地图-1-天-先有地图再上路",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-源码复刻大纲"
     ]
   },
   {
@@ -377,7 +422,7 @@
     "title": "02-2-复刻路线-十个里程碑-每步可运行-命名沿用经典-didact",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-源码复刻大纲"
     ]
   },
   {
@@ -385,7 +430,7 @@
     "title": "03-M2-render-v1-递归直渲-0-5-天",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-源码复刻大纲"
     ]
   },
   {
@@ -393,7 +438,7 @@
     "title": "04-M3-并发思路与-Fiber-数据结构-1-天",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-源码复刻大纲"
     ]
   },
   {
@@ -401,7 +446,7 @@
     "title": "05-M4-render-与-commit-分离-1-天",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-源码复刻大纲"
     ]
   },
   {
@@ -409,7 +454,7 @@
     "title": "06-M5-Reconciliation-diff-与复用-2-天-核心",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-源码复刻大纲"
     ]
   },
   {
@@ -417,7 +462,7 @@
     "title": "07-M6-函数组件-1-天",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-源码复刻大纲"
     ]
   },
   {
@@ -425,7 +470,7 @@
     "title": "08-M7-useState-1-5-天-核心",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-源码复刻大纲"
     ]
   },
   {
@@ -433,7 +478,7 @@
     "title": "09-M8-useEffect-1-5-天-核心",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-源码复刻大纲"
     ]
   },
   {
@@ -441,7 +486,7 @@
     "title": "10-M9-补全-API-与批处理-2-天",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-源码复刻大纲"
     ]
   },
   {
@@ -449,7 +494,7 @@
     "title": "11-M10-选修-各-1-天",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-源码复刻大纲"
     ]
   },
   {
@@ -457,7 +502,7 @@
     "title": "12-3-验收-用你的-mini-React-写真实应用-1-周",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-源码复刻大纲"
     ]
   },
   {
@@ -465,7 +510,7 @@
     "title": "13-4-复刻之后-三条深化路径",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-源码复刻大纲"
     ]
   },
   {
@@ -473,7 +518,7 @@
     "title": "14-5-自测题-复刻完应能脱口而出",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-源码复刻大纲"
     ]
   },
   {
@@ -481,7 +526,7 @@
     "title": "15-6-与前五份文档的连接",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-源码复刻大纲"
     ]
   },
   {
@@ -489,15 +534,38 @@
     "title": "16-7-节奏总表-约-5-周",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-源码复刻大纲"
     ]
+  },
+  {
+    "id": "react-源码复刻大纲",
+    "title": "React 源码学习：复刻一个简化版 React",
+    "linkTo": [
+      "01-1-前置-真实-React-的架构地图-1-天-先有地图再上路",
+      "02-2-复刻路线-十个里程碑-每步可运行-命名沿用经典-didact",
+      "03-M2-render-v1-递归直渲-0-5-天",
+      "04-M3-并发思路与-Fiber-数据结构-1-天",
+      "05-M4-render-与-commit-分离-1-天",
+      "06-M5-Reconciliation-diff-与复用-2-天-核心",
+      "07-M6-函数组件-1-天",
+      "08-M7-useState-1-5-天-核心",
+      "09-M8-useEffect-1-5-天-核心",
+      "10-M9-补全-API-与批处理-2-天",
+      "11-M10-选修-各-1-天",
+      "12-3-验收-用你的-mini-React-写真实应用-1-周",
+      "13-4-复刻之后-三条深化路径",
+      "14-5-自测题-复刻完应能脱口而出",
+      "15-6-与前五份文档的连接",
+      "16-7-节奏总表-约-5-周"
+    ],
+    "referencedBy": []
   },
   {
     "id": "01-引言-这份大纲在六份文档里的位置",
     "title": "01-引言-这份大纲在六份文档里的位置",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -505,7 +573,7 @@
     "title": "02-A1-受控-非受控双模式-30-行-hook-处处要用",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -513,7 +581,7 @@
     "title": "03-A2-弹层体系-Popover-Select-Tooltip-DatePicker",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -521,7 +589,7 @@
     "title": "04-A3-退出动画-难题-visible-mounted-双状态机",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -529,7 +597,7 @@
     "title": "05-A4-焦点管理",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -537,7 +605,7 @@
     "title": "06-A5-键盘导航与-ARIA",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -545,7 +613,7 @@
     "title": "07-A6-事件边界",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -553,7 +621,7 @@
     "title": "08-A7-SSR-与环境兼容",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -561,7 +629,7 @@
     "title": "09-A8-ref-体系与-API-生态",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -569,7 +637,7 @@
     "title": "10-A9-样式与主题方案选型",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -577,7 +645,7 @@
     "title": "Part B：组件清单（按功力分级）",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -585,7 +653,7 @@
     "title": "12-Lv2-弹层与反馈组件-功力主考场之一",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -593,7 +661,7 @@
     "title": "13-Lv3-复杂交互组件-公认最考功力",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -601,7 +669,7 @@
     "title": "14-DatePicker-日历是最苦的组件",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -609,7 +677,7 @@
     "title": "15-Table-中后台之王",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -617,7 +685,7 @@
     "title": "16-Tabs",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -625,7 +693,7 @@
     "title": "17-Collapse",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -633,7 +701,7 @@
     "title": "18-Tree",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -641,7 +709,7 @@
     "title": "19-Cascader-TreeSelect-Transfer",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -649,7 +717,7 @@
     "title": "20-Upload",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -657,7 +725,7 @@
     "title": "21-Carousel-Slider-Rate-ColorPicker",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -665,7 +733,7 @@
     "title": "22-水印-Watermark-攻防趣味题",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -673,7 +741,7 @@
     "title": "23-VirtualList-Anchor-Progress-等",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -681,7 +749,7 @@
     "title": "24-ConfigProvider-App-模式级",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -689,7 +757,7 @@
     "title": "25-Lv4-范式之争-组件之上的认知",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -697,7 +765,7 @@
     "title": "Part C：工程化（从 demo 到可发布）",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -705,7 +773,7 @@
     "title": "27-C2-构建-tsup-father-unbuild-ESM-CJS-双产物-dt",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -713,7 +781,7 @@
     "title": "28-C3-文档-Storybook-dumi-MDX-用例即文档-视觉回归-Chromatic",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -721,7 +789,7 @@
     "title": "29-C4-测试-Vitest-Testing-Library-逐组件-Storybook",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -729,7 +797,7 @@
     "title": "30-C5-版本-changesets-自动-changelog-semver-纪律",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -737,7 +805,7 @@
     "title": "31-C6-兼容-browserslist-矩阵-SSR-hydrate-冒烟测试-React",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -745,7 +813,7 @@
     "title": "源码阅读优先级",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -753,7 +821,7 @@
     "title": "33-D2-antd-工程化与细节功力-Wave-波纹-两个汉字空格-Watermark",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -761,7 +829,7 @@
     "title": "34-D3-shadcn-ui-cva-变体管理与现代形态",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
   },
   {
@@ -769,15 +837,57 @@
     "title": "35-D4-WAI-ARIA-Authoring-Practices-所有键盘-ARIA",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-组件库实战大纲"
     ]
+  },
+  {
+    "id": "react-组件库实战大纲",
+    "title": "React 组件库实战大纲：组件实现的功力清单",
+    "linkTo": [
+      "01-引言-这份大纲在六份文档里的位置",
+      "02-A1-受控-非受控双模式-30-行-hook-处处要用",
+      "03-A2-弹层体系-Popover-Select-Tooltip-DatePicker",
+      "04-A3-退出动画-难题-visible-mounted-双状态机",
+      "05-A4-焦点管理",
+      "06-A5-键盘导航与-ARIA",
+      "07-A6-事件边界",
+      "08-A7-SSR-与环境兼容",
+      "09-A8-ref-体系与-API-生态",
+      "10-A9-样式与主题方案选型",
+      "11-Lv1-基础组件-打地基-练细节功力",
+      "12-Lv2-弹层与反馈组件-功力主考场之一",
+      "13-Lv3-复杂交互组件-公认最考功力",
+      "14-DatePicker-日历是最苦的组件",
+      "15-Table-中后台之王",
+      "16-Tabs",
+      "17-Collapse",
+      "18-Tree",
+      "19-Cascader-TreeSelect-Transfer",
+      "20-Upload",
+      "21-Carousel-Slider-Rate-ColorPicker",
+      "22-水印-Watermark-攻防趣味题",
+      "23-VirtualList-Anchor-Progress-等",
+      "24-ConfigProvider-App-模式级",
+      "25-Lv4-范式之争-组件之上的认知",
+      "26-C1-仓库-pnpm-monorepo-components-hooks-tokens",
+      "27-C2-构建-tsup-father-unbuild-ESM-CJS-双产物-dt",
+      "28-C3-文档-Storybook-dumi-MDX-用例即文档-视觉回归-Chromatic",
+      "29-C4-测试-Vitest-Testing-Library-逐组件-Storybook",
+      "30-C5-版本-changesets-自动-changelog-semver-纪律",
+      "31-C6-兼容-browserslist-矩阵-SSR-hydrate-冒烟测试-React",
+      "32-D1-Radix-UI-无样式组件的行为-无障碍实现-每个组件几百行-最易吸收",
+      "33-D2-antd-工程化与细节功力-Wave-波纹-两个汉字空格-Watermark",
+      "34-D3-shadcn-ui-cva-变体管理与现代形态",
+      "35-D4-WAI-ARIA-Authoring-Practices-所有键盘-ARIA"
+    ],
+    "referencedBy": []
   },
   {
     "id": "01-如何使用本文档",
     "title": "01-如何使用本文档",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-进阶大纲-复杂场景"
     ]
   },
   {
@@ -785,7 +895,7 @@
     "title": "02-0-全景认知-五大场景是一个内核",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-进阶大纲-复杂场景"
     ]
   },
   {
@@ -793,7 +903,7 @@
     "title": "03-1-通用底座-1-5-周-先于一切场景",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-进阶大纲-复杂场景"
     ]
   },
   {
@@ -801,7 +911,7 @@
     "title": "04-1-2-组件注册表模式",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-进阶大纲-复杂场景"
     ]
   },
   {
@@ -809,7 +919,7 @@
     "title": "05-1-3-递归渲染器",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-进阶大纲-复杂场景"
     ]
   },
   {
@@ -817,7 +927,7 @@
     "title": "06-1-4-表达式引擎",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-进阶大纲-复杂场景"
     ]
   },
   {
@@ -825,7 +935,7 @@
     "title": "07-1-5-Undo-Redo-三种实现",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-进阶大纲-复杂场景"
     ]
   },
   {
@@ -833,7 +943,7 @@
     "title": "08-1-6-拖拽原理-dnd-kit-精讲",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-进阶大纲-复杂场景"
     ]
   },
   {
@@ -841,7 +951,7 @@
     "title": "09-1-7-大-Schema-树性能",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-进阶大纲-复杂场景"
     ]
   },
   {
@@ -849,7 +959,7 @@
     "title": "10-2-Schema-动态表单-2-周",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-进阶大纲-复杂场景"
     ]
   },
   {
@@ -857,7 +967,7 @@
     "title": "11-3-拖拽式表单设计器-Form-Builder-2-周",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-进阶大纲-复杂场景"
     ]
   },
   {
@@ -865,7 +975,7 @@
     "title": "12-4-Grafana-式拖拽仪表盘-2-周",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-进阶大纲-复杂场景"
     ]
   },
   {
@@ -873,7 +983,7 @@
     "title": "13-5-JSON-编辑器-1-周",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-进阶大纲-复杂场景"
     ]
   },
   {
@@ -881,7 +991,7 @@
     "title": "14-6-低代码平台整合-2-3-周",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-进阶大纲-复杂场景"
     ]
   },
   {
@@ -889,7 +999,7 @@
     "title": "15-7-扩展场景-同难度梯度-可选方向",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-进阶大纲-复杂场景"
     ]
   },
   {
@@ -897,7 +1007,7 @@
     "title": "16-8-源码阅读地图-按难度递增",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-进阶大纲-复杂场景"
     ]
   },
   {
@@ -905,7 +1015,7 @@
     "title": "17-9-高频难点速查表",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-进阶大纲-复杂场景"
     ]
   },
   {
@@ -913,15 +1023,40 @@
     "title": "18-10-节奏安排-10-周",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-进阶大纲-复杂场景"
     ]
+  },
+  {
+    "id": "react-进阶大纲-复杂场景",
+    "title": "React 高阶实战大纲：Schema 驱动的复杂业务场景",
+    "linkTo": [
+      "01-如何使用本文档",
+      "02-0-全景认知-五大场景是一个内核",
+      "03-1-通用底座-1-5-周-先于一切场景",
+      "04-1-2-组件注册表模式",
+      "05-1-3-递归渲染器",
+      "06-1-4-表达式引擎",
+      "07-1-5-Undo-Redo-三种实现",
+      "08-1-6-拖拽原理-dnd-kit-精讲",
+      "09-1-7-大-Schema-树性能",
+      "10-2-Schema-动态表单-2-周",
+      "11-3-拖拽式表单设计器-Form-Builder-2-周",
+      "12-4-Grafana-式拖拽仪表盘-2-周",
+      "13-5-JSON-编辑器-1-周",
+      "14-6-低代码平台整合-2-3-周",
+      "15-7-扩展场景-同难度梯度-可选方向",
+      "16-8-源码阅读地图-按难度递增",
+      "17-9-高频难点速查表",
+      "18-10-节奏安排-10-周"
+    ],
+    "referencedBy": []
   },
   {
     "id": "01-引言-开工之前-先看清这条暗线",
     "title": "01-引言-开工之前-先看清这条暗线",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -929,7 +1064,7 @@
     "title": "Part A：搭建器族（增量篇）",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -937,7 +1072,7 @@
     "title": "03-2-工作流编排器-节点图编辑器",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -945,7 +1080,7 @@
     "title": "04-3-动态查询构建器-规则引擎-UI-全量展开",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -953,7 +1088,7 @@
     "title": "05-3-1-核心技术总览",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -961,7 +1096,7 @@
     "title": "06-3-2-递归渲染-QueryGroup-QueryRow",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -969,7 +1104,7 @@
     "title": "07-3-3-字段元数据驱动-field-schema",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -977,7 +1112,7 @@
     "title": "08-3-4-值编辑器体系-Setter-复用-远程-options-懒加载-防抖-取消",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -985,7 +1120,7 @@
     "title": "09-3-5-协议转换层-前后端契约关键-条件树-json-logic-Mongo-query",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -993,7 +1128,7 @@
     "title": "10-3-6-校验-空值-类型不匹配-between-要两个值-嵌套深度上限-条件数上限",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -1001,7 +1136,7 @@
     "title": "11-3-7-试运行面板-json-logic-js-前端即时求值",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -1009,7 +1144,7 @@
     "title": "12-3-8-高级-规则模板库-协议-占位变量-规则版本-diff-monaco-diff",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -1017,7 +1152,7 @@
     "title": "13-3-9-坑-查询构建器常见翻车点与修法",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -1025,7 +1160,7 @@
     "title": "14-3-10-与内核的复用关系-为什么它被列为三星",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -1033,7 +1168,7 @@
     "title": "15-4-JSON-Schema-编辑器-配置可视化编辑器",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -1041,7 +1176,7 @@
     "title": "16-5-无限画布-白板工具",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -1049,7 +1184,7 @@
     "title": "17-6-富文本-块级编辑器-类-Notion",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -1057,7 +1192,7 @@
     "title": "Part B：SaaS 平台能力族（8/9/10 全量展开）",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -1065,7 +1200,7 @@
     "title": "19-8-细粒度权限控制",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -1073,7 +1208,7 @@
     "title": "20-9-多租户动态主题",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -1081,7 +1216,7 @@
     "title": "21-10-国际化与动态语言包",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -1089,7 +1224,7 @@
     "title": "22-组合毕业项目-多租户-SaaS-控制台",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
   },
   {
@@ -1097,15 +1232,45 @@
     "title": "23-与前几份的关系与优先级",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景-第二辑"
     ]
+  },
+  {
+    "id": "react-高阶场景-第二辑",
+    "title": "React 高阶场景第二辑：搭建器族 × SaaS 平台能力族",
+    "linkTo": [
+      "01-引言-开工之前-先看清这条暗线",
+      "02-1-低代码页面搭建器-可视化大屏编辑器",
+      "03-2-工作流编排器-节点图编辑器",
+      "04-3-动态查询构建器-规则引擎-UI-全量展开",
+      "05-3-1-核心技术总览",
+      "06-3-2-递归渲染-QueryGroup-QueryRow",
+      "07-3-3-字段元数据驱动-field-schema",
+      "08-3-4-值编辑器体系-Setter-复用-远程-options-懒加载-防抖-取消",
+      "09-3-5-协议转换层-前后端契约关键-条件树-json-logic-Mongo-query",
+      "10-3-6-校验-空值-类型不匹配-between-要两个值-嵌套深度上限-条件数上限",
+      "11-3-7-试运行面板-json-logic-js-前端即时求值",
+      "12-3-8-高级-规则模板库-协议-占位变量-规则版本-diff-monaco-diff",
+      "13-3-9-坑-查询构建器常见翻车点与修法",
+      "14-3-10-与内核的复用关系-为什么它被列为三星",
+      "15-4-JSON-Schema-编辑器-配置可视化编辑器",
+      "16-5-无限画布-白板工具",
+      "17-6-富文本-块级编辑器-类-Notion",
+      "18-Part-B-总论-先把-共同模式-讲透-三章都只是它的实例",
+      "19-8-细粒度权限控制",
+      "20-9-多租户动态主题",
+      "21-10-国际化与动态语言包",
+      "22-组合毕业项目-多租户-SaaS-控制台",
+      "23-与前几份的关系与优先级"
+    ],
+    "referencedBy": []
   },
   {
     "id": "01-这张全景图怎么用",
     "title": "01-这张全景图怎么用",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景全景图"
     ]
   },
   {
@@ -1113,7 +1278,7 @@
     "title": "02-全景总览",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景全景图"
     ]
   },
   {
@@ -1121,7 +1286,7 @@
     "title": "03-React-相关度过滤视图",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景全景图"
     ]
   },
   {
@@ -1129,7 +1294,7 @@
     "title": "04-A-编辑器家族-与-Schema-线最近-壁垒最高",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景全景图"
     ]
   },
   {
@@ -1137,7 +1302,7 @@
     "title": "05-B-实时与协同",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景全景图"
     ]
   },
   {
@@ -1145,7 +1310,7 @@
     "title": "06-C-图形与可视化",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景全景图"
     ]
   },
   {
@@ -1153,7 +1318,7 @@
     "title": "07-D-大型应用架构",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景全景图"
     ]
   },
   {
@@ -1161,7 +1326,7 @@
     "title": "08-E-极端性能与离线",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景全景图"
     ]
   },
   {
@@ -1169,7 +1334,7 @@
     "title": "09-F-AI-原生前端-当下最热-且与你的-Schema-线天然衔接",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景全景图"
     ]
   },
   {
@@ -1177,7 +1342,7 @@
     "title": "10-G-交互底座-复杂交互组件自研-性价比最高",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景全景图"
     ]
   },
   {
@@ -1185,7 +1350,7 @@
     "title": "11-怎么选-按职业方向匹配",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景全景图"
     ]
   },
   {
@@ -1193,7 +1358,7 @@
     "title": "12-给-React-开发者的三个-最值钱-建议",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景全景图"
     ]
   },
   {
@@ -1201,8 +1366,28 @@
     "title": "13-与前两份大纲的衔接-内核复用",
     "linkTo": [],
     "referencedBy": [
-      "README"
+      "react-高阶场景全景图"
     ]
+  },
+  {
+    "id": "react-高阶场景全景图",
+    "title": "前端高阶场景全景图",
+    "linkTo": [
+      "01-这张全景图怎么用",
+      "02-全景总览",
+      "03-React-相关度过滤视图",
+      "04-A-编辑器家族-与-Schema-线最近-壁垒最高",
+      "05-B-实时与协同",
+      "06-C-图形与可视化",
+      "07-D-大型应用架构",
+      "08-E-极端性能与离线",
+      "09-F-AI-原生前端-当下最热-且与你的-Schema-线天然衔接",
+      "10-G-交互底座-复杂交互组件自研-性价比最高",
+      "11-怎么选-按职业方向匹配",
+      "12-给-React-开发者的三个-最值钱-建议",
+      "13-与前两份大纲的衔接-内核复用"
+    ],
+    "referencedBy": []
   },
   {
     "id": "写作指南-MDX-与在线代码块",
