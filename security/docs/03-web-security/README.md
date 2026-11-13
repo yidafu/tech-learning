@@ -17,3 +17,4 @@ SQL 注入、XSS、CSRF/SSRF、文件上传、文件包含、反序列化、认�
 - [17-Burp-Suite-使用指南](./17-Burp-Suite-使用指南.md)
 - [18-靶场实操指南-DVWA-WebGoat](./18-靶场实操指南-DVWA-WebGoat.md)
 - [48-文件包含-LFI-RFI](./48-文件包含-LFI-RFI.md)（2026-11-13 补全站内缺口）
+- [52-XXE-XML外部实体注入](./52-XXE-XML外部实体注入.md)（2026-11-14 补全站内缺口）
