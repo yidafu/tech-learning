@@ -287,6 +287,42 @@
     ]
   },
   {
+    "id": "02-数据流分析",
+    "title": "数据流分析：格、不动点与 worklist",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "03-SSA构建",
+    "title": "SSA 构建：支配树、支配边界与 φ",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "04-经典优化pass",
+    "title": "经典优化 pass 与管线组织",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "05-JIT视角",
+    "title": "JIT 视角：反馈、推测与反悔的权利",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "06-前端工程优化对照",
+    "title": "前端工程优化对照：tree-shaking、minify 与 sourcemap",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "07-实践-优化pass与收益分析",
+    "title": "实践：给 mini 字节码写优化 pass 与收益分析",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
     "id": "08-第八阶段",
     "title": "第八阶段导览：现代编译器与前端工程实战",
     "linkTo": [],
