@@ -14,6 +14,7 @@
 | 4 | 整合与告警：三大支柱关联（exemplars、日志带 trace_id）、统一仪表盘、SLO 与错误预算、Alertmanager | [notes/04-integration/](docs/notes/04-integration/README.md) | [labs/lab04-three-pillars/](docs/labs/lab04-three-pillars/README.md) |
 | 5 | 生产进阶：采样策略、高基数问题、持续性能剖析（Pyroscope）、eBPF、Kubernetes 可观测性 | [notes/05-production/](docs/notes/05-production/README.md) | [labs/lab05-sampling-and-profiling/](docs/labs/lab05-sampling-and-profiling/README.md) |
 | 6 | 系统设计（收官）：从零设计一个可观测系统——总体架构与容量、SDK 设计（服务端 + 前端 RUM）、接入管道、存储后端、查询与告警 | [notes/06-system-design/](docs/notes/06-system-design/README.md) | —（规划中：lab06 mini 可观测平台） |
+| 7 | 横向专题（持续扩充）：混沌工程与故障演练、事件响应与值班、大模型应用可观测性 | [notes/07-topics/](docs/notes/07-topics/README.md) | — |
 
 ## 建议学习顺序
 
@@ -38,7 +39,8 @@
 │   │   ├── 03-tracing/
 │   │   ├── 04-integration/
 │   │   ├── 05-production/
-│   │   └── 06-system-design/  # 收官：从零设计一个可观测系统
+│   │   ├── 06-system-design/  # 收官：从零设计一个可观测系统
+│   │   └── 07-topics/         # 横向专题：混沌工程、事件响应、LLM 可观测性
 │   └── labs/                  # 动手实验（每个实验独立子目录，可一键 podman compose 运行）
 │       ├── lab00-otel-collector-basics/
 │       ├── lab01-prometheus-grafana/
