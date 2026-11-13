@@ -217,7 +217,25 @@
   },
   {
     "id": "00-导览",
-    "title": "着色器语言专题导览",
+    "title": "附录速查导览",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "01-项目一-模型查看器",
+    "title": "项目一：模型查看器",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "02-项目二-3D数据可视化",
+    "title": "项目二：3D 数据可视化",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "03-项目三-全景查看器",
+    "title": "项目三：全景查看器",
     "linkTo": [],
     "referencedBy": []
   },
@@ -312,6 +330,18 @@
     "referencedBy": []
   },
   {
+    "id": "01-数值积分与运动",
+    "title": "数值积分与运动",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "02-碰撞检测与响应",
+    "title": "碰撞检测与响应",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
     "id": "01-语言核心",
     "title": "GLSL 语言核心",
     "linkTo": [],
@@ -338,6 +368,36 @@
   {
     "id": "05-ES3特性与调试规范",
     "title": "ES3 特性与调试规范",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "01-glTF2",
+    "title": "glTF 2.0 深入：格式、数据与导出",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "02-压缩与工具链",
+    "title": "压缩与工具链：让资产小到能上线",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "01-WebGL-API速查",
+    "title": "WebGL API 速查",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "02-GLSL速查卡",
+    "title": "GLSL 速查卡",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "03-常用代码片段",
+    "title": "常用代码片段",
     "linkTo": [],
     "referencedBy": []
   }
