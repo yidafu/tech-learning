@@ -1,9 +1,10 @@
 # Docusaurus 阅读站点（站点根 = 仓库根）：忽略依赖与生成产物，保留 docs/ 符号链接与配置
 # （webpack 已配 resolve.symlinks:false，符号链接按 docs/ 路径解析，不受本文件影响，勿忽略 docs/）
-# static/ 下只有 copy-samples.mjs 生成的 第N阶段/ 目录是生成物；
+# static/ 下只有 copy-samples.mjs 生成的示例目录（第N阶段/、数据系统内核专题/ 等按目录名拷贝）是生成物；
 # static/img/（站群统一 logo/favicon，来自 shared/sync-theme.mjs）需要提交
 /node_modules/
 /build/
 /.docusaurus/
-/static/第*/
+/static/*
+!/static/img/
 .DS_Store

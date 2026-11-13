@@ -14,7 +14,7 @@
   └── 示例目录（部分阶段有）  # 挂所属分册号下、排其后面：01-第一阶段/07a-示例-patterns；02-第二阶段/03a-示例-microservices·04a-示例-es-cqrs·04b-示例-event-driven·05a-示例-hex-onion-clean；03-第三阶段/02a-示例-cap-algorithms；04-第四阶段/02a-示例-adr
 docusaurus.config.mjs    # Docusaurus 3.10 阅读站点配置（站点根 = 仓库根，8081；关键决策见文件头注释）
 package.json / sidebars.mjs / scripts/ / src/ / plugins/  # 站点脚手架：npm scripts（dev/build 前自动跑 scripts/copy-samples.mjs，static/ 目录名剥序号对齐 URL）、显式侧边栏（大纲 → 示例项目场景 → 六个阶段）、首页与 /graph 图谱组件、link-graph 本地插件
-docs/                    # 站点内容挂载点：仅放指向上述笔记的相对符号链接（../01-第一阶段 等 8 条），勿把笔记写入；static/ 是 .kt 示例生成物已 gitignore；/graph 知识图谱由 plugins/link-graph.mjs 从正文 .md 链接生成
+docs/                    # 站点内容挂载点：仅放指向上述笔记的相对符号链接（../01-第一阶段 等 9 条，含 07-数据系统内核专题），勿把笔记写入；static/ 是 .kt 示例生成物已 gitignore；/graph 知识图谱由 plugins/link-graph.mjs 从正文 .md 链接生成
 start-docusaurus.sh      # Docusaurus 站点一键启动脚本（./start-docusaurus.sh 前台启动；-b 顺带开浏览器；-o 仅打开浏览器；已在运行则只提示）
 .backup-split-20261104/  # 2026-11-04 拆分前的原单一主笔记备份（仅供追溯，勿改勿链）
 .backup-unify-20261110/  # 2026-11-10 目录结构与标题统一前的全书备份（同上，仅供追溯，勿改勿链）

@@ -10,6 +10,7 @@ const stages = [
   ['04-第四阶段', '第四阶段'],
   ['05-第五阶段', '第五阶段'],
   ['06-第六阶段', '第六阶段'],
+  ['07-数据系统内核专题', '数据系统内核专题'],
 ]
 
 /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */

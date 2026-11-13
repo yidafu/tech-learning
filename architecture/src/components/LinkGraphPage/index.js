@@ -7,7 +7,7 @@ import styles from './styles.module.css'
 // 知识图谱页：路由与数据由 plugins/link-graph.mjs 注入（props.graph = { nodes, links }）。
 // force-graph 依赖 window/canvas，只在 useEffect 里动态 import，SSG 阶段不加载、也不进其他页面的包。
 
-// 分组配色（group 取值见 link-graph.mjs）：大纲 + 六个阶段 + 示例项目场景
+// 分组配色（group 取值见 link-graph.mjs）：大纲 + 六个阶段 + 数据系统内核专题 + 示例项目场景
 const GROUPS = [
   ['软件架构学习大纲', '大纲', '#9c755f'],
   ['第一阶段', '第一阶段', '#4e79a7'],
@@ -16,6 +16,7 @@ const GROUPS = [
   ['第四阶段', '第四阶段', '#76b7b2'],
   ['第五阶段', '第五阶段', '#59a14f'],
   ['第六阶段', '第六阶段', '#edc948'],
+  ['数据系统内核专题', '数据系统内核专题', '#ff9da7'],
   ['示例项目场景', '示例项目场景', '#b07aa1'],
 ]
 const COLORS = Object.fromEntries(GROUPS.map(([group, , color]) => [group, color]))

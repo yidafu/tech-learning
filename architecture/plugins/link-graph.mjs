@@ -71,8 +71,9 @@ export default function linkGraphPlugin(context) {
         const segments = relative(docsDir, file).split(sep)
         const group = segments[0].replace(/\.md$/, '').replace(/^\d+-/, '')
         // 枢纽页 = 根目录的大纲 + 各目录的导览页，页面上常显标题：
-        // 六个阶段目录是 01-<主题>.md；示例项目场景目录因 01~14 已是场景编号，导览页用 00-导览.md
-        const isStageDir = /第.阶段$/.test(group)
+        // 六个阶段目录是 01-<主题>.md；示例项目场景目录因 01~14 已是场景编号，导览页用 00-导览.md；
+        // 07-数据系统内核专题同阶段（01-导览.md）
+        const isStageDir = /(第.阶段|数据系统内核专题)$/.test(group)
         const hub =
           segments.length === 1 ||
           (segments.length === 2 &&

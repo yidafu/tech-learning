@@ -14,7 +14,8 @@ const docsDir = join(siteDir, 'docs')
 const staticDir = join(siteDir, 'static')
 
 const isSampleDir = (name) => /^\d+[a-z]-示例-/.test(name)
-const isStageDir = (name) => /^\d+-第.阶段$/.test(name)
+// 阶段目录 + 07-数据系统内核专题（同样挂示例目录、同样剥前缀出 URL 段）
+const isStageDir = (name) => /^\d+-(第.阶段|数据系统内核专题)$/.test(name)
 const urlSegment = (dirName) => dirName.replace(/^\d+-/, '')
 
 // docs/ 下的阶段目录是指向工作区源目录的符号链接：Dirent 不跟随符号链接，
@@ -24,7 +25,7 @@ const realDirs = (dir) =>
 
 mkdirSync(staticDir, { recursive: true })
 for (const name of realDirs(staticDir)) {
-  if (/^第.阶段$/.test(name)) {
+  if (/^(第.阶段|数据系统内核专题)$/.test(name)) {
     rmSync(join(staticDir, name), { recursive: true, force: true })
   }
 }
