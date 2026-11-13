@@ -216,8 +216,74 @@
     "referencedBy": []
   },
   {
+    "id": "00-导览",
+    "title": "着色器语言专题导览",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "01-调试与诊断",
+    "title": "调试与诊断",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "02-移动端与兼容性",
+    "title": "移动端与兼容性",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "03-测试与质量",
+    "title": "测试与质量",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "01-GLSL Cookbook",
+    "title": "GLSL Cookbook：着色器技法箱",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "02-文本与2D渲染",
+    "title": "文本与 2D 渲染",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "03-GPGPU与计算",
+    "title": "GPGPU 与计算：把 GPU 当通用处理器",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "04-WebGPU迁移指南",
+    "title": "WebGPU 迁移指南：为自研框架留好抽象层（选修前瞻）",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
     "id": "01-线性代数深化",
     "title": "线性代数深化：基、正交性与矩阵分解",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "02-仿射几何与齐次坐标",
+    "title": "仿射几何与齐次坐标",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "03-旋转表示与转换",
+    "title": "旋转表示与转换",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "04-曲线与样条",
+    "title": "曲线与样条",
     "linkTo": [],
     "referencedBy": []
   },
@@ -242,6 +308,36 @@
   {
     "id": "08-色彩数学",
     "title": "色彩数学",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "01-语言核心",
+    "title": "GLSL 语言核心",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "02-预处理与变体管理",
+    "title": "预处理与变体管理",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "03-内置函数速查与深用",
+    "title": "内置函数速查与深用",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "04-精度与编译器行为",
+    "title": "精度与编译器行为",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "05-ES3特性与调试规范",
+    "title": "ES3 特性与调试规范",
     "linkTo": [],
     "referencedBy": []
   }
