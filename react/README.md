@@ -33,7 +33,7 @@ npm run serve  # 本地预览构建产物
 | 3 | 前端高阶场景全景图 | 7 大族群 23 个高阶场景选型地图 | [/docs/react-高阶场景全景图](/docs/react-高阶场景全景图) |
 | 4 | React 高阶场景第二辑 | 搭建器族 × SaaS 平台能力族 | [/docs/react-高阶场景-第二辑](/docs/react-高阶场景-第二辑) |
 | 5 | React 组件库实战大纲 | 组件实现的功力清单 | [/docs/react-组件库实战大纲](/docs/react-组件库实战大纲) |
-| 6 | React 源码学习：复刻一个简化版 React | didact 式 mini React，M1–M10 | [/docs/react-源码复刻大纲](/docs/react-源码复刻大纲) |
+| 6 | React 源码学习：复刻一个简化版 React | didact 式 mini React，M1–M13（含并发三部曲）+ React Compiler 专题 | [/docs/react-源码复刻大纲](/docs/react-源码复刻大纲) |
 | 7 | React 复杂场景项目复刻手册 | 拖拽仪表盘 / 低代码平台整合 | [/docs/react-复杂场景-项目复刻](/docs/react-复杂场景-项目复刻) |
 
 ## 约定
@@ -54,4 +54,4 @@ npm run serve  # 本地预览构建产物
 2. **上难度**：《react-进阶大纲-复杂场景》—— schema 内核是后面所有场景的公共底座。
 3. **扩视野**：《react-高阶场景全景图》选方向；《react-高阶场景-第二辑》吃透搭建器族与 SaaS 三件套。
 4. **练功力**：《react-组件库实战大纲》Part A → Lv 阶梯，与场景线并行。
-5. **懂原理**：《react-源码复刻大纲》可随时穿插，复刻完回头看前五份会更透。
+5. **懂原理**：《react-源码复刻大纲》可随时穿插，复刻完回头看前五份会更透。其中并发三部曲（M11–M13：调度器、lane、可中断渲染与 transition）对齐阶段 6 的 `useTransition`；第 8 章 React Compiler 专题是阶段 6 第 10 条评估清单的原理篇。
