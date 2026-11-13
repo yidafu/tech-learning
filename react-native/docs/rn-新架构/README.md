@@ -6,6 +6,7 @@ references:
   - 03-TurboModules
   - 04-Codegen
   - 05-新旧架构对比与迁移
+  - 06-迁移工程实践
 ---
 
 # 模块七 · 新架构（JSI / Fabric / TurboModules）
@@ -21,3 +22,4 @@ references:
 | [03 · TurboModules](03-TurboModules.md) | 懒加载实例化、双平台模块管理器与旧模块的 Interop 兜底通道 |
 | [04 · Codegen](04-Codegen.md) | TS spec → C++ / Java / ObjC 绑定代码的 IDL 编译器；错误前移 + 绑定前移 |
 | [05 · 新旧架构对比与迁移](05-新旧架构对比与迁移.md) | 六维对照表、bridgeless 数据流复盘、四步迁移路线与性能预期管理 |
+| [06 · 迁移工程实践](06-迁移工程实践.md) | Interop 机制与限制清单、第三方库兼容性排查流程、问题四分类与真迁移检查单 |

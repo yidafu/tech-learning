@@ -66,6 +66,18 @@ const modules = [
     desc: '手写 mini-react-native、自定义 TurboModule、Fabric 组件、调试工具链',
     tag: '做实战',
   },
+  {
+    title: '测试体系',
+    dir: 'rn-测试体系',
+    desc: 'Jest 预设与组件测试渲染器原理、mock 纪律、Detox / Maestro / Appium 选型',
+    tag: '懂工程',
+  },
+  {
+    title: '混合开发',
+    dir: 'rn-混合开发',
+    desc: 'RN 嵌入既有原生 App：双端集成、多实例与生命周期、混合导航与通信边界',
+    tag: '懂工程',
+  },
 ];
 
 const readingOrder = [
@@ -106,7 +118,7 @@ export default function Home() {
           </ol>
         </section>
         <section className="container home-section--last">
-          <Heading as="h2">十个模块</Heading>
+          <Heading as="h2">十二个模块</Heading>
           <FeatureCardGrid
             cards={modules.map((mod) => ({
               title: mod.title,

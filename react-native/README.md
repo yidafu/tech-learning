@@ -1,6 +1,6 @@
 # ReactNative 原理学习站（文档站）
 
-系统拆解 ReactNative 底层工作原理的十个模块：从启动流程、Bridge 通信、渲染管线到新架构（JSI / Fabric / TurboModules），原理为主、源码关键路径为辅。使用 **Docusaurus 3** 构建。
+系统拆解 ReactNative 底层工作原理的十二个模块：从启动流程、Bridge 通信、渲染管线到新架构（JSI / Fabric / TurboModules），原理为主、源码关键路径为辅。使用 **Docusaurus 3** 构建。
 
 ## 本地运行
 
@@ -17,11 +17,11 @@ npm run serve  # 本地预览构建产物
 |------|------|
 | `docusaurus.config.js` | 站点配置（标题 / 模块导航 / 站群互链） |
 | `sidebars.js` | 侧边栏由 docs/ 目录结构自动生成 |
-| `docs/` | 十个原理模块（每模块一个目录，README.md 为索引页） |
+| `docs/` | 十二个原理模块（每模块一个目录，README.md 为索引页） |
 | `src/pages/index.js` | 站群统一模板首页（阅读顺序 + 模块卡片） |
 | `src/css/custom.css`、`src/components/site/`、`static/img/` | 站群统一主题（由 `shared/sync-theme.mjs` 同步，勿手改） |
 
-## 十个模块
+## 十二个模块
 
 | # | 模块 | 定位 | 站内路径 |
 |---|------|------|----------|
@@ -32,9 +32,11 @@ npm run serve  # 本地预览构建产物
 | 5 | 渲染原理 | 三棵树、Reconciler、Yoga | [/docs/rn-渲染原理](/docs/rn-渲染原理) |
 | 6 | 事件系统原理 | 触摸链路、手势仲裁 | [/docs/rn-事件系统原理](/docs/rn-事件系统原理) |
 | 7 | 新架构 | JSI / Fabric / TurboModules / Codegen | [/docs/rn-新架构](/docs/rn-新架构) |
-| 8 | Metro 打包与热更新 | 打包管线、Bundle 结构、差分更新 | [/docs/rn-Metro打包与热更新](/docs/rn-Metro打包与热更新) |
-| 9 | 性能优化原理 | 定位方法论、列表虚拟化、掉帧归因 | [/docs/rn-性能优化原理](/docs/rn-性能优化原理) |
+| 8 | Metro 打包与热更新 | 打包管线、Bundle 结构、差分更新、OTA 工程实践 | [/docs/rn-Metro打包与热更新](/docs/rn-Metro打包与热更新) |
+| 9 | 性能优化原理 | 定位方法论、剖析操作手册、列表虚拟化、掉帧归因 | [/docs/rn-性能优化原理](/docs/rn-性能优化原理) |
 | 10 | 原理实战 | mini-react-native、TurboModule 开发 | [/docs/rn-原理实战](/docs/rn-原理实战) |
+| 11 | 测试体系 | Jest / 组件测试渲染器、E2E 框架选型 | [/docs/rn-测试体系](/docs/rn-测试体系) |
+| 12 | 混合开发 | RN 嵌入原生 App、多实例、混合导航与通信边界 | [/docs/rn-混合开发](/docs/rn-混合开发) |
 
 ## 约定
 

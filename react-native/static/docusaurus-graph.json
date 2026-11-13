@@ -110,12 +110,30 @@
     ]
   },
   {
+    "id": "04-包体与启动优化实操",
+    "title": "包体与启动优化实操（Hermes / 构成分析 / 拆包 / inline requires）",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-Metro打包与热更新"
+    ]
+  },
+  {
+    "id": "05-OTA更新工程实践",
+    "title": "OTA 更新工程实践（CodePush 之后）",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-Metro打包与热更新"
+    ]
+  },
+  {
     "id": "rn-Metro打包与热更新",
     "title": "模块八 · Metro 打包与热更新",
     "linkTo": [
       "01-Metro三阶段与Bundle结构",
       "02-热更新原理",
-      "03-Metro配置与工程化"
+      "03-Metro配置与工程化",
+      "04-包体与启动优化实操",
+      "05-OTA更新工程实践"
     ],
     "referencedBy": []
   },
@@ -378,13 +396,22 @@
     ]
   },
   {
+    "id": "05-性能剖析操作手册",
+    "title": "性能剖析操作手册：从现象到函数",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-性能优化原理"
+    ]
+  },
+  {
     "id": "rn-性能优化原理",
     "title": "模块九 · 性能优化原理",
     "linkTo": [
       "01-性能定位方法论",
       "02-列表虚拟化原理",
       "03-渲染与状态优化",
-      "04-内存与稳定性"
+      "04-内存与稳定性",
+      "05-性能剖析操作手册"
     ],
     "referencedBy": []
   },
@@ -429,6 +456,14 @@
     ]
   },
   {
+    "id": "06-迁移工程实践",
+    "title": "新架构迁移工程实践（Interop / 兼容性排查 / 常见问题）",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-新架构"
+    ]
+  },
+  {
     "id": "rn-新架构",
     "title": "模块七 · 新架构（JSI / Fabric / TurboModules）",
     "linkTo": [
@@ -436,7 +471,58 @@
       "02-Fabric渲染管线",
       "03-TurboModules",
       "04-Codegen",
-      "05-新旧架构对比与迁移"
+      "05-新旧架构对比与迁移",
+      "06-迁移工程实践"
+    ],
+    "referencedBy": []
+  },
+  {
+    "id": "01-Jest单元测试与组件测试原理",
+    "title": "Jest 单元测试与组件测试原理",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-测试体系"
+    ]
+  },
+  {
+    "id": "02-端到端测试与选型",
+    "title": "端到端测试与选型",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-测试体系"
+    ]
+  },
+  {
+    "id": "rn-测试体系",
+    "title": "模块十一 · 测试体系",
+    "linkTo": [
+      "01-Jest单元测试与组件测试原理",
+      "02-端到端测试与选型"
+    ],
+    "referencedBy": []
+  },
+  {
+    "id": "01-原生工程集成与生命周期",
+    "title": "原生工程集成与生命周期",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-混合开发"
+    ]
+  },
+  {
+    "id": "02-混合导航与通信边界",
+    "title": "混合导航与通信边界",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-混合开发"
+    ]
+  },
+  {
+    "id": "rn-混合开发",
+    "title": "模块十二 · 混合开发（Brownfield）",
+    "linkTo": [
+      "01-原生工程集成与生命周期",
+      "02-混合导航与通信边界"
     ],
     "referencedBy": []
   },

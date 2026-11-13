@@ -1,5 +1,5 @@
 // @ts-check
-// Docusaurus 配置：ReactNative 原理学习站，docs/ 下为十个原理模块。
+// Docusaurus 配置：ReactNative 原理学习站，docs/ 下为十二个原理模块。
 
 // docusaurus-graph：构建后生成文档关系图（build/docusaurus-graph.json，站点右上角入口）
 const sitePlugins = ['docusaurus-graph'];
@@ -74,6 +74,8 @@ const config = {
               { to: '/docs/rn-Metro打包与热更新', label: '08 · Metro 打包与热更新' },
               { to: '/docs/rn-性能优化原理', label: '09 · 性能优化原理' },
               { to: '/docs/rn-原理实战', label: '10 · 原理实战' },
+              { to: '/docs/rn-测试体系', label: '11 · 测试体系' },
+              { to: '/docs/rn-混合开发', label: '12 · 混合开发' },
             ],
           },
           {
