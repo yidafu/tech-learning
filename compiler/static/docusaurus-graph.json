@@ -394,6 +394,60 @@
     ]
   },
   {
+    "id": "11-Wasm专题",
+    "title": "Wasm 专题导览",
+    "linkTo": [
+      "02-二进制格式与WAT",
+      "03-表达式与结构化控制流",
+      "04-线性内存与JS互操作",
+      "05-工具链与性能真相",
+      "06-实践-mini到Wasm"
+    ],
+    "referencedBy": [
+      "编译原理学习大纲"
+    ]
+  },
+  {
+    "id": "02-二进制格式与WAT",
+    "title": "二进制格式与 WAT：一个模块的逐字节解剖",
+    "linkTo": [],
+    "referencedBy": [
+      "11-Wasm专题"
+    ]
+  },
+  {
+    "id": "03-表达式与结构化控制流",
+    "title": "后端一：表达式与结构化控制流",
+    "linkTo": [],
+    "referencedBy": [
+      "11-Wasm专题"
+    ]
+  },
+  {
+    "id": "04-线性内存与JS互操作",
+    "title": "后端二：线性内存与 JS 互操作",
+    "linkTo": [],
+    "referencedBy": [
+      "11-Wasm专题"
+    ]
+  },
+  {
+    "id": "05-工具链与性能真相",
+    "title": "工具链与性能真相",
+    "linkTo": [],
+    "referencedBy": [
+      "11-Wasm专题"
+    ]
+  },
+  {
+    "id": "06-实践-mini到Wasm",
+    "title": "实践：mini → Wasm 编译器",
+    "linkTo": [],
+    "referencedBy": [
+      "11-Wasm专题"
+    ]
+  },
+  {
     "id": "编译原理学习大纲",
     "title": "编译原理学习大纲",
     "linkTo": [
@@ -406,7 +460,8 @@
       "07-第七阶段",
       "08-第八阶段",
       "09-演练场",
-      "10-GC算法专题"
+      "10-GC算法专题",
+      "11-Wasm专题"
     ],
     "referencedBy": []
   }
