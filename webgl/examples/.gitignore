@@ -1,0 +1,5 @@
+# Vite 构建产物（根仓库 .gitignore 只覆盖了 build/，未覆盖 dist/）
+dist/
+
+# 本地依赖与缓存（根仓库规则 **/node_modules/ 已覆盖，此处兜底）
+node_modules/

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>06 微型场景图 - WebGL 示例</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #101018; }
+  #gl { display: block; width: 100vw; height: 100vh; touch-action: none; }
+  .hud { position: fixed; left: 12px; top: 12px; color: #cfd8e3; font: 12px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; user-select: none; white-space: pre; }
+  .hud a { color: #7aa2f7; text-decoration: none; }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div class="hud"><span id="tree"></span></div>
+<script type="module" src="./main.ts"></script>
+</body>
+</html>

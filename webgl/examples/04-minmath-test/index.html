@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>04 数学库自检 - WebGL 示例</title>
+<style>
+  html, body { margin: 0; background: #101418; color: #cfd8e3; font: 14px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  main { max-width: 880px; margin: 0 auto; padding: 32px 20px 60px; }
+  h1 { font-size: 20px; color: #e8ecf3; }
+  a { color: #7aa2f7; }
+  h2 { font-size: 15px; color: #9aa5b1; margin: 28px 0 8px; border-bottom: 1px solid #2a3040; padding-bottom: 4px; }
+  li { list-style: none; padding: 1px 0; }
+  .pass::before { content: 'PASS '; color: #4c9a63; font-weight: bold; }
+  .fail::before { content: 'FAIL '; color: #d06a6a; font-weight: bold; }
+  .fail { color: #e0a0a0; }
+  .detail { color: #8a93a3; }
+  #summary { margin-top: 28px; font-size: 16px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>04 数学库自检 <a href="../index.html" style="font-size:13px">返回目录</a></h1>
+  <p>对 src/common/math.ts（minmath 最小集）的运行时断言：黄金值 / 性质 / 往返三类思路，
+     对应《03-第三阶段/02-数学库minmath.md》1.4 节（分册用 vitest，本页在浏览器里跑同样的用例）。</p>
+  <div id="summary"></div>
+</main>
+<script type="module" src="./main.ts"></script>
+</body>
+</html>

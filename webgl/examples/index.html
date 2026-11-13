@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebGL 示例工程 - tech-learning</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; background: #0e1116; color: #d5dbe4; font: 15px/1.6 -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 40px 20px 60px; }
+  h1 { font-size: 24px; color: #eef1f6; margin-bottom: 6px; }
+  p.sub { color: #8b95a5; margin-top: 0; }
+  ol { list-style: none; padding: 0; margin: 24px 0; }
+  li { margin: 10px 0; }
+  a.card { display: block; padding: 14px 18px; border: 1px solid #262d3a; border-radius: 10px; text-decoration: none; background: #141922; transition: border-color 0.15s, background 0.15s; }
+  a.card:hover { border-color: #3d4a5f; background: #182030; }
+  .num { display: inline-block; min-width: 34px; color: #7aa2f7; font-family: ui-monospace, Menlo, monospace; }
+  .title { color: #e8ecf3; }
+  .desc { display: block; color: #8b95a5; font-size: 13px; margin-top: 2px; padding-left: 34px; }
+  footer { color: #5d6675; font-size: 13px; border-top: 1px solid #20263200; margin-top: 30px; }
+  code { background: #1a212c; border-radius: 4px; padding: 1px 6px; font-size: 13px; color: #9dc0ff; }
+</style>
+</head>
+<body>
+<main>
+  <h1>WebGL 示例工程</h1>
+  <p class="sub">tech-learning / webgl 分册的递进式可运行示例：Vite + TypeScript，零运行时依赖。
+     运行方式见 <a href="./README.md">README.md</a>（<code>npm install &amp;&amp; npm run dev</code>）。</p>
+
+  <ol>
+    <li><a class="card" href="01-hello-triangle/index.html">
+      <span class="num">01</span><span class="title">第一个三角形</span>
+      <span class="desc">VBO 上传、attribute 接线（stride/offset）、drawArrays 画一个渐变三角形</span></a></li>
+    <li><a class="card" href="02-orbit-cube/index.html">
+      <span class="num">02</span><span class="title">自转 + 公转立方体</span>
+      <span class="desc">手写矩阵链 M = R(公转)·T(轨道)·R(倾斜)·R(自转)，perspective/lookAt 相机与深度测试</span></a></li>
+    <li><a class="card" href="03-textured-earth/index.html">
+      <span class="num">03</span><span class="title">纹理地球</span>
+      <span class="desc">canvas 程序化双纹理（零外部素材）+ Blinn-Phong 海洋高光 + 独立自转的透明云层</span></a></li>
+    <li><a class="card" href="04-minmath-test/index.html">
+      <span class="num">04</span><span class="title">数学库自检</span>
+      <span class="desc">minmath 最小集的运行时断言：黄金值 / 性质 / 往返三类用例在页面打印 PASS/FAIL</span></a></li>
+    <li><a class="card" href="05-orbit-controls/index.html">
+      <span class="num">05</span><span class="title">轨道相机控制</span>
+      <span class="desc">球坐标参数化相机位置，拖拽旋转、滚轮指数缩放、帧率无关的阻尼收敛</span></a></li>
+    <li><a class="card" href="06-scene-graph/index.html">
+      <span class="num">06</span><span class="title">微型场景图</span>
+      <span class="desc">8 节点父子变换树：子节点只改局部自转角，公转由父"轨道节点"带动，双脏标记剪枝</span></a></li>
+    <li><a class="card" href="07-picking/index.html">
+      <span class="num">07</span><span class="title">射线拾取</span>
+      <span class="desc">屏幕点逆投影成世界射线，Möller–Trumbore 逐三角形求交，悬停提亮 / 点击选中</span></a></li>
+    <li><a class="card" href="08-shadows/index.html">
+      <span class="num">08</span><span class="title">阴影与 PCF 软阴影</span>
+      <span class="desc">shadow map 两 pass（光源正交相机渲染深度），坡度感知 bias + 3x3 PCF，空格开关对比</span></a></li>
+  </ol>
+
+  <footer>各示例代码顶部注释标注了对应分册路径；公共层（gl / math / geometry / controls）提炼在 <code>src/common/</code>。</footer>
+</main>
+</body>
+</html>

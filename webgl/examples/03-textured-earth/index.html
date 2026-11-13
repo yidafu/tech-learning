@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>03 纹理地球 - WebGL 示例</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #04050a; }
+  #gl { display: block; width: 100vw; height: 100vh; }
+  .hud { position: fixed; left: 12px; top: 12px; color: #cfd8e3; font: 13px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; user-select: none; }
+  .hud a { color: #7aa2f7; text-decoration: none; }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div class="hud">
+  <a href="../index.html">返回目录</a><br>
+  03 纹理地球：程序化纹理 + Blinn-Phong + 云层<br>
+  鼠标移动 = 太阳方向；空格 = 暂停
+</div>
+<script type="module" src="./main.ts"></script>
+</body>
+</html>
