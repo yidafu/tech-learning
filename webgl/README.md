@@ -44,7 +44,7 @@ npm run serve  # 本地预览构建产物
 
 ## 可运行示例（`examples/`）
 
-独立的 Vite + TypeScript 工程（与文档站无依赖关系），把分册代码落成 8 个递进示例：三角形 → 公转立方体 → 程序化纹理地球 → 数学库自检 → 轨道相机 → 微型场景图 → 射线拾取 → shadow map。运行方式见 [examples/README.md](examples/README.md)。
+独立的 Vite + TypeScript 工程（与文档站无依赖关系），把分册代码落成 13 个递进示例：三角形 → 公转立方体 → 程序化纹理地球 → 数学库自检 → 轨道相机 → 微型场景图 → 射线拾取 → shadow map → IBL 环境光照 → SSAO → GPU 分段计时 → 级联阴影 → 视锥剔除。运行方式见 [examples/README.md](examples/README.md)。
 
 ## 约定
 

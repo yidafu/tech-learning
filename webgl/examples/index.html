@@ -52,6 +52,21 @@
     <li><a class="card" href="08-shadows/index.html">
       <span class="num">08</span><span class="title">阴影与 PCF 软阴影</span>
       <span class="desc">shadow map 两 pass（光源正交相机渲染深度），坡度感知 bias + 3x3 PCF，空格开关对比</span></a></li>
+    <li><a class="card" href="09-pbr-ibl/index.html">
+      <span class="num">09</span><span class="title">基于图像的光照 IBL</span>
+      <span class="desc">程序化 HDR 天空生成四份 IBL 资产（辐照度 / GGX 预滤波 / BRDF LUT），金属度-粗糙度球阵 PBR 合成</span></a></li>
+    <li><a class="card" href="10-ssao/index.html">
+      <span class="num">10</span><span class="title">屏幕空间环境光遮蔽</span>
+      <span class="desc">G-buffer(MRT) + 64 采样半球核 + 4x4 噪声旋转，盒滤波去噪后与光照合成，空格开关对比</span></a></li>
+    <li><a class="card" href="11-gpu-timer/index.html">
+      <span class="num">11</span><span class="title">GPU 性能度量</span>
+      <span class="desc">EXT_disjoint_timer_query 分段计时（shadow/scene/post）与 CPU 帧统计并排，调片元负载观察 GPU 瓶颈形态</span></a></li>
+    <li><a class="card" href="12-csm/index.html">
+      <span class="num">12</span><span class="title">级联阴影 CSM</span>
+      <span class="desc">practical split 三级分割 + 深度纹理数组，纹素对齐消 shimmer，随级 bias 与级间 blend，按级染色 / 光锥线框调试</span></a></li>
+    <li><a class="card" href="13-frustum-culling/index.html">
+      <span class="num">13</span><span class="title">视锥剔除与场景管理</span>
+      <span class="desc">视锥六平面提取 + 场景图层次 AABB 剔除（HUD 统计每帧测试 / 剪枝数），front-to-back 排序，被剔幽灵与视锥线框</span></a></li>
   </ol>
 
   <footer>各示例代码顶部注释标注了对应分册路径；公共层（gl / math / geometry / controls）提炼在 <code>src/common/</code>。</footer>

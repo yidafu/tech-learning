@@ -25,6 +25,11 @@ npm run preview    # 本地预览构建产物
 | [06-scene-graph](06-scene-graph/index.html) | [第四阶段 / 场景图](../docs/04-第四阶段/03-场景图.md) | 8 节点父子变换树（恒星-行星-月球）：`matrixWorld = 父 × 局部`、双脏标记剪枝、空轨道节点带动公转 |
 | [07-picking](07-picking/index.html) | [第四阶段 / 交互系统](../docs/04-第四阶段/05-交互系统.md) | 屏幕点 -> NDC -> 逆投影 -> 世界射线，Möller–Trumbore 三角形求交（局部空间 + t 缩放换算），hover/click 语义 |
 | [08-shadows](08-shadows/index.html) | [第五阶段 / 阴影与 PCF 软阴影](../docs/05-第五阶段/02-阴影与PCF软阴影.md) | 两 pass shadow map（`DEPTH_COMPONENT24` + `sampler2DShadow`）、光源正交相机按 AABB 拟合、坡度 bias + 3x3 PCF |
+| [09-pbr-ibl](09-pbr-ibl/index.html) | [第五阶段 / 基于图像的光照](../docs/05-第五阶段/08-基于图像的光照.md) | 程序化 HDR 天空 → 四份 IBL 资产（env cubemap/辐照度/GGX 预滤波 mip/BRDF LUT）→ 金属度-粗糙度球阵 PBR 合成，空格开关环境光对比 |
+| [10-ssao](10-ssao/index.html) | [第五阶段 / 屏幕空间环境光遮蔽](../docs/05-第五阶段/09-屏幕空间环境光遮蔽.md) | G-buffer(MRT) → 64 采样半球核 + 4x4 噪声旋转 → 盒滤波 → 光照合成；空格开关 AO、V 查看遮蔽缓冲 |
+| [11-gpu-timer](11-gpu-timer/index.html) | [第五阶段 / GPU 性能度量与剖析](../docs/05-第五阶段/10-GPU性能度量与剖析.md) | `EXT_disjoint_timer_query_webgl2` 分段计时（shadow/scene/post）与 CPU 帧统计并排，↑/↓ 调片元负载看 GPU 瓶颈形态 |
+| [12-csm](12-csm/index.html) | [第五阶段 / 级联阴影CSM](../docs/05-第五阶段/11-级联阴影CSM.md) | practical split 三级分割（`[`/`]` 调 λ）、每级光锥拟合 + 纹素对齐（S 开关看 shimmer）、`TEXTURE_2D_ARRAY` 深度、随级 bias 与 blend band、C 按级染色、B 光锥线框 |
+| [13-frustum-culling](13-frustum-culling/index.html) | [第五阶段 / 视锥剔除与场景管理](../docs/05-第五阶段/12-视锥剔除与场景管理.md) | Gribb–Hartmann 六平面 + 场景图层次 AABB 剔除（HUD 统计每帧测试/剪枝/剔除数）、front-to-back 排序、V 被剔幽灵、F 视锥线框 |
 
 每个示例的 `main.ts` 顶部注释都标注了对应分册路径；交互方式见各页面左上角 HUD。
 
@@ -53,11 +58,16 @@ examples/
 ├── 05-orbit-controls/
 ├── 06-scene-graph/             #   额外：scene-graph.ts（Node3D）
 ├── 07-picking/                 #   额外：raycast.ts、boxes.ts（场景数据）
-└── 08-shadows/                 #   额外：shadow.ts（深度 FBO + 光相机）、shaders.ts
+├── 08-shadows/                 #   额外：shadow.ts（深度 FBO + 光相机）、shaders.ts
+├── 09-pbr-ibl/                 #   额外：ibl.ts（四份 IBL 资产生成）、shaders.ts
+├── 10-ssao/                    #   额外：ssao.ts（G-buffer/采样核/模糊）、shaders.ts
+├── 11-gpu-timer/               #   额外：gpu-timer.ts（GpuFrameTimer 查询池）
+├── 12-csm/                     #   额外：csm.ts（分割/拟合/纹理数组）、shaders.ts
+└── 13-frustum-culling/         #   额外：frustum.ts（平面/AABB）、scene-graph.ts（CullNode）
 ```
 
 ## 与分册的对应关系说明
 
 - **API 命名**：`compileShader / createProgram / lookAt / perspective / fromTRS / OrbitControls / createSphere / ...` 均沿用分册命名；分册里"每个 demo 原样复制"的骨架（上下文、编译链接、resize）统一提炼进了 `src/common/`。
-- **WebGL 版本**：01/02 按第一阶段分册用 GLSL ES 1.00（WebGL1 语法）；03-08 用 WebGL2（VAO、`DEPTH_COMPONENT24` 等，与三、四、五阶段分册一致）。
+- **WebGL 版本**：01/02 按第一阶段分册用 GLSL ES 1.00（WebGL1 语法）；03-13 用 WebGL2（VAO、`DEPTH_COMPONENT24`、纹理数组等，与三、四、五阶段分册一致）。
 - **刻意的精简**（均在代码注释中标明出处）：`math.ts` 是 minmath 的最小集（无 Quaternion/Mat3，场景图用"轴 + 角"代替四元数）；法线矩阵在纯旋转场景直接取 `mat3(uModel)`（分册注明完整实现须用 `normalFromMat4`）。
