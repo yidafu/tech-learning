@@ -331,6 +331,36 @@
     ]
   },
   {
+    "id": "02-Babel深度剖析",
+    "title": "Babel 深度剖析：把前七阶段的流水线搬进真实工具链",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "03-实践-mini-lint",
+    "title": "实践：从零实现 mini-lint",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "04-实践-Babel插件三选一",
+    "title": "实践：Babel 插件三选一",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "05-TypeScript编译器架构",
+    "title": "TypeScript 编译器架构：Program / Checker / Transformer / Emitter",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "06-esbuild-SWC与工具链选型",
+    "title": "esbuild / SWC 为什么快：手段、代价与选型决策树",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
     "id": "09-演练场",
     "title": "演练场导览：多范式语言核心最小集",
     "linkTo": [
