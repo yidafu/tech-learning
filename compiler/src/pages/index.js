@@ -56,6 +56,12 @@ const stages = [
   },
 ];
 
+const playground = {
+  title: '语言演练场',
+  desc: '四种计算模型的最小核心：λ 演算 / Lisp / Forth / Prolog，浏览器里直接跑——换一圈视角看 mini 语言的每个设计为什么如此。',
+  tag: '做实战',
+};
+
 const readingOrder = [
   { step: '1', label: '建全局', text: '第一阶段先看清编译器流水线全景，知道 Babel / tsc / esbuild 各自在做哪一段。' },
   { step: '2', label: '走前端', text: '第二到四阶段吃透词法、语法、语义三段，把 mini 语言从字符流推进到带类型的 AST。' },
@@ -92,7 +98,7 @@ export default function Home() {
             ))}
           </ol>
         </section>
-        <section className="container home-section--last">
+        <section className="container home-section">
           <Heading as="h2">八个阶段</Heading>
           <FeatureCardGrid
             cards={stages.map((stage) => ({
@@ -103,6 +109,21 @@ export default function Home() {
               to: `/docs/${stage.dir}/导览`,
               path: `${stage.dir}/`,
             }))}
+          />
+        </section>
+        <section className="container home-section--last">
+          <Heading as="h2">语言演练场</Heading>
+          <FeatureCardGrid
+            cards={[
+              {
+                title: playground.title,
+                desc: playground.desc,
+                tag: playground.tag,
+                accent: tagAccent[playground.tag] ?? 'primary',
+                to: '/playground',
+                path: 'playground/',
+              },
+            ]}
           />
         </section>
       </main>

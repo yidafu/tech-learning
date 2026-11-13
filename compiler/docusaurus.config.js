@@ -77,6 +77,19 @@ const config = {
           },
           {
             type: 'dropdown',
+            label: '演练场',
+            position: 'left',
+            items: [
+              { to: '/playground', label: '总览' },
+              { to: '/playground/lambda', label: 'λ 演算 · 归约器' },
+              { to: '/playground/lisp', label: 'Lisp · 元循环' },
+              { to: '/playground/forth', label: 'Forth · 栈机' },
+              { to: '/playground/prolog', label: 'Prolog · 合一与回溯' },
+              { to: '/docs/演练场/导览', label: '分册讲解（文档）' },
+            ],
+          },
+          {
+            type: 'dropdown',
             label: '站群',
             position: 'right',
             items: [
