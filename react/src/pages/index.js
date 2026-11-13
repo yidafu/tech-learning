@@ -48,6 +48,12 @@ const outlines = [
     desc: '复杂场景项目级复刻：拖拽仪表盘 / 低代码平台整合',
     tag: '做项目',
   },
+  {
+    title: '第二辑项目复刻手册',
+    dir: 'react-高阶场景-第二辑-项目复刻',
+    desc: '第二辑 9 场景施工手册：大屏搭建器 / 工作流节点图 / 查询构建器 / SaaS 毕业项目',
+    tag: '做项目',
+  },
 ];
 
 const readingOrder = [
@@ -89,7 +95,7 @@ export default function Home() {
           </ol>
         </section>
         <section className="container home-section--last">
-          <Heading as="h2">七份大纲</Heading>
+          <Heading as="h2">八份大纲</Heading>
           <FeatureCardGrid
             cards={outlines.map((outline) => ({
               title: outline.title,

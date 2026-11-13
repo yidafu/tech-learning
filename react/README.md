@@ -1,6 +1,6 @@
 # React 高阶学习课程（文档站）
 
-七份场景驱动的 React 学习大纲，使用 **Docusaurus 3** 构建为文档站，站点配置直接位于本仓库根目录。
+八份场景驱动的 React 学习大纲，使用 **Docusaurus 3** 构建为文档站，站点配置直接位于本仓库根目录。
 
 ## 本地运行
 
@@ -17,14 +17,14 @@ npm run serve  # 本地预览构建产物
 |------|------|
 | `docusaurus.config.js` | 站点配置（标题 / 导航 / zh-Hans） |
 | `sidebars.js` | 侧边栏由 docs/ 目录结构自动生成 |
-| `docs/` | 七份大纲的正文（每份一个目录，README.md 为分章索引） |
+| `docs/` | 八份大纲的正文（每份一个目录，README.md 为分章索引） |
 | `src/pages/index.js` | 文档站首页（阅读顺序 + 大纲卡片） |
 | `src/css/custom.css` | 主题色与首页样式 |
 | `完整版备份/` | 拆分前的完整原件（未纳入文档站） |
 | `大纲原件备份/` | 更早的精简版大纲（未纳入文档站） |
 | `DOCUSAURUS-SETUP.md` | 站点搭建手册：在其他项目复刻本站的完整步骤与踩坑清单 |
 
-## 七份大纲
+## 八份大纲
 
 | # | 文档 | 定位 | 站内路径 |
 |---|------|------|----------|
@@ -35,6 +35,7 @@ npm run serve  # 本地预览构建产物
 | 5 | React 组件库实战大纲 | 组件实现的功力清单 | [/docs/react-组件库实战大纲](/docs/react-组件库实战大纲) |
 | 6 | React 源码学习：复刻一个简化版 React | didact 式 mini React，M1–M13（含并发三部曲）+ React Compiler 专题 | [/docs/react-源码复刻大纲](/docs/react-源码复刻大纲) |
 | 7 | React 复杂场景项目复刻手册 | 拖拽仪表盘 / 低代码平台整合 | [/docs/react-复杂场景-项目复刻](/docs/react-复杂场景-项目复刻) |
+| 8 | React 高阶场景第二辑项目复刻手册 | 大屏搭建器 / 工作流节点图 / 查询构建器等 9 场景施工手册 | [/docs/react-高阶场景-第二辑-项目复刻](/docs/react-高阶场景-第二辑-项目复刻) |
 
 ## 约定
 
@@ -43,7 +44,7 @@ npm run serve  # 本地预览构建产物
 - `.md` 文件按纯 Markdown 解析（`markdown.format: 'detect'`），不要求 MDX 语法；如需嵌 React 组件，新建 `.mdx` 或在 front matter 加 `format: mdx`。
 - 已启用 `@docusaurus/theme-live-codeblock`：```` ```jsx live ```` / ```` ```js live ```` 代码块在页面内直接运行。注意 react-live 4.x 规则：inline 模式整段代码必须是一个表达式；多语句用 `noInline` + `render()`；求值结果必须是 React 元素才会显示。详见站内 [写作指南](/docs/写作指南-MDX-与在线代码块)。
 - 已启用 `@docusaurus/theme-mermaid`：```` ```mermaid ```` 代码块渲染为图表（`.md` 直接可用）。
-- 已启用 `docusaurus-graph`：构建后生成 `build/docusaurus-graph.json`，站点右上角图视图入口看全站知识图谱。节点的边只来自 front matter `sources:` / `references:` 标签（值为目标文件名去 `.md`）；七份大纲 README 已注入 `references:` 指向各章。
+- 已启用 `docusaurus-graph`：构建后生成 `build/docusaurus-graph.json`，站点右上角图视图入口看全站知识图谱。节点的边只来自 front matter `sources:` / `references:` 标签（值为目标文件名去 `.md`）；八份大纲 README 已注入 `references:` 指向各章。
 - `@docusaurus/plugin-rsdoctor` 为按需启用：`npm run build:analyze`（即 `RSDOCTOR=true`）生成 `build/.rsdoctor/` 产物分析报告。⚠️ 不要放进常规构建——instrument 开销大（构建 80 秒 → 15+ 分钟），且其 SDK 会让构建进程写完报告后不退出（需手动 Ctrl-C）。
 - 通用 React 组件放 `src/components/`（如 `Callout`），供 `.mdx` 静态嵌入。
 - `docusaurus.config.js` 中的 `url` 为占位地址，部署时替换为实际域名。
