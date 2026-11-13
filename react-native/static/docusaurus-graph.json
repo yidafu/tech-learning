@@ -144,12 +144,30 @@
     ]
   },
   {
+    "id": "04-动画系统原理",
+    "title": "动画系统原理",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-事件系统原理"
+    ]
+  },
+  {
+    "id": "05-键盘与TextInput链路",
+    "title": "键盘与 TextInput 链路",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-事件系统原理"
+    ]
+  },
+  {
     "id": "rn-事件系统原理",
     "title": "模块六 · 事件系统原理",
     "linkTo": [
       "01-触摸事件链路与手势仲裁",
       "02-GestureHandler原理化",
-      "03-滚动与列表事件"
+      "03-滚动与列表事件",
+      "04-动画系统原理",
+      "05-键盘与TextInput链路"
     ],
     "referencedBy": []
   },
@@ -229,13 +247,58 @@
     ]
   },
   {
+    "id": "05-mini-react-native落地实现",
+    "title": "mini-react-native 落地实现（M0–M5）",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-原理实战"
+    ]
+  },
+  {
+    "id": "06-宿主工程与视图原语",
+    "title": "宿主工程与视图原语（M0–M1 全量实现）",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-原理实战"
+    ]
+  },
+  {
+    "id": "07-渲染器与更新管线",
+    "title": "渲染器与更新管线（M2–M3 全量实现）",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-原理实战"
+    ]
+  },
+  {
+    "id": "08-布局器与上屏后端",
+    "title": "布局器与上屏后端（M4–M5 全量实现）",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-原理实战"
+    ]
+  },
+  {
+    "id": "09-事件回路与收官自测",
+    "title": "事件回路与收官自测",
+    "linkTo": [],
+    "referencedBy": [
+      "rn-原理实战"
+    ]
+  },
+  {
     "id": "rn-原理实战",
     "title": "模块十 · 原理实战",
     "linkTo": [
       "01-mini-react-native总览",
       "02-自定义TurboModule全流程",
       "03-Fabric原生组件开发",
-      "04-调试工具链原理"
+      "04-调试工具链原理",
+      "05-mini-react-native落地实现",
+      "06-宿主工程与视图原语",
+      "07-渲染器与更新管线",
+      "08-布局器与上屏后端",
+      "09-事件回路与收官自测"
     ],
     "referencedBy": []
   },
