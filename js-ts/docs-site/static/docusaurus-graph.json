@@ -146,6 +146,8 @@
     "linkTo": [],
     "referencedBy": [
       "10-ts-generics",
+      "33-ts-classes-and-interfaces",
+      "34-ts-function-types",
       "26-compiler-perspective"
     ]
   },
@@ -156,6 +158,7 @@
       "09-ts-narrowing"
     ],
     "referencedBy": [
+      "32-ts-type-challenges",
       "24-interview-prediction-questions"
     ]
   },
@@ -164,6 +167,7 @@
     "title": "11 · TypeScript 类型编程：映射 / 条件 / infer / 模板字面量 / 变长元组",
     "linkTo": [],
     "referencedBy": [
+      "32-ts-type-challenges",
       "22-design-patterns"
     ]
   },
@@ -171,13 +175,20 @@
     "id": "12-ts-utility-types",
     "title": "12 · 内置工具类型：源码级理解与手写",
     "linkTo": [],
-    "referencedBy": []
+    "referencedBy": [
+      "32-ts-type-challenges",
+      "33-ts-classes-and-interfaces",
+      "34-ts-function-types"
+    ]
   },
   {
     "id": "13-ts-type-theory",
     "title": "13 · TypeScript 类型系统理论",
     "linkTo": [],
     "referencedBy": [
+      "32-ts-type-challenges",
+      "33-ts-classes-and-interfaces",
+      "34-ts-function-types",
       "24-interview-prediction-questions",
       "26-compiler-perspective",
       "28-js-ts-history"
@@ -193,6 +204,40 @@
     "id": "15-tsconfig",
     "title": "15 · tsconfig 关键项",
     "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "32-ts-type-challenges",
+    "title": "32 · 类型体操实战：14 道递进题",
+    "linkTo": [
+      "10-ts-generics",
+      "11-ts-type-programming",
+      "12-ts-utility-types",
+      "13-ts-type-theory"
+    ],
+    "referencedBy": []
+  },
+  {
+    "id": "33-ts-classes-and-interfaces",
+    "title": "33 · 类与接口的类型系统",
+    "linkTo": [
+      "09-ts-narrowing",
+      "12-ts-utility-types",
+      "13-ts-type-theory"
+    ],
+    "referencedBy": [
+      "34-ts-function-types"
+    ]
+  },
+  {
+    "id": "34-ts-function-types",
+    "title": "34 · 函数类型深入：重载 / void / this / 构造签名",
+    "linkTo": [
+      "09-ts-narrowing",
+      "12-ts-utility-types",
+      "13-ts-type-theory",
+      "33-ts-classes-and-interfaces"
+    ],
     "referencedBy": []
   },
   {

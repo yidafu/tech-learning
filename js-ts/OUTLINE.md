@@ -55,6 +55,9 @@
 5. **类型系统理论**：结构类型、协变/逆变、`never`/`unknown` 的角色
 6. **声明文件与模块解析**：`.d.ts` 编写、`moduleResolution`（node10 vs bundler）、`declare`/`declare module`
 7. **tsconfig 关键项**：`strictNullChecks`、`noUncheckedIndexedAccess`、`isolatedModules` 等
+8. **类与接口的类型系统**（`notes/stage-3-ts-types/33-ts-classes-and-interfaces.md`）：interface vs type 真实差异（声明合并/隐式索引签名/extends 冲突呈现）、private 同源检查（结构类型的名义岛）、`typeof C` 两面性、多态 `this` 与 Builder、mixin 的 `Constructor<T>` 模式
+9. **函数类型深入**（`notes/stage-3-ts-types/34-ts-function-types.md`）：重载三规则（顺序即优先级/实现签名不可见/兼容实现）、void 单向豁免、方法双变豁免 vs 属性严格逆变、`this` 参数、构造签名与 `abstract new`、`NoInfer`（推断源污染）
+10. **类型体操实战**（`notes/stage-3-ts-types/32-ts-type-challenges.md`）：六套路库（模式匹配/递归拆解/累加器/集合分发/映射变换/元组计数）+ 14 道递进题（easy → hard，含大纲点名的 `Curry`）+ 体操的工程边界
 
 **里程碑**：完成 10–15 道类型体操（如 `DeepReadonly`、`TupleToUnion`、`Curry`），能手写常用工具类型。
 

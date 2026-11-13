@@ -62,6 +62,9 @@ cd docs-site && npm run build   # 构建到 docs-site/build/
 | 3.5 类型系统理论（协变/逆变等） | [13](notes/stage-3-ts-types/13-ts-type-theory.md) | `exercises/ts-theory/`（3 个） |
 | 3.6 声明文件与模块解析 | [14](notes/stage-3-ts-types/14-ts-declarations-and-modules.md) | `exercises/ts-declarations/`（含 .d.ts） |
 | 3.7 tsconfig 关键项 | [15](notes/stage-3-ts-types/15-tsconfig.md) | `exercises/tsconfig/`（3 个 Compiler API 对照实验） |
+| 3.8 类与接口（声明合并/private 名义化/this/mixin） | [33](notes/stage-3-ts-types/33-ts-classes-and-interfaces.md) | `exercises/ts-classes-interfaces/`（2 个） |
+| 3.9 函数类型（重载/void 豁免/this/构造签名/NoInfer） | [34](notes/stage-3-ts-types/34-ts-function-types.md) | `exercises/ts-function-types/`（2 个） |
+| 3.10 类型体操实战（里程碑：14 道递进题） | [32](notes/stage-3-ts-types/32-ts-type-challenges.md) | `exercises/ts-type-challenges/`（4 个） |
 
 ### 阶段 4 · 工程化
 | 主题 | 笔记 | 练习目录 |
@@ -88,6 +91,7 @@ cd docs-site && npm run build   # 构建到 docs-site/build/
 
 - [x] **阶段 1**：手写 `Promise`（Promises/A+ 逐条标注）/ `bind` / `new` / 深拷贝 / `EventEmitter` —— `npx vitest run exercises/milestone/`（67 用例全绿）
 - [x] **阶段 3**：手写 15 个工具类型（含严格版 Omit）+ 类型体操 5 组练习 —— `npx vitest run exercises/ts-utility-types/`（20 用例全绿）
+- [x] **阶段 3（扩展）**：类型体操 14 道递进题（easy → hard，含 `Curry`/`MinusOne`/`Get`）+ 类与接口 + 函数类型深入 —— `tsc --strict` 全部单文件校验通过（`exercises/ts-type-challenges/`、`ts-classes-interfaces/`、`ts-function-types/`）
 
 ## 质量口径
 
