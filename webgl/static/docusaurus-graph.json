@@ -186,6 +186,24 @@
     "referencedBy": []
   },
   {
+    "id": "08-基于图像的光照",
+    "title": "基于图像的光照",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "09-屏幕空间环境光遮蔽",
+    "title": "屏幕空间环境光遮蔽",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "10-GPU性能度量与剖析",
+    "title": "GPU 性能度量与剖析",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
     "id": "02-Three",
     "title": "Three.js 源码研读：对照自研框架查漏补缺",
     "linkTo": [],

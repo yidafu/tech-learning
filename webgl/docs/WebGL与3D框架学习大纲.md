@@ -115,6 +115,9 @@
   - drawcall 是什么、合批（batching）思路
   - 显存管理、纹理压缩格式（KTX2 / Basis）概念
   - 调试工具：Spector.js 抓帧分析、性能埋点
+- [ ] 7. 增补：IBL 完整实现——equirect→cubemap、辐照度卷积、GGX 预滤波 mip、BRDF LUT（[08-基于图像的光照](05-第五阶段/08-基于图像的光照.md)）
+- [ ] 8. 增补：屏幕空间环境光遮蔽 SSAO（[09-屏幕空间环境光遮蔽](05-第五阶段/09-屏幕空间环境光遮蔽.md)）
+- [ ] 9. 增补：GPU 性能度量——EXT_disjoint_timer_query、瓶颈归因、RenderDoc（[10-GPU性能度量与剖析](05-第五阶段/10-GPU性能度量与剖析.md)）
 
 ## 第六阶段：源码对标与毕业项目（2~3 周）
 
