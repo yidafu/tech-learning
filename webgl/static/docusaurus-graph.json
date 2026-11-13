@@ -342,6 +342,24 @@
     "referencedBy": []
   },
   {
+    "id": "03-刚体转动动力学",
+    "title": "刚体转动动力学",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "04-关节与约束求解器",
+    "title": "关节与约束求解器",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "05-连续碰撞检测与流体粒子",
+    "title": "连续碰撞检测与流体粒子",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
     "id": "01-语言核心",
     "title": "GLSL 语言核心",
     "linkTo": [],
