@@ -74,6 +74,7 @@ const config = {
               { to: '/docs/第七阶段/导览', label: '07 · 优化技术' },
               { to: '/docs/第八阶段/导览', label: '08 · 现代编译器实战' },
               { to: '/docs/GC算法专题/导览', label: '专题 · GC 算法' },
+              { to: '/docs/Wasm专题/导览', label: '专题 · Wasm' },
             ],
           },
           {
