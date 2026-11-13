@@ -51,6 +51,8 @@ cd docs-site && npm run build   # 构建到 docs-site/build/
 | --- | --- | --- |
 | V8 执行流程 / 隐藏类 / IC | [07](notes/stage-2-engine-runtime/07-v8-engine.md) | `exercises/v8-and-performance/`（5 个） |
 | 渲染管线 / 防抖节流 / 切片 / Worker | [08](notes/stage-2-engine-runtime/08-render-and-performance.md) | 同上 |
+| Node.js 运行时（streams/Buffer/子进程/worker_threads/cluster） | [35](notes/stage-2-engine-runtime/35-node-runtime.md) | `exercises/node-runtime/`（5 个 .mjs） |
+| 性能工程（CPU profile/堆快照三快照法/事件循环延迟/六步法） | [36](notes/stage-2-engine-runtime/36-performance-engineering.md) | `exercises/performance-engineering/`（4 个 .mjs） |
 
 ### 阶段 3 · TypeScript 类型系统
 | 主题 | 笔记 | 练习目录 |

@@ -42,6 +42,8 @@
 - 隐藏类（hidden classes）与内联缓存对性能的影响
 - 浏览器渲染管线与事件循环的关系（rAF、rIC、任务切片）
 - 性能专题：防抖/节流、懒加载、Web Workers、长任务分析
+- Node.js 运行时（`notes/stage-2-engine-runtime/35-node-runtime.md`）：streams 与背压（highWaterMark → false → drain、pipeline）、Buffer 与堆外内存（external）、child_process 四件套与注入面/maxBuffer、worker_threads vs cluster 选型、模块加载在进程模型上的推论（事件循环细节见阶段 1 笔记 31；ESM/CJS 见阶段 4 笔记 16）
+- 性能工程方法论（`notes/stage-2-engine-runtime/36-performance-engineering.md`）：CPU 采样剖析（`--cpu-prof`、`.cpuprofile` 结构、self/total）与火焰图读法（宽度/栈深）；堆快照三快照法（保留大小/支配树/三种常见泄漏模式的快照特征，场景复现见阶段 1 笔记 06）；`monitorEventLoopDelay` 与 `eventLoopUtilization` 的 CPU 型/IO 等待型分类；「慢 → 函数」六步法（指标 → 分类 → 插桩 → profile → 等价修复 → 预算）
 
 ## 阶段 3：TypeScript 类型系统（3–4 周）
 

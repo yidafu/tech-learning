@@ -63,6 +63,8 @@
     "title": "06 · 内存管理：V8 垃圾回收、泄漏排查与 Weak 家族",
     "linkTo": [],
     "referencedBy": [
+      "35-node-runtime",
+      "36-performance-engineering",
       "30-internals-vs-mainstream"
     ]
   },
@@ -117,6 +119,7 @@
     "linkTo": [],
     "referencedBy": [
       "29-prototype-chain-supplement",
+      "36-performance-engineering",
       "24-interview-prediction-questions",
       "26-compiler-perspective",
       "27-weird-behaviors-by-stage",
@@ -130,15 +133,56 @@
     "linkTo": [
       "04-async-programming"
     ],
-    "referencedBy": []
+    "referencedBy": [
+      "35-node-runtime",
+      "36-performance-engineering"
+    ]
   },
   {
     "id": "08-render-and-performance",
     "title": "08 · 渲染管线、事件循环与性能专题",
     "linkTo": [],
     "referencedBy": [
+      "35-node-runtime",
+      "36-performance-engineering",
       "24-interview-prediction-questions"
     ]
+  },
+  {
+    "id": "35-node-runtime",
+    "title": "35 · Node.js 运行时：streams、Buffer、子进程与并行模型",
+    "linkTo": [
+      "31-async-supplement",
+      "16-modules-esm-cjs",
+      "08-render-and-performance",
+      "06-memory-management"
+    ],
+    "referencedBy": [
+      "36-performance-engineering"
+    ]
+  },
+  {
+    "id": "16-modules-esm-cjs",
+    "title": "16 · 模块化：CommonJS 与 ESM 的机制差异",
+    "linkTo": [],
+    "referencedBy": [
+      "35-node-runtime",
+      "24-interview-prediction-questions",
+      "26-compiler-perspective",
+      "28-js-ts-history"
+    ]
+  },
+  {
+    "id": "36-performance-engineering",
+    "title": "36 · 性能工程：CPU profile、堆快照与事件循环延迟",
+    "linkTo": [
+      "06-memory-management",
+      "07-v8-engine",
+      "08-render-and-performance",
+      "31-async-supplement",
+      "35-node-runtime"
+    ],
+    "referencedBy": []
   },
   {
     "id": "09-ts-narrowing",
@@ -239,16 +283,6 @@
       "33-ts-classes-and-interfaces"
     ],
     "referencedBy": []
-  },
-  {
-    "id": "16-modules-esm-cjs",
-    "title": "16 · 模块化：CommonJS 与 ESM 的机制差异",
-    "linkTo": [],
-    "referencedBy": [
-      "24-interview-prediction-questions",
-      "26-compiler-perspective",
-      "28-js-ts-history"
-    ]
   },
   {
     "id": "17-build-tools",
