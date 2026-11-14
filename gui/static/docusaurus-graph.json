@@ -1,0 +1,363 @@
+[
+  {
+    "id": "01-第一阶段",
+    "title": "第一阶段导览：全局观与第一个窗口",
+    "linkTo": [],
+    "referencedBy": [
+      "GUI框架学习大纲"
+    ]
+  },
+  {
+    "id": "02-GUI框架是什么",
+    "title": "GUI 框架是什么：分层、两种模式与浏览器的同构",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "03-主流框架架构地图",
+    "title": "主流框架架构地图：七个框架，一张取舍表",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "04-raylib图形库解剖",
+    "title": "raylib 图形库解剖：给什么、不给什么",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "05-ScriptC工具链",
+    "title": "ScriptC 工具链：从 TypeScript 到原生窗口",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "06-第一个窗口与帧循环",
+    "title": "第一个窗口与帧循环：mini-gui 的第一次呼吸",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "02-第二阶段",
+    "title": "第二阶段导览：绘制层",
+    "linkTo": [],
+    "referencedBy": [
+      "GUI框架学习大纲"
+    ]
+  },
+  {
+    "id": "02-从裸调用到Painter",
+    "title": "从裸调用到 Painter：给绘制装一个可替换的底座",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "03-基础图元",
+    "title": "基础图元：几何、颜色与最小绘制集",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "04-裁剪与变换",
+    "title": "裁剪与变换：嵌套坐标系与 scissor 栈",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "05-位图与九宫格",
+    "title": "位图与九宫格：句柄、程序化纹理与不变形拉伸",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "06-显示列表与批处理",
+    "title": "显示列表与批处理：记录、重放、排序的机会",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "03-第三阶段",
+    "title": "第三阶段导览：文本与排版",
+    "linkTo": [],
+    "referencedBy": [
+      "GUI框架学习大纲"
+    ]
+  },
+  {
+    "id": "02-字体与字形",
+    "title": "字体与字形：默认字体的来历与 CJK 的现实",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "03-文本度量",
+    "title": "文本度量：advance、行高与「测量=绘制」铁律",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "04-断行算法",
+    "title": "断行算法：贪心装箱与可断块",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "05-富文本span",
+    "title": "富文本 span 与光标几何：两遍布局和一个真实的映射 bug",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "06-文本缓存",
+    "title": "文本缓存：把 O(n²) 度量压回 O(n)",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "04-第四阶段",
+    "title": "第四阶段导览：控件树与布局",
+    "linkTo": [],
+    "referencedBy": [
+      "GUI框架学习大纲"
+    ]
+  },
+  {
+    "id": "02-为什么是两棵树",
+    "title": "为什么是两棵树：Widget 与 RenderObject 的分工",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "03-布局协议",
+    "title": "布局协议：约束向下、尺寸向上、父定位置",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "04-盒模型与基础布局器",
+    "title": "盒模型与基础布局器：Padding / SizedBox / Align / 装饰盒",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "05-Flex布局",
+    "title": "Flex 布局：主轴、交叉轴与弹性分配",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "06-布局性能",
+    "title": "布局性能：缓存、边界与一个被测试抓住的调度 bug",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "05-第五阶段",
+    "title": "第五阶段导览：事件与交互",
+    "linkTo": [],
+    "referencedBy": [
+      "GUI框架学习大纲"
+    ]
+  },
+  {
+    "id": "02-输入抽象",
+    "title": "输入抽象：从轮询到事件流",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "03-命中测试",
+    "title": "命中测试：从窗口坐标到命中链",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "04-指针状态机",
+    "title": "指针状态机：分发、捕获、hover 差分与手势判定",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "05-焦点系统",
+    "title": "焦点系统：Tab 遍历与键盘路由",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "06-滚动与手势",
+    "title": "滚动与手势：视口、惯性与竞裁",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "06-第六阶段",
+    "title": "第六阶段导览：渲染管线与调度",
+    "linkTo": [],
+    "referencedBy": [
+      "GUI框架学习大纲"
+    ]
+  },
+  {
+    "id": "02-帧流水线",
+    "title": "帧流水线：一帧的旅程",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "03-脏标记与失效传播",
+    "title": "脏标记与失效传播：自底向上标脏、自顶向下消化",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "04-局部重绘",
+    "title": "局部重绘：失效截断、图层合成与「没做到的第三道」",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "05-动画系统",
+    "title": "动画系统：值补间、曲线族与帧率无关的推进",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "06-性能度量",
+    "title": "性能度量：观测口、压测方法与诚实账本",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "07-第七阶段",
+    "title": "第七阶段导览：声明式与响应式层",
+    "linkTo": [],
+    "referencedBy": [
+      "GUI框架学习大纲"
+    ]
+  },
+  {
+    "id": "02-命令式之痛",
+    "title": "命令式之痛：为什么需要声明式层",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "03-signals内核",
+    "title": "signals 内核：读时收集、写时拓扑、惰性计算",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "04-声明式组件API",
+    "title": "声明式组件 API：VNode、挂载与原地更新",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "05-树协调",
+    "title": "树协调：keyed 列表与身份保持",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "06-生命周期与主题",
+    "title": "生命周期与主题：stop、token 与热切换",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "08-第八阶段",
+    "title": "第八阶段导览：工程化与毕业项目",
+    "linkTo": [],
+    "referencedBy": [
+      "GUI框架学习大纲"
+    ]
+  },
+  {
+    "id": "02-控件库补全",
+    "title": "控件库补全：TextField 的完整解剖",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "03-虚拟列表",
+    "title": "虚拟列表：万级行的池化与记账",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "04-平台细节",
+    "title": "平台细节：HiDPI、窗口系统与 ScriptC 宿主面",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "05-测试方法",
+    "title": "测试方法：无头像素断言、事件回放与黄金用例",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "06-对标与展望",
+    "title": "对标与展望：五框架取舍表与三条扩展线",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "07-毕业项目",
+    "title": "毕业项目：三选一的需求书与验收门",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "09-布局算法专题",
+    "title": "布局算法专题：五种排版引擎的完整算法",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "02-流式布局Flow",
+    "title": "流式布局 Flow：贪心装行的完整算法",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "03-网格布局Grid",
+    "title": "网格布局 Grid：轨道先定型、格子后入座的两段式算法",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "04-约束布局Constraint",
+    "title": "约束布局 Constraint：锚点线性方程与 Kahn 工作清单",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "05-绝对定位Absolute",
+    "title": "绝对定位 Absolute：锚边四元组的算术",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "06-堆叠分层Stack",
+    "title": "堆叠与分层 Stack / Z：第三根轴的完整算法",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "GUI框架学习大纲",
+    "title": "GUI 框架学习大纲",
+    "linkTo": [
+      "01-第一阶段",
+      "02-第二阶段",
+      "03-第三阶段",
+      "04-第四阶段",
+      "05-第五阶段",
+      "06-第六阶段",
+      "07-第七阶段",
+      "08-第八阶段"
+    ],
+    "referencedBy": []
+  }
+]

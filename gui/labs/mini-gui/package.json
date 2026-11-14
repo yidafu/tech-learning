@@ -1,0 +1,21 @@
+{
+  "name": "mini-gui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "scriptc-raylib run src/apps/01-window.ts --dev",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "scriptc": "^0.4.12",
+    "scriptc-raylib": "^1.0.4",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
