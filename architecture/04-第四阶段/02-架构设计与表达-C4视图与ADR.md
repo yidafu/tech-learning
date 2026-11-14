@@ -296,7 +296,7 @@ fun main(args: Array<String>) {
 }
 ```
 
-对本阶段示例 ADR 目录 [02a-示例-adr/](02a-示例-adr)（含 ADR-003 被取代、ADR-007 已接受、ADR-008 已接受三个文件）运行 `java -jar adrindex.jar 04-第四阶段/02a-示例-adr`，实际输出：
+对本阶段示例 ADR 目录 `02a-示例-adr/`（目录见各文件相对链接）（含 ADR-003 被取代、ADR-007 已接受、ADR-008 已接受三个文件）运行 `java -jar adrindex.jar 04-第四阶段/02a-示例-adr`，实际输出：
 
 ```text
 | 编号 | 标题 | 状态 | 文件 |
