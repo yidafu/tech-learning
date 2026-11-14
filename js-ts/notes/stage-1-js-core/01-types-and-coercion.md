@@ -2,7 +2,7 @@
 mdx:
   format: mdx
 ---
-# 01 类型系统与类型转换：原始值、装箱与四套相等语义
+# 01 · 类型系统与类型转换：原始值、装箱与四套相等语义
 
 **对应大纲**：阶段 1.1 类型系统与类型转换（`typeof`/`instanceof` 的坑、显式/隐式转换、`ToPrimitive`、`==` vs `===` vs `Object.is`、`Symbol`）
 

@@ -9,7 +9,7 @@
   },
   {
     "id": "01-types-and-coercion",
-    "title": "01 类型系统与类型转换：原始值、装箱与四套相等语义",
+    "title": "01 · 类型系统与类型转换：原始值、装箱与四套相等语义",
     "linkTo": [],
     "referencedBy": [
       "24-interview-prediction-questions",
@@ -70,7 +70,7 @@
   },
   {
     "id": "25-milestone-implementations",
-    "title": "里程碑笔记：手写 Promise / bind / new / 深拷贝 / EventEmitter",
+    "title": "25 · 里程碑笔记：手写 Promise / bind / new / 深拷贝 / EventEmitter",
     "linkTo": [],
     "referencedBy": []
   },

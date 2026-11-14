@@ -2,7 +2,7 @@
 mdx:
   format: mdx
 ---
-# 里程碑笔记：手写 Promise / bind / new / 深拷贝 / EventEmitter
+# 25 · 里程碑笔记：手写 Promise / bind / new / 深拷贝 / EventEmitter
 
 > 对应大纲：**阶段 1 里程碑**（异步编程 → Promise 状态机；this 与原型链 → bind/new；内存管理 → WeakMap 深拷贝）
 > 配套练习：`exercises/milestone/`（每个实现都带 Vitest 用例，可对照运行）
