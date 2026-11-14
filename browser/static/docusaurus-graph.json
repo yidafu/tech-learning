@@ -1,0 +1,538 @@
+[
+  {
+    "id": "01-第一阶段",
+    "title": "第一阶段导览：全链路鸟瞰与度量基础",
+    "linkTo": [
+      "02-从URL到首屏全景时间线与耗时账本",
+      "03-浏览器组成-进程线程与站点隔离",
+      "04-度量基础-Network与Performance面板入门"
+    ],
+    "referencedBy": [
+      "浏览器与网络原理学习大纲"
+    ]
+  },
+  {
+    "id": "02-从URL到首屏全景时间线与耗时账本",
+    "title": "从 URL 到首屏：全景时间线与耗时账本",
+    "linkTo": [],
+    "referencedBy": [
+      "01-第一阶段"
+    ]
+  },
+  {
+    "id": "03-浏览器组成-进程线程与站点隔离",
+    "title": "浏览器组成：进程、线程与站点隔离",
+    "linkTo": [],
+    "referencedBy": [
+      "01-第一阶段"
+    ]
+  },
+  {
+    "id": "04-度量基础-Network与Performance面板入门",
+    "title": "度量基础：Network 与 Performance 面板入门",
+    "linkTo": [],
+    "referencedBy": [
+      "01-第一阶段"
+    ]
+  },
+  {
+    "id": "02-第二阶段",
+    "title": "第二阶段导览：发起请求之前——导航与浏览器决策",
+    "linkTo": [
+      "02-URL语法解析与地址栏决策",
+      "03-导航决策链-HSTS-ServiceWorker-缓存与BFCache",
+      "04-导航执行-跨进程流转与commit",
+      "05-站点隔离深潜-frame tree与OOPIF"
+    ],
+    "referencedBy": [
+      "浏览器与网络原理学习大纲"
+    ]
+  },
+  {
+    "id": "02-URL语法解析与地址栏决策",
+    "title": "URL 语法解析与地址栏决策",
+    "linkTo": [],
+    "referencedBy": [
+      "02-第二阶段"
+    ]
+  },
+  {
+    "id": "03-导航决策链-HSTS-ServiceWorker-缓存与BFCache",
+    "title": "导航决策链：HSTS、Service Worker、缓存与 BFCache",
+    "linkTo": [],
+    "referencedBy": [
+      "02-第二阶段"
+    ]
+  },
+  {
+    "id": "04-导航执行-跨进程流转与commit",
+    "title": "导航执行：跨进程流转与 commit",
+    "linkTo": [],
+    "referencedBy": [
+      "02-第二阶段"
+    ]
+  },
+  {
+    "id": "05-站点隔离深潜-frame tree与OOPIF",
+    "title": "站点隔离深潜：frame tree 与 OOPIF",
+    "linkTo": [],
+    "referencedBy": [
+      "02-第二阶段"
+    ]
+  },
+  {
+    "id": "03-第三阶段",
+    "title": "第三阶段导览：建立连接——DNS、TCP/UDP、ICMP 与 TLS",
+    "linkTo": [
+      "02-DNS解析全链路",
+      "03-TCP-三次握手与传输控制",
+      "04-UDP与ICMP-无连接传输与网络层信令",
+      "05-TLS-从明文到加密信道",
+      "06-实践-用抓包工具拆一次真实握手"
+    ],
+    "referencedBy": [
+      "浏览器与网络原理学习大纲"
+    ]
+  },
+  {
+    "id": "02-DNS解析全链路",
+    "title": "DNS 解析全链路",
+    "linkTo": [],
+    "referencedBy": [
+      "03-第三阶段"
+    ]
+  },
+  {
+    "id": "03-TCP-三次握手与传输控制",
+    "title": "TCP：三次握手与传输控制",
+    "linkTo": [],
+    "referencedBy": [
+      "03-第三阶段"
+    ]
+  },
+  {
+    "id": "04-UDP与ICMP-无连接传输与网络层信令",
+    "title": "UDP 与 ICMP：无连接传输与网络层信令",
+    "linkTo": [],
+    "referencedBy": [
+      "03-第三阶段"
+    ]
+  },
+  {
+    "id": "05-TLS-从明文到加密信道",
+    "title": "TLS：从明文到加密信道（HTTPS 握手详解）",
+    "linkTo": [],
+    "referencedBy": [
+      "03-第三阶段"
+    ]
+  },
+  {
+    "id": "06-实践-用抓包工具拆一次真实握手",
+    "title": "实践：用抓包工具拆一次真实握手",
+    "linkTo": [],
+    "referencedBy": [
+      "03-第三阶段"
+    ]
+  },
+  {
+    "id": "04-第四阶段",
+    "title": "第四阶段导览：HTTP 协议与请求语义",
+    "linkTo": [
+      "02-HTTP1.1-报文语义与连接管理",
+      "03-HTTP2-分帧多路复用与优先级",
+      "04-HTTP3与QUIC",
+      "05-请求语义-协商-Cookie-条件请求与Range"
+    ],
+    "referencedBy": [
+      "浏览器与网络原理学习大纲"
+    ]
+  },
+  {
+    "id": "02-HTTP1.1-报文语义与连接管理",
+    "title": "02-HTTP1.1-报文语义与连接管理",
+    "linkTo": [],
+    "referencedBy": [
+      "04-第四阶段"
+    ]
+  },
+  {
+    "id": "03-HTTP2-分帧多路复用与优先级",
+    "title": "HTTP/2：分帧、多路复用与优先级",
+    "linkTo": [],
+    "referencedBy": [
+      "04-第四阶段"
+    ]
+  },
+  {
+    "id": "04-HTTP3与QUIC",
+    "title": "HTTP/3 与 QUIC：换掉传输层",
+    "linkTo": [],
+    "referencedBy": [
+      "04-第四阶段"
+    ]
+  },
+  {
+    "id": "05-请求语义-协商-Cookie-条件请求与Range",
+    "title": "请求语义：内容协商、Cookie、条件请求与 Range",
+    "linkTo": [],
+    "referencedBy": [
+      "04-第四阶段"
+    ]
+  },
+  {
+    "id": "02-HTTP1",
+    "title": "HTTP/1.1：报文语义与连接管理",
+    "linkTo": [],
+    "referencedBy": []
+  },
+  {
+    "id": "05-第五阶段",
+    "title": "第五阶段导览：服务端与响应回程",
+    "linkTo": [
+      "02-CDN-边缘-回源与调度",
+      "03-负载均衡-网关与反向代理",
+      "04-服务端如何生成HTML-模板-SSR与流式",
+      "05-响应回程-压缩-分块与连接复用",
+      "06-错误-重定向与失败模式"
+    ],
+    "referencedBy": [
+      "浏览器与网络原理学习大纲"
+    ]
+  },
+  {
+    "id": "02-CDN-边缘-回源与调度",
+    "title": "CDN：边缘、回源与调度",
+    "linkTo": [],
+    "referencedBy": [
+      "05-第五阶段"
+    ]
+  },
+  {
+    "id": "03-负载均衡-网关与反向代理",
+    "title": "负载均衡、网关与反向代理",
+    "linkTo": [],
+    "referencedBy": [
+      "05-第五阶段"
+    ]
+  },
+  {
+    "id": "04-服务端如何生成HTML-模板-SSR与流式",
+    "title": "服务端如何生成 HTML：模板、SSR 与流式",
+    "linkTo": [],
+    "referencedBy": [
+      "05-第五阶段"
+    ]
+  },
+  {
+    "id": "05-响应回程-压缩-分块与连接复用",
+    "title": "响应回程：压缩、分块与连接复用",
+    "linkTo": [],
+    "referencedBy": [
+      "05-第五阶段"
+    ]
+  },
+  {
+    "id": "06-错误-重定向与失败模式",
+    "title": "错误、重定向与失败模式",
+    "linkTo": [],
+    "referencedBy": [
+      "05-第五阶段"
+    ]
+  },
+  {
+    "id": "06-第六阶段",
+    "title": "第六阶段导览：接收、缓存与子资源调度",
+    "linkTo": [
+      "02-网络进程接收流水线",
+      "03-HTTP缓存体系全解",
+      "04-ServiceWorker-生命周期与拦截时序",
+      "05-子资源调度-预解析扫描器-优先级与资源hint",
+      "06-脚本加载模型-阻塞-defer-async与module"
+    ],
+    "referencedBy": [
+      "浏览器与网络原理学习大纲"
+    ]
+  },
+  {
+    "id": "02-网络进程接收流水线",
+    "title": "02-网络进程接收流水线",
+    "linkTo": [],
+    "referencedBy": [
+      "06-第六阶段"
+    ]
+  },
+  {
+    "id": "03-HTTP缓存体系全解",
+    "title": "03-HTTP缓存体系全解",
+    "linkTo": [],
+    "referencedBy": [
+      "06-第六阶段"
+    ]
+  },
+  {
+    "id": "04-ServiceWorker-生命周期与拦截时序",
+    "title": "04-ServiceWorker-生命周期与拦截时序",
+    "linkTo": [],
+    "referencedBy": [
+      "06-第六阶段"
+    ]
+  },
+  {
+    "id": "05-子资源调度-预解析扫描器-优先级与资源hint",
+    "title": "05-子资源调度-预解析扫描器-优先级与资源hint",
+    "linkTo": [],
+    "referencedBy": [
+      "06-第六阶段"
+    ]
+  },
+  {
+    "id": "06-脚本加载模型-阻塞-defer-async与module",
+    "title": "06-脚本加载模型-阻塞-defer-async与module",
+    "linkTo": [],
+    "referencedBy": [
+      "06-第六阶段"
+    ]
+  },
+  {
+    "id": "07-第七阶段",
+    "title": "第七阶段导览：解析与构建——HTML、CSS、JS 变成可计算的数据",
+    "linkTo": [
+      "02-从字节到字符-编码判定与解码",
+      "03-HTML解析器-状态机-容错与DOM构建",
+      "04-CSS解析与CSSOM",
+      "05-样式计算-级联-匹配与ComputedStyle",
+      "06-V8执行模型-从源码到优化机器码",
+      "07-事件循环与任务调度-渲染在哪里发生"
+    ],
+    "referencedBy": [
+      "浏览器与网络原理学习大纲"
+    ]
+  },
+  {
+    "id": "02-从字节到字符-编码判定与解码",
+    "title": "02-从字节到字符-编码判定与解码",
+    "linkTo": [],
+    "referencedBy": [
+      "07-第七阶段"
+    ]
+  },
+  {
+    "id": "03-HTML解析器-状态机-容错与DOM构建",
+    "title": "03-HTML解析器-状态机-容错与DOM构建",
+    "linkTo": [],
+    "referencedBy": [
+      "07-第七阶段"
+    ]
+  },
+  {
+    "id": "04-CSS解析与CSSOM",
+    "title": "04-CSS解析与CSSOM",
+    "linkTo": [],
+    "referencedBy": [
+      "07-第七阶段"
+    ]
+  },
+  {
+    "id": "05-样式计算-级联-匹配与ComputedStyle",
+    "title": "05-样式计算-级联-匹配与ComputedStyle",
+    "linkTo": [],
+    "referencedBy": [
+      "07-第七阶段"
+    ]
+  },
+  {
+    "id": "06-V8执行模型-从源码到优化机器码",
+    "title": "06-V8执行模型-从源码到优化机器码",
+    "linkTo": [],
+    "referencedBy": [
+      "07-第七阶段"
+    ]
+  },
+  {
+    "id": "07-事件循环与任务调度-渲染在哪里发生",
+    "title": "07-事件循环与任务调度-渲染在哪里发生",
+    "linkTo": [],
+    "referencedBy": [
+      "07-第七阶段"
+    ]
+  },
+  {
+    "id": "08-第八阶段",
+    "title": "第八阶段导览：渲染管线——从树到像素",
+    "linkTo": [
+      "02-渲染树与LayoutNG-fragment树",
+      "03-布局-盒模型-格式化上下文与布局抖动",
+      "04-分层-PaintLayer-合成层与层爆炸",
+      "05-绘制与栅格化-display list-瓦片与Skia",
+      "06-合成-合成线程-GPU与vsync",
+      "07-一帧的完整生命周期-失效传播与帧预算"
+    ],
+    "referencedBy": [
+      "浏览器与网络原理学习大纲"
+    ]
+  },
+  {
+    "id": "02-渲染树与LayoutNG-fragment树",
+    "title": "02-渲染树与LayoutNG-fragment树",
+    "linkTo": [],
+    "referencedBy": [
+      "08-第八阶段"
+    ]
+  },
+  {
+    "id": "03-布局-盒模型-格式化上下文与布局抖动",
+    "title": "03-布局-盒模型-格式化上下文与布局抖动",
+    "linkTo": [],
+    "referencedBy": [
+      "08-第八阶段"
+    ]
+  },
+  {
+    "id": "04-分层-PaintLayer-合成层与层爆炸",
+    "title": "04-分层-PaintLayer-合成层与层爆炸",
+    "linkTo": [],
+    "referencedBy": [
+      "08-第八阶段"
+    ]
+  },
+  {
+    "id": "05-绘制与栅格化-display list-瓦片与Skia",
+    "title": "05-绘制与栅格化-display list-瓦片与Skia",
+    "linkTo": [],
+    "referencedBy": [
+      "08-第八阶段"
+    ]
+  },
+  {
+    "id": "06-合成-合成线程-GPU与vsync",
+    "title": "06-合成-合成线程-GPU与vsync",
+    "linkTo": [],
+    "referencedBy": [
+      "08-第八阶段"
+    ]
+  },
+  {
+    "id": "07-一帧的完整生命周期-失效传播与帧预算",
+    "title": "07-一帧的完整生命周期-失效传播与帧预算",
+    "linkTo": [],
+    "referencedBy": [
+      "08-第八阶段"
+    ]
+  },
+  {
+    "id": "09-第九阶段",
+    "title": "第九阶段导览：首屏、交互与持续渲染",
+    "linkTo": [
+      "02-关键渲染路径与首屏呈现",
+      "03-性能指标深潜-FCP-LCP-CLS-INP测量原理",
+      "04-加载优化手法手册",
+      "05-输入事件链路与交互渲染",
+      "06-水合与下一代渲染架构"
+    ],
+    "referencedBy": [
+      "浏览器与网络原理学习大纲"
+    ]
+  },
+  {
+    "id": "02-关键渲染路径与首屏呈现",
+    "title": "02-关键渲染路径与首屏呈现",
+    "linkTo": [],
+    "referencedBy": [
+      "09-第九阶段"
+    ]
+  },
+  {
+    "id": "03-性能指标深潜-FCP-LCP-CLS-INP测量原理",
+    "title": "03-性能指标深潜-FCP-LCP-CLS-INP测量原理",
+    "linkTo": [],
+    "referencedBy": [
+      "09-第九阶段"
+    ]
+  },
+  {
+    "id": "04-加载优化手法手册",
+    "title": "04-加载优化手法手册",
+    "linkTo": [],
+    "referencedBy": [
+      "09-第九阶段"
+    ]
+  },
+  {
+    "id": "05-输入事件链路与交互渲染",
+    "title": "05-输入事件链路与交互渲染",
+    "linkTo": [],
+    "referencedBy": [
+      "09-第九阶段"
+    ]
+  },
+  {
+    "id": "06-水合与下一代渲染架构",
+    "title": "06-水合与下一代渲染架构",
+    "linkTo": [],
+    "referencedBy": [
+      "09-第九阶段"
+    ]
+  },
+  {
+    "id": "10-第十阶段",
+    "title": "第十阶段导览：实战、工具与毕业",
+    "linkTo": [
+      "02-DevTools深潜-Performance全轨道解剖",
+      "03-案例复盘集-加载类",
+      "04-案例复盘集-渲染类",
+      "05-毕业项目-全链路测量与优化报告"
+    ],
+    "referencedBy": [
+      "浏览器与网络原理学习大纲"
+    ]
+  },
+  {
+    "id": "02-DevTools深潜-Performance全轨道解剖",
+    "title": "02-DevTools深潜-Performance全轨道解剖",
+    "linkTo": [],
+    "referencedBy": [
+      "10-第十阶段"
+    ]
+  },
+  {
+    "id": "03-案例复盘集-加载类",
+    "title": "03-案例复盘集-加载类",
+    "linkTo": [],
+    "referencedBy": [
+      "10-第十阶段"
+    ]
+  },
+  {
+    "id": "04-案例复盘集-渲染类",
+    "title": "04-案例复盘集-渲染类",
+    "linkTo": [],
+    "referencedBy": [
+      "10-第十阶段"
+    ]
+  },
+  {
+    "id": "05-毕业项目-全链路测量与优化报告",
+    "title": "05-毕业项目-全链路测量与优化报告",
+    "linkTo": [],
+    "referencedBy": [
+      "10-第十阶段"
+    ]
+  },
+  {
+    "id": "浏览器与网络原理学习大纲",
+    "title": "浏览器与网络原理学习大纲",
+    "linkTo": [
+      "01-第一阶段",
+      "02-第二阶段",
+      "03-第三阶段",
+      "04-第四阶段",
+      "05-第五阶段",
+      "06-第六阶段",
+      "07-第七阶段",
+      "08-第八阶段",
+      "09-第九阶段",
+      "10-第十阶段"
+    ],
+    "referencedBy": []
+  }
+]
