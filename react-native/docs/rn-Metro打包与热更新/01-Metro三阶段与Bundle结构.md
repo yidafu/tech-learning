@@ -1,4 +1,4 @@
-# Metro 三阶段与 Bundle 结构
+# 01. Metro 三阶段与 Bundle 结构
 
 > RN 的 bundle 不是黑盒，是一段可以逐行阅读的 JS。本篇先拆 Metro 的三阶段流水线，再解剖一个真实 bundle 的结构——读懂结构，热更新、拆包、启动优化都有了抓手。
 

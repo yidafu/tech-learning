@@ -1,7 +1,7 @@
 [
   {
     "id": "01-Bridge本质与消息队列",
-    "title": "Bridge 本质与消息队列",
+    "title": "01. Bridge 本质与消息队列",
     "linkTo": [],
     "referencedBy": [
       "rn-Bridge通信原理"
@@ -9,7 +9,7 @@
   },
   {
     "id": "02-NativeModules调用链",
-    "title": "Native Modules 调用链",
+    "title": "02. Native Modules 调用链",
     "linkTo": [],
     "referencedBy": [
       "rn-Bridge通信原理"
@@ -17,7 +17,7 @@
   },
   {
     "id": "03-Bridge瓶颈量化",
-    "title": "Bridge 瓶颈量化",
+    "title": "03. Bridge 瓶颈量化",
     "linkTo": [],
     "referencedBy": [
       "rn-Bridge通信原理"
@@ -25,7 +25,7 @@
   },
   {
     "id": "04-跨语言通信的通用设计",
-    "title": "跨语言通信的通用设计",
+    "title": "04. 跨语言通信的通用设计",
     "linkTo": [],
     "referencedBy": [
       "rn-Bridge通信原理"
@@ -44,7 +44,7 @@
   },
   {
     "id": "01-JS引擎对比与Hermes原理",
-    "title": "JS 引擎对比与 Hermes 原理",
+    "title": "01. JS 引擎对比与 Hermes 原理",
     "linkTo": [],
     "referencedBy": [
       "rn-JS引擎与线程模型"
@@ -52,7 +52,7 @@
   },
   {
     "id": "02-四线程模型",
-    "title": "四线程模型",
+    "title": "02. 四线程模型",
     "linkTo": [],
     "referencedBy": [
       "rn-JS引擎与线程模型"
@@ -60,7 +60,7 @@
   },
   {
     "id": "03-Hermes深潜：字节码与GC",
-    "title": "Hermes 深潜：字节码与 GC",
+    "title": "03. Hermes 深潜：字节码与 GC",
     "linkTo": [],
     "referencedBy": [
       "rn-JS引擎与线程模型"
@@ -68,7 +68,7 @@
   },
   {
     "id": "04-同步与异步的边界",
-    "title": "同步与异步的边界",
+    "title": "04. 同步与异步的边界",
     "linkTo": [],
     "referencedBy": [
       "rn-JS引擎与线程模型"
@@ -87,7 +87,7 @@
   },
   {
     "id": "01-Metro三阶段与Bundle结构",
-    "title": "Metro 三阶段与 Bundle 结构",
+    "title": "01. Metro 三阶段与 Bundle 结构",
     "linkTo": [],
     "referencedBy": [
       "rn-Metro打包与热更新"
@@ -95,7 +95,7 @@
   },
   {
     "id": "02-热更新原理",
-    "title": "热更新原理（CodePush / expo-updates）",
+    "title": "02. 热更新原理（CodePush / expo-updates）",
     "linkTo": [],
     "referencedBy": [
       "rn-Metro打包与热更新"
@@ -103,7 +103,7 @@
   },
   {
     "id": "03-Metro配置与工程化",
-    "title": "Metro 配置与工程化",
+    "title": "03. Metro 配置与工程化",
     "linkTo": [],
     "referencedBy": [
       "rn-Metro打包与热更新"
@@ -111,7 +111,7 @@
   },
   {
     "id": "04-包体与启动优化实操",
-    "title": "包体与启动优化实操（Hermes / 构成分析 / 拆包 / inline requires）",
+    "title": "04. 包体与启动优化实操（Hermes / 构成分析 / 拆包 / inline requires）",
     "linkTo": [],
     "referencedBy": [
       "rn-Metro打包与热更新"
@@ -119,7 +119,7 @@
   },
   {
     "id": "05-OTA更新工程实践",
-    "title": "OTA 更新工程实践（CodePush 之后）",
+    "title": "05. OTA 更新工程实践（CodePush 之后）",
     "linkTo": [],
     "referencedBy": [
       "rn-Metro打包与热更新"
@@ -139,7 +139,7 @@
   },
   {
     "id": "01-触摸事件链路与手势仲裁",
-    "title": "触摸事件链路与手势仲裁",
+    "title": "01. 触摸事件链路与手势仲裁",
     "linkTo": [],
     "referencedBy": [
       "rn-事件系统原理"
@@ -147,7 +147,7 @@
   },
   {
     "id": "02-GestureHandler原理化",
-    "title": "Gesture Handler 原理化",
+    "title": "02. Gesture Handler 原理化",
     "linkTo": [],
     "referencedBy": [
       "rn-事件系统原理"
@@ -155,7 +155,7 @@
   },
   {
     "id": "03-滚动与列表事件",
-    "title": "滚动与列表事件",
+    "title": "03. 滚动与列表事件",
     "linkTo": [],
     "referencedBy": [
       "rn-事件系统原理"
@@ -163,7 +163,7 @@
   },
   {
     "id": "04-动画系统原理",
-    "title": "动画系统原理",
+    "title": "04. 动画系统原理",
     "linkTo": [],
     "referencedBy": [
       "rn-事件系统原理"
@@ -171,7 +171,7 @@
   },
   {
     "id": "05-键盘与TextInput链路",
-    "title": "键盘与 TextInput 链路",
+    "title": "05. 键盘与 TextInput 链路",
     "linkTo": [],
     "referencedBy": [
       "rn-事件系统原理"
@@ -191,7 +191,7 @@
   },
   {
     "id": "01-RN全景与技术本质",
-    "title": "RN 全景与技术本质",
+    "title": "01. RN 全景与技术本质",
     "linkTo": [],
     "referencedBy": [
       "rn-全景与演进"
@@ -199,7 +199,7 @@
   },
   {
     "id": "02-从View到像素的旅程",
-    "title": "从 View 到像素的旅程",
+    "title": "02. 从 View 到像素的旅程",
     "linkTo": [],
     "referencedBy": [
       "rn-全景与演进"
@@ -207,7 +207,7 @@
   },
   {
     "id": "03-版本演进时间线",
-    "title": "版本演进时间线",
+    "title": "03. 版本演进时间线",
     "linkTo": [],
     "referencedBy": [
       "rn-全景与演进"
@@ -215,7 +215,7 @@
   },
   {
     "id": "04-RN生态与选型建议",
-    "title": "RN 生态与选型建议",
+    "title": "04. RN 生态与选型建议",
     "linkTo": [],
     "referencedBy": [
       "rn-全景与演进"
@@ -234,7 +234,7 @@
   },
   {
     "id": "01-mini-react-native总览",
-    "title": "mini-react-native 总览",
+    "title": "01. mini-react-native 总览",
     "linkTo": [],
     "referencedBy": [
       "rn-原理实战"
@@ -242,7 +242,7 @@
   },
   {
     "id": "02-自定义TurboModule全流程",
-    "title": "自定义 TurboModule 全流程",
+    "title": "02. 自定义 TurboModule 全流程",
     "linkTo": [],
     "referencedBy": [
       "rn-原理实战"
@@ -250,7 +250,7 @@
   },
   {
     "id": "03-Fabric原生组件开发",
-    "title": "Fabric 原生组件开发",
+    "title": "03. Fabric 原生组件开发",
     "linkTo": [],
     "referencedBy": [
       "rn-原理实战"
@@ -258,7 +258,7 @@
   },
   {
     "id": "04-调试工具链原理",
-    "title": "调试工具链原理",
+    "title": "04. 调试工具链原理",
     "linkTo": [],
     "referencedBy": [
       "rn-原理实战"
@@ -266,7 +266,7 @@
   },
   {
     "id": "05-mini-react-native落地实现",
-    "title": "mini-react-native 落地实现（M0–M5）",
+    "title": "05. mini-react-native 落地实现（M0–M5）",
     "linkTo": [],
     "referencedBy": [
       "rn-原理实战"
@@ -274,7 +274,7 @@
   },
   {
     "id": "06-宿主工程与视图原语",
-    "title": "宿主工程与视图原语（M0–M1 全量实现）",
+    "title": "06. 宿主工程与视图原语（M0–M1 全量实现）",
     "linkTo": [],
     "referencedBy": [
       "rn-原理实战"
@@ -282,7 +282,7 @@
   },
   {
     "id": "07-渲染器与更新管线",
-    "title": "渲染器与更新管线（M2–M3 全量实现）",
+    "title": "07. 渲染器与更新管线（M2–M3 全量实现）",
     "linkTo": [],
     "referencedBy": [
       "rn-原理实战"
@@ -290,7 +290,7 @@
   },
   {
     "id": "08-布局器与上屏后端",
-    "title": "布局器与上屏后端（M4–M5 全量实现）",
+    "title": "08. 布局器与上屏后端（M4–M5 全量实现）",
     "linkTo": [],
     "referencedBy": [
       "rn-原理实战"
@@ -298,7 +298,7 @@
   },
   {
     "id": "09-事件回路与收官自测",
-    "title": "事件回路与收官自测",
+    "title": "09. 事件回路与收官自测",
     "linkTo": [],
     "referencedBy": [
       "rn-原理实战"
@@ -322,7 +322,7 @@
   },
   {
     "id": "01-Android启动链路",
-    "title": "Android 启动链路",
+    "title": "01. Android 启动链路",
     "linkTo": [],
     "referencedBy": [
       "rn-启动流程原理"
@@ -330,7 +330,7 @@
   },
   {
     "id": "02-iOS启动链路与runApplication",
-    "title": "iOS 启动链路与 runApplication",
+    "title": "02. iOS 启动链路与 runApplication",
     "linkTo": [],
     "referencedBy": [
       "rn-启动流程原理"
@@ -338,7 +338,7 @@
   },
   {
     "id": "03-Bundle加载策略",
-    "title": "Bundle 加载策略",
+    "title": "03. Bundle 加载策略",
     "linkTo": [],
     "referencedBy": [
       "rn-启动流程原理"
@@ -346,7 +346,7 @@
   },
   {
     "id": "04-启动优化原理",
-    "title": "启动优化原理",
+    "title": "04. 启动优化原理",
     "linkTo": [],
     "referencedBy": [
       "rn-启动流程原理"
@@ -365,7 +365,7 @@
   },
   {
     "id": "01-性能定位方法论",
-    "title": "性能定位方法论",
+    "title": "01. 性能定位方法论",
     "linkTo": [],
     "referencedBy": [
       "rn-性能优化原理"
@@ -373,7 +373,7 @@
   },
   {
     "id": "02-列表虚拟化原理",
-    "title": "列表虚拟化原理",
+    "title": "02. 列表虚拟化原理",
     "linkTo": [],
     "referencedBy": [
       "rn-性能优化原理"
@@ -381,7 +381,7 @@
   },
   {
     "id": "03-渲染与状态优化",
-    "title": "渲染与状态优化",
+    "title": "03. 渲染与状态优化",
     "linkTo": [],
     "referencedBy": [
       "rn-性能优化原理"
@@ -389,7 +389,7 @@
   },
   {
     "id": "04-内存与稳定性",
-    "title": "内存与稳定性",
+    "title": "04. 内存与稳定性",
     "linkTo": [],
     "referencedBy": [
       "rn-性能优化原理"
@@ -397,7 +397,7 @@
   },
   {
     "id": "05-性能剖析操作手册",
-    "title": "性能剖析操作手册：从现象到函数",
+    "title": "05. 性能剖析操作手册：从现象到函数",
     "linkTo": [],
     "referencedBy": [
       "rn-性能优化原理"
@@ -417,7 +417,7 @@
   },
   {
     "id": "01-JSI原理",
-    "title": "JSI 原理",
+    "title": "01. JSI 原理",
     "linkTo": [],
     "referencedBy": [
       "rn-新架构"
@@ -425,7 +425,7 @@
   },
   {
     "id": "02-Fabric渲染管线",
-    "title": "Fabric 渲染管线",
+    "title": "02. Fabric 渲染管线",
     "linkTo": [],
     "referencedBy": [
       "rn-新架构"
@@ -433,7 +433,7 @@
   },
   {
     "id": "03-TurboModules",
-    "title": "TurboModules",
+    "title": "03. TurboModules",
     "linkTo": [],
     "referencedBy": [
       "rn-新架构"
@@ -441,7 +441,7 @@
   },
   {
     "id": "04-Codegen",
-    "title": "Codegen",
+    "title": "04. Codegen",
     "linkTo": [],
     "referencedBy": [
       "rn-新架构"
@@ -449,7 +449,7 @@
   },
   {
     "id": "05-新旧架构对比与迁移",
-    "title": "新旧架构对比与迁移",
+    "title": "05. 新旧架构对比与迁移",
     "linkTo": [],
     "referencedBy": [
       "rn-新架构"
@@ -457,7 +457,7 @@
   },
   {
     "id": "06-迁移工程实践",
-    "title": "新架构迁移工程实践（Interop / 兼容性排查 / 常见问题）",
+    "title": "06. 新架构迁移工程实践（Interop / 兼容性排查 / 常见问题）",
     "linkTo": [],
     "referencedBy": [
       "rn-新架构"
@@ -478,7 +478,7 @@
   },
   {
     "id": "01-Jest单元测试与组件测试原理",
-    "title": "Jest 单元测试与组件测试原理",
+    "title": "01. Jest 单元测试与组件测试原理",
     "linkTo": [],
     "referencedBy": [
       "rn-测试体系"
@@ -486,7 +486,7 @@
   },
   {
     "id": "02-端到端测试与选型",
-    "title": "端到端测试与选型",
+    "title": "02. 端到端测试与选型",
     "linkTo": [],
     "referencedBy": [
       "rn-测试体系"
@@ -503,7 +503,7 @@
   },
   {
     "id": "01-原生工程集成与生命周期",
-    "title": "原生工程集成与生命周期",
+    "title": "01. 原生工程集成与生命周期",
     "linkTo": [],
     "referencedBy": [
       "rn-混合开发"
@@ -511,7 +511,7 @@
   },
   {
     "id": "02-混合导航与通信边界",
-    "title": "混合导航与通信边界",
+    "title": "02. 混合导航与通信边界",
     "linkTo": [],
     "referencedBy": [
       "rn-混合开发"
@@ -528,7 +528,7 @@
   },
   {
     "id": "01-三棵树与Reconciler",
-    "title": "三棵树与 Reconciler",
+    "title": "01. 三棵树与 Reconciler",
     "linkTo": [],
     "referencedBy": [
       "rn-渲染原理"
@@ -536,7 +536,7 @@
   },
   {
     "id": "02-Yoga布局引擎",
-    "title": "Yoga 布局引擎",
+    "title": "02. Yoga 布局引擎",
     "linkTo": [],
     "referencedBy": [
       "rn-渲染原理"
@@ -544,7 +544,7 @@
   },
   {
     "id": "03-视图提交与批量挂载",
-    "title": "视图提交与批量挂载",
+    "title": "03. 视图提交与批量挂载",
     "linkTo": [],
     "referencedBy": [
       "rn-渲染原理"
@@ -552,7 +552,7 @@
   },
   {
     "id": "04-样式DPI与平台适配",
-    "title": "样式、DPI 与平台适配",
+    "title": "04. 样式、DPI 与平台适配",
     "linkTo": [],
     "referencedBy": [
       "rn-渲染原理"

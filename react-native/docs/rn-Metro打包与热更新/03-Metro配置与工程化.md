@@ -1,4 +1,4 @@
-# Metro 配置与工程化
+# 03. Metro 配置与工程化
 
 > 01 篇讲了 Metro 的三阶段（Resolution / Transformation / Serialization），本篇讲**这三段各能怎么改**：resolver 的平台与 monorepo、transformer 的注入、serializer 的多包 id，最后回答那个经典问题——**Metro 为什么没有 code-splitting**。
 

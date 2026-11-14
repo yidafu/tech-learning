@@ -1,4 +1,4 @@
-# Hermes 深潜：字节码与 GC
+# 03. Hermes 深潜：字节码与 GC
 
 > 01 篇讲了"为什么选 Hermes"，本篇拆开机器：**hbc 文件里到底装了什么？为什么没有 JIT？GC 又是怎么在移动端内存预算内工作的？** 源码对应 facebook/hermes 仓库。
 

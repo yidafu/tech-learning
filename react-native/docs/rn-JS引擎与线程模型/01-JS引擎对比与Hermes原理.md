@@ -1,4 +1,4 @@
-# JS 引擎对比与 Hermes 原理
+# 01. JS 引擎对比与 Hermes 原理
 
 > RN 历史上跑过三个引擎：JavaScriptCore（元老）、Hermes（亲儿子）、V8（可选件）。本篇讲三者取舍的底层逻辑，并拆开 Hermes"为什么快"的两个字：字节码。
 

@@ -1,4 +1,4 @@
-# Gesture Handler 原理化
+# 02. Gesture Handler 原理化
 
 > 01 篇的 Responder System 是"用 JS 模拟手势仲裁"——它把每个触摸事件都送过桥。react-native-gesture-handler（RNGH）反其道而行：**把手势识别整个搬回原生侧**。本篇拆它的架构动机、原生识别器如何驱动 React 组件，以及与 Reanimated worklet 的"零过桥"协作。
 

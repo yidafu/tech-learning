@@ -1,4 +1,4 @@
-# JSI 原理
+# 01. JSI 原理
 
 > 新架构的地基不是 Fabric，而是 JSI（JavaScript Interface）：一层用 C++ 写的"引擎通用遥控器"。理解了 JSI，"同步调用原生"从口号变成一句可解释的话。
 

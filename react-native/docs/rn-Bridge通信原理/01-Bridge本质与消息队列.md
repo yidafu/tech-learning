@@ -1,4 +1,4 @@
-# Bridge 本质与消息队列
+# 01. Bridge 本质与消息队列
 
 > 把旧架构的 Bridge 说透，只需要回答三个问题：**消息长什么样？什么时候发？怎么序列化？** 对应 MessageQueue 的三个队列、批量窗口和 JSON 编码。源码以 `Libraries/BatchedBridge/` 为根。
 

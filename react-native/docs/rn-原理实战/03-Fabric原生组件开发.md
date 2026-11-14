@@ -1,4 +1,4 @@
-# Fabric 原生组件开发
+# 03. Fabric 原生组件开发
 
 > 02 篇做了"非 UI 能力"（TurboModule），本篇做"UI 能力"：自定义 **Fabric 原生组件**。样例是一个圆形进度环：props 控制 `size/progress/color`，动画走原生侧，完成时回传 `onProgressComplete` 事件——覆盖 props 下行、事件上行、状态（State）三通道。
 
