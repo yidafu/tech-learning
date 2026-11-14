@@ -244,6 +244,32 @@ __d(function (p1, p2, p3, p4, p5, p6, p7) { /* 你的模块代码 */ }, 0, [1, 5
 - 多 bundle = 公共包提供 A 的 `__d` 集，业务包只是追加新的 `__d` 段（id 空间要事先分配好——`createModuleIdFactory` 定制）；
 - 循环依赖为何得到 `undefined`：`m.exports = {}` 先占位，factory 执行中取到的依赖可能尚未填充。
 
+### 3.3 现场检查：对一个真实 dev bundle 逐段对号
+
+dev server 的产物是**未压缩的纯 JS**（Hermes 字节码要等 release 构建——那是 [04 篇](04-包体与启动优化实操.md) §2.4 的现场），可以直接拉下来逐段找：
+
+```bash
+npx react-native start   # 先起 Metro（默认 8081）
+curl -s "http://localhost:8081/index.bundle?platform=ios&dev=true" -o /tmp/main.dev.js
+
+grep -c "__d(function" /tmp/main.dev.js   # 模块注册数 = 垫片 + 依赖 + 业务代码（远大于你的文件数）
+tail -5 /tmp/main.dev.js                  # 尾部找 __r(N)：序列化段的收尾就是入口执行
+grep -oE "__r\(([0-9]+)\)" /tmp/main.dev.js | tail -1
+grep -oE "\], ?\[[0-9]+(, ?[0-9]+)*\]\);" /tmp/main.dev.js | head -3   # 随手挖几个 dependencyMap
+```
+
+五个观察对号入座（每个都对应本篇的一节）：
+
+| 现场 | 对应小节 | 读法 |
+|---|---|---|
+| `__d` 数量 >> 业务文件数 | §3 Bundle 解剖 | 五段里的 Modules 段不止你的代码：polyfill、垫片、React Native 运行时全部按模块注册 |
+| 入口的 id 不是 0 | §3.1 | 3.1 的"入口 id=0"是最小例子的简化；真 bundle 里垫片先注册，入口 id 排在后面——**找入口看尾部的 `__r(N)`，别假设 N=0** |
+| 每个模块的依赖表都是纯数字数组 | §1.1 Resolution | 字符串路径在转译期已换成下标——bundle 里 grep 不到 `require('./xxx')` 的字符串字面量 |
+| `__r(` 只出现在极少数行 | §3.1 | 除了尾部入口那一行，模块都是被工厂里的 `r(d[i])` 惰性触发的；HMR 运行时会多几个注册点 |
+| 同一 url 改参数 `dev=false` 再拉 | §4 dev/prod 差异 | 体积骤降、混淆开启——但注意：`dev=false` 的 HTTP 产物仍是 JS，**只有 release 构建才走 Hermes 字节码**，两种"生产形态"别混为一谈（§4.2） |
+
+带着一个追问收尾：把 `platform=ios` 换成 `platform=android` 再拉一份，`__d` 数量不同——§1.1 的平台分流（`.ios.js`/`.android.js`/原生模块解析）在产物层面的直接证据。**产物是三阶段的镜子**：现场检查做多了，对"哪个阶段出了问题"的直觉会从猜变成看。
+
 ## 4. dev 与 prod 的差异清单
 
 | 维度 | dev | prod |

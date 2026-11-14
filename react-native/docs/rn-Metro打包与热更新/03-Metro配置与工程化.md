@@ -190,6 +190,19 @@ workspace 里如果 App 与某个共享包各自依赖了 React/ReactDOM（哪�
 - **CI 缓存要带"配置指纹"**：metro/babel 的缓存若在 CI 复用，key 必须包含配置与依赖版本，否则"改了配置产物没变"；
 - **软链与真实路径的混用**：同一包有时以链接路径、有时以真实路径进图，会被当成两个模块（单例失效）——保持 `resolveSymlinks` 行为全工程一致。
 
+### 2.3 手工推演：一份两包 monorepo 的解析走查
+
+把 2.1 的"两份 React"病按解析路径推到底，看它到底在哪一步长出来。布局：`workspaces: ["packages/*"]`，`packages/app`（RN 壳）与 `packages/shared`（共享包），`shared` 声明依赖 `react ^18`，`app` 也声明 `react ^18`：
+
+| 步 | 谁 require 什么 | 查找序列 | 命中点 | 进图的身份 |
+|---|---|---|---|---|
+| ① | `app` 里 `import 'shared'` | `app/node_modules/shared`（无——workspace 包不重复落包）→ `root/node_modules/shared` | **symlink → `packages/shared`** | `resolveSymlinks: true` 时以真实路径注册 |
+| ② | `packages/shared` 里 `import 'react'` | `packages/shared/node_modules/react`（hoist 后无）→ `root/node_modules/react` | 根的那份 | 一份 |
+| ③ | `app` 里 `import 'react'` | `app/node_modules/react`（hoist 后无）→ `root/node_modules/react` | 根的同一份 | 一份——②③ 同一路径，单例成立 |
+| ④ | 若某天有人给 `shared` 单独装了 `react`（版本不同） | ② 的查找在 `packages/shared/node_modules/react` **提前命中** | 子包自己的那份 | **两份 React 进图**——2.1 的病在查找序列上的诞生地 |
+
+三个结论把配置项和病理接上：① 表里"命中点是否同一路径"就是单例成立的全部条件——`resolveSymlinks` 决定的是 ① 里"symlink 算不算同一份"，版本对齐决定的是 ②④ 里"查找会不会提前命中"——**两个旋钮管一件事：让 React 在全图只有一个物理身份**；② `nodeModulesPaths` 里根目录**必须排在子目录之前**（§2 开头的配置顺序），否则 ② 的查找先落进别的副本——顺序是语义的一部分；③ 2.2 缓存陷阱的 babel 那条在这里也能看到根：Metro 的 babel 配置从壳工程（projectRoot）向上找**一份** `babel.config.js` 统一管辖全图——shared 想有独立预设本来就不受支持，与其绕不如显式对齐。查实际解析结果别猜，`npx react-native config`（§2 末尾）输出里直接看各依赖被解析到的物理路径。
+
 ## 3. serializer：模块 id 与多 bundle
 
 01 篇讲过 `__d(id, factory)` 的封装——**id 从哪来**就是 `createModuleIdFactory` 决定的：
