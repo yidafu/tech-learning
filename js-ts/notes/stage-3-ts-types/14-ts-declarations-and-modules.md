@@ -253,3 +253,54 @@ npx tsx exercises/ts-declarations/01-ambient-usage.ts
 - TS 5.0 Release Notes（bundler、node10 更名与废弃）：https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html
 - Node.js 官方文档《Packages》（exports 字段）：https://nodejs.org/api/packages.html
 - 下一站：`notes/stage-3-ts-types/15-tsconfig.md`（阶段 3.7 tsconfig 关键项）
+
+## 附：声明文件的现场排查速查（收尾增补）
+
+本册讲了 .d.ts 的结构与模块解析，收尾把"装了包却没有类型 / 类型不对"的排查路径压成速查表：
+
+| 症状 | 第一嫌疑 | 验证动作 |
+|---|---|---|
+| `import x from 'pkg'` 报"找不到声明" | 包没带类型且无 @types | ls node_modules/pkg 看 types 字段；查 DefinitelyTyped |
+| 类型是隐式 any（noImplicitAny 没报） | skipLibCheck 或宽松 tsconfig | 查 tsconfig 的 three lines：strict/skipLibCheck/moduleResolution |
+| 补全出来的类型是 any | 解析到了 JS 而非 .d.ts | 查 package.json 的 types/exports.types 字段指向 |
+| 类型与运行时不符（版本漂移） | @types 版本与包版本脱钩 | 对齐两边的版本号；库自带类型时删 @types |
+| monorepo 里 monorepo 内包没有类型 | 没走 source 直接引用 | workspace 协议 + 源码引用（含 tsconfig paths） |
+| `export =` 的包 import 失败 | CJS/ESM 互操作姿势 | esModuleInterop / allowSyntheticDefaultImports |
+
+排查表的统一心法：**类型丢失永远是"解析链"断了**——从 import 语句到 types 字段到 tsconfig 三开关，六行症状对应六处断点。逐行对号比全局重装快得多。
+
+### 收尾自测（增补）
+
+1. 排查表的六行各断在解析链的哪一环？按链路顺序复述一遍。
+2. skipLibCheck 关掉了什么检查、省了什么成本？为什么它几乎总是开着？
+3. `export =` 与 `export default` 的互操作差异在 importsNotUsedAsValues/esModuleInterop 下各怎么表现？
+4. 给你的包加类型的三种发布姿势（随包/@types/直接源码）各自的适用条件是什么？
+
+排查表再补最后一节"预防优于排查"——发包前的一次自查，能消灭表里的前四行症状：
+
+- 包内有手写 .d.ts → package.json 写 `"types": "./dist/index.d.ts"`，发版前 tsc 空消费一次（新建空项目 install 你的包试 import）；
+- 依赖 @types → 确认 @types 的版本约定与主包对齐（README 写清楚对应关系）；
+- 双格式包（[16 册](../stage-4-engineering/16-modules-esm-cjs.md)）→ exports 里 types 条件放第一位，双入口各指向对应声明；
+- monorepo 内部包 → 直接发布 TS 源 + 消费方 include，或走 build 产物 + 声明，二选一并写进 ADR，不要两套并存。
+
+预防清单四行 = 发布类型包的全部纪律。本册与 16 册（模块）、[13 册](13-ts-type-theory.md)（类型理论）合起来构成"类型如何跨文件、跨包流动"的完整链路——声明文件是这条链路的最后一公里，也是工程上最容易断的一环。
+
+### 收尾一句话（增补）
+
+声明文件的本质是**类型宇宙的接口契约**——运行时靠 package.json 的入口字段，类型靠 types 字段，两套入口并行不悖；排查一切"类型找不到"的问题，都是在追这两套入口谁断了。
+
+### 补充：类型入口与运行时入口的对齐表（最终）
+
+| 入口种类 | package.json 字段 | 断链症状 | 修复 |
+|---|---|---|---|
+| CJS 运行时 | main | require 找不到 | 补 main |
+| ESM 运行时 | module / exports.import | ESM 消费失败 | 补 exports 条件 |
+| CJS 类型 | exports.types / types | 消费方隐式 any | 补 types 条件 |
+| ESM 类型 | exports."types" | 同上（另一入口） | 双条件各配 types |
+| 子路径 | exports"./x" | 深路径 import 失败 | 每个子路径单独配 |
+
+五行对齐表是"发布一个可被正确消费的包"的完整清单——运行时与类型各两条入口 + 子路径扩展，任何一行缺失都是排查表里某行症状的根因。
+
+### 收尾自测（增补）
+
+7. 双格式包的 exports 里 types 条件为什么必须放第一组？放第二组会发生什么？

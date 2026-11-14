@@ -271,3 +271,35 @@ console.log(({}).deep?.v);
 - ① `["__proto__"]`；`1`。
 - ② 读到 `Object.prototype`（accessor getter 的返回值）：truthy → `if (!t[k])` 不成立 → **不**执行 `t[k] = {}`（替换原型的那步被跳过）→ 递归 merge 的 target 就是 Object.prototype 本身 → `deep` 被写进 Object.prototype → 全局所有对象都能读到 `.deep.v === 1`。注意与 JSON.parse 的对照：那里 CreateDataProperty 绕过 accessor 建了自有属性，这里普通**读**走 getter 返回原型——同一个字符串键，两种建属性语义，行为相反。
 - ③ 任意两个：merge 前过滤 `__proto__`/`constructor`/`prototype` 键；用 `Map` 或 `Object.create(null)` 承接用户输入（没有 Object.prototype 就没有这条洞）；深层防御如 `structuredClone` 代替手写 merge、公共依赖锁版本（历史上 lodash/jquery 都出过 CVE）。
+
+## 附：原型链的三张速查卡（收尾增补）
+
+本册补充分册覆盖了 getter/setter 与原型污染，收尾把全册压成三张卡：
+
+### 卡一：属性查找的完整决策树
+
+- 自有属性？→ 返回（data 或 accessor 各自的语义）
+- 沿 `[[Prototype]]` 上溯，每一层重跑上一条
+- 到 `null`（Object.prototype 的原型）仍无 → undefined
+- 全程任何一层命中 accessor → getter 的 this 是**发起查找的对象**，不是定义者
+
+### 卡二：写操作的四种结局
+
+- 自有 data 属性 → 就地改写（[[Set]] 直写）
+- 自有 accessor → setter 接管（this 同卡一规则）
+- 原型链上有 setter → **setter 接管，不会在自身建属性**（`count++` 事故的根因）
+- 全链无拦截 → 在自身建 data 属性
+
+### 卡三：防御性写法的判据
+
+- 要不可扩展/不可改 → Object.freeze（浅！嵌套对象要递归）
+- 要防原型污染（merge 类代码）→ 键白名单 + `Object.hasOwn` 过滤 `__proto__`/`constructor`
+- 要"读时不触发 getter 的副作用" → `Object.getOwnPropertyDescriptor` 直取描述符
+
+三张卡合起来覆盖本册全部机制点——每张卡的每一行都能在正文找到对应小节的展开，速查卡是复习入口，正文是证据链。
+
+### 收尾自测（增补）
+
+1. 卡二第三行"原型 setter 接管"与卡一 getter 的 this 规则合起来，解释了哪些"this 不是你写的那个对象"事故？
+2. freeze 浅防御漏了什么？递归 freeze 的成本画像是什么？
+3. 你项目的 merge/assign 类工具函数过一遍卡三第二行：白名单和 hasOwn 过滤都有吗？

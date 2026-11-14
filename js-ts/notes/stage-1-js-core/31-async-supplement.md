@@ -234,3 +234,67 @@ slow 完成
 - TC39《Explicit Resource Management》提案仓库（using / await using / DisposableStack / SuppressedError）：[https://github.com/tc39/proposal-explicit-resource-management](https://github.com/tc39/proposal-explicit-resource-management)
 - p-limit（生产级并发限制器，对照练习 07 的手写版）：[https://github.com/sindresorhus/p-limit](https://github.com/sindresorhus/p-limit)
 - web-infra-dev《Deep Dive into Top-level await》（模块求值与 Promise 机制的关系）：[https://github.com/orgs/web-infra-dev/discussions/9](https://github.com/orgs/web-infra-dev/discussions/9)
+
+## 附：异步场景 × 正确工具速查（收尾增补）
+
+把"遇到什么场景、拿什么工具"压成一张可贴在工位的速查表：
+
+| 场景 | 正确工具 | 反面教材 |
+|---|---|---|
+| 串行依赖（后一步用前一步结果） | await 链 | Promise.all（并发错） |
+| 互相独立的 N 个请求 | Promise.all / allSettled | for 循环 await（串行慢） |
+| N 个请求但并发要限流 | 手写 pool（练习 07）或 p-limit | Promise.all 全量并发（打爆服务） |
+| "谁先到用谁"（超时/降级） | Promise.race / any | setTimeout 包裹的 hack |
+| 一批任务只要一个成功结果 | Promise.any | 手写布尔旗标 |
+| 每个结果单独处置（成败混合） | Promise.allSettled | all + catch 重试（一败俱伤） |
+| 事件驱动的持续异步流 | AsyncIterator / Observable 思想 | 回调嵌套 |
+| 取消一个进行中的异步操作 | AbortController + signal | promise 上"标记 canceled"（拦不住） |
+| 同步路径里要"异步一次" | queueMicrotask / 首个 await | setTimeout 0（时机不同） |
+
+每行的机制出处都能回指本册正文的某一节：allSettled 与 all 的分野在"失败传播语义"，race 的坑在"败者继续跑"，AbortController 的本质是"异步操作的取消要有跨层协议"。速查表的用法是反查——review 时看到反面列的写法，顺着行找正解与机制。
+
+## 复习自测（增补）
+
+1. `Promise.all` 第三个任务失败时，前两个成功的结果还能拿到吗？要用什么 API？各自的失败语义是什么？
+2. 手写并发池（练习 07）里"槽位释放"为什么必须放 `finally`？漏放会出现什么现象？
+3. AbortController 触发后，fetch 一定立刻停止网络请求吗？"取消"到底取消了什么？
+4. `await` 之后的代码在微任务队列的什么位置？和 `queueMicrotask(() => ...)` 排队的位置有何区别？
+5. 一句话解释"为什么 async 函数返回的永远是新 promise，即使 return 一个现成 promise"。
+6. 挑项目里一处 `for + await`：改并发（或限流并发）后收益来自哪里——网络并行还是队列消减？
+
+### 速查表的机制底账：三行最容易讲错的补充
+
+- **allSettled 不等于"更好的 all"**：两者的失败语义是不同的契约——all 是"全成才成"（一票否决），allSettled 是"我全都要（结果不论成败）"。选错的代价不是报错而是静默语义漂移：业务要"一票否决"的场景用了 allSettled，部分失败会被当成功路径吞掉；
+- **race 的"败者继续跑"**：race 只决定**谁的结果先被采用**，不取消任何参与方——超时用 race 时，底层请求仍在消耗连接。完整方案是 race + AbortController（败者主动掐掉），两者是组合关系不是替代关系；
+- **queueMicrotask 与首个 await 的微妙差别**：函数开头 `await` 会把后续全部塞进微任务，而 `queueMicrotask` 只排一个回调——两者在"我要异步一次"上等价，但在"后续还有没有链"上不等价。链式续排的场景用前者，单次让出用后者。
+
+速查表加这三行底账，异步工具选择的"为什么"就闭环了——每一条都能在 code review 里当裁决依据。
+
+### 收尾一句话
+
+异步编程的全部复杂度，在于**控制流被切到时间轴上之后，错误传播与生命周期必须显式设计**——Promise 家族的每个成员都是对这个显式化问题的一种标准化答案。本册补充与练习（01~09）合起来，是这个答案体系的可运行版。
+
+### 微任务与宏任务的执行序一页卡
+
+- 每个宏任务（脚本/定时器/IO 回调）跑完后，**清空全部微任务队列**才开始下一个宏任务；
+- 微任务内部再派生的微任务也插在本次清空前（await 链不断则队列不清）；
+- `process.nextTick` 优先于 promise 微任务（Node 独有的更高优先级队列）；
+- setTimeout(fn, 0) 是宏任务——与 queueMicrotask 同一轮里的先后：微任务必先；
+- 浏览器渲染帧不插在微任务之间——长微任务链会阻塞绘制（这正是"切片让出"要用宏任务的场合）。
+
+五行合起来是事件循环的最小完备模型：**宏任务切轮次，微任务清到底**。本册所有"执行顺序"题都能用它推导。
+
+### 练习映射（收尾归档）
+
+- 练习 01~03 基础链路与执行序 → 本卡 + 执行序一页卡；
+- 练习 04~06 错误传播与 allSettled → 速查表成败混合行；
+- 练习 07 并发池 → 速查表限流行 + finally 纪律；
+- 练习 08~09 取消与让出 → AbortController 行 + 切片让出。
+
+每个练习都能指回一张卡的一行——归档完毕，本册的"现象层—机制层—工具层"三层齐了。
+
+最后一行归档：三层（现象/机制/工具）与三张卡（速查表/执行序/练习映射）就是本册的全部骨架——复习时按"卡 → 正文节 → 练习"的顺序走一圈，十分钟一轮。
+
+复习一轮后做最后的动手验收：把练习 07 的并发池在 30 秒内默写出骨架（信号量 + finally 释放）——写不出说明速查表还没长进手指，回到练习重跑。
+
+那道默写题的标准答案锚点：池子的本质是"一个计数器 + 一个等待队列"——计数器管并发上限，队列管公平，finally 管回收。三个部件各自对应一节正文，默写即检验三层是否都通了。
