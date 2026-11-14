@@ -255,7 +255,7 @@
   },
   {
     "id": "02-网络进程接收流水线",
-    "title": "02-网络进程接收流水线",
+    "title": "网络进程接收流水线：响应字节进门后的第一段路",
     "linkTo": [],
     "referencedBy": [
       "06-第六阶段"
@@ -263,7 +263,7 @@
   },
   {
     "id": "03-HTTP缓存体系全解",
-    "title": "03-HTTP缓存体系全解",
+    "title": "HTTP 缓存体系全解：强缓存、协商缓存与判定流程",
     "linkTo": [],
     "referencedBy": [
       "06-第六阶段"
@@ -271,7 +271,7 @@
   },
   {
     "id": "04-ServiceWorker-生命周期与拦截时序",
-    "title": "04-ServiceWorker-生命周期与拦截时序",
+    "title": "Service Worker：生命周期与拦截时序",
     "linkTo": [],
     "referencedBy": [
       "06-第六阶段"
@@ -279,7 +279,7 @@
   },
   {
     "id": "05-子资源调度-预解析扫描器-优先级与资源hint",
-    "title": "05-子资源调度-预解析扫描器-优先级与资源hint",
+    "title": "子资源调度：预解析扫描器、优先级与资源 hint",
     "linkTo": [],
     "referencedBy": [
       "06-第六阶段"
@@ -287,7 +287,7 @@
   },
   {
     "id": "06-脚本加载模型-阻塞-defer-async与module",
-    "title": "06-脚本加载模型-阻塞-defer-async与module",
+    "title": "脚本加载模型：阻塞、defer、async 与 module",
     "linkTo": [],
     "referencedBy": [
       "06-第六阶段"
@@ -310,7 +310,7 @@
   },
   {
     "id": "02-从字节到字符-编码判定与解码",
-    "title": "02-从字节到字符-编码判定与解码",
+    "title": "从字节到字符：编码判定与解码",
     "linkTo": [],
     "referencedBy": [
       "07-第七阶段"
@@ -318,7 +318,7 @@
   },
   {
     "id": "03-HTML解析器-状态机-容错与DOM构建",
-    "title": "03-HTML解析器-状态机-容错与DOM构建",
+    "title": "HTML 解析器：状态机、容错与 DOM 构建",
     "linkTo": [],
     "referencedBy": [
       "07-第七阶段"
@@ -326,7 +326,7 @@
   },
   {
     "id": "04-CSS解析与CSSOM",
-    "title": "04-CSS解析与CSSOM",
+    "title": "CSS 解析与 CSSOM",
     "linkTo": [],
     "referencedBy": [
       "07-第七阶段"
@@ -334,7 +334,7 @@
   },
   {
     "id": "05-样式计算-级联-匹配与ComputedStyle",
-    "title": "05-样式计算-级联-匹配与ComputedStyle",
+    "title": "样式计算：级联、匹配与 ComputedStyle",
     "linkTo": [],
     "referencedBy": [
       "07-第七阶段"
@@ -342,7 +342,7 @@
   },
   {
     "id": "06-V8执行模型-从源码到优化机器码",
-    "title": "06-V8执行模型-从源码到优化机器码",
+    "title": "V8 执行模型：从源码到优化机器码",
     "linkTo": [],
     "referencedBy": [
       "07-第七阶段"
@@ -350,7 +350,7 @@
   },
   {
     "id": "07-事件循环与任务调度-渲染在哪里发生",
-    "title": "07-事件循环与任务调度-渲染在哪里发生",
+    "title": "事件循环与任务调度：渲染在哪里发生",
     "linkTo": [],
     "referencedBy": [
       "07-第七阶段"
@@ -373,7 +373,7 @@
   },
   {
     "id": "02-渲染树与LayoutNG-fragment树",
-    "title": "02-渲染树与LayoutNG-fragment树",
+    "title": "渲染树与 LayoutNG：fragment 树",
     "linkTo": [],
     "referencedBy": [
       "08-第八阶段"
@@ -381,7 +381,7 @@
   },
   {
     "id": "03-布局-盒模型-格式化上下文与布局抖动",
-    "title": "03-布局-盒模型-格式化上下文与布局抖动",
+    "title": "布局：盒模型、格式化上下文与布局抖动",
     "linkTo": [],
     "referencedBy": [
       "08-第八阶段"
@@ -389,7 +389,7 @@
   },
   {
     "id": "04-分层-PaintLayer-合成层与层爆炸",
-    "title": "04-分层-PaintLayer-合成层与层爆炸",
+    "title": "分层：PaintLayer、合成层与层爆炸",
     "linkTo": [],
     "referencedBy": [
       "08-第八阶段"
@@ -397,7 +397,7 @@
   },
   {
     "id": "05-绘制与栅格化-display list-瓦片与Skia",
-    "title": "05-绘制与栅格化-display list-瓦片与Skia",
+    "title": "绘制与栅格化：display list、瓦片与 Skia",
     "linkTo": [],
     "referencedBy": [
       "08-第八阶段"
@@ -405,7 +405,7 @@
   },
   {
     "id": "06-合成-合成线程-GPU与vsync",
-    "title": "06-合成-合成线程-GPU与vsync",
+    "title": "合成：合成线程、GPU 与 vsync",
     "linkTo": [],
     "referencedBy": [
       "08-第八阶段"
@@ -413,7 +413,7 @@
   },
   {
     "id": "07-一帧的完整生命周期-失效传播与帧预算",
-    "title": "07-一帧的完整生命周期-失效传播与帧预算",
+    "title": "一帧的完整生命周期：失效传播与帧预算",
     "linkTo": [],
     "referencedBy": [
       "08-第八阶段"
@@ -435,7 +435,7 @@
   },
   {
     "id": "02-关键渲染路径与首屏呈现",
-    "title": "02-关键渲染路径与首屏呈现",
+    "title": "关键渲染路径与首屏呈现",
     "linkTo": [],
     "referencedBy": [
       "09-第九阶段"
@@ -443,7 +443,7 @@
   },
   {
     "id": "03-性能指标深潜-FCP-LCP-CLS-INP测量原理",
-    "title": "03-性能指标深潜-FCP-LCP-CLS-INP测量原理",
+    "title": "性能指标深潜：FCP / LCP / CLS / INP 测量原理",
     "linkTo": [],
     "referencedBy": [
       "09-第九阶段"
@@ -451,7 +451,7 @@
   },
   {
     "id": "04-加载优化手法手册",
-    "title": "04-加载优化手法手册",
+    "title": "加载优化手法手册",
     "linkTo": [],
     "referencedBy": [
       "09-第九阶段"
@@ -459,7 +459,7 @@
   },
   {
     "id": "05-输入事件链路与交互渲染",
-    "title": "05-输入事件链路与交互渲染",
+    "title": "输入事件链路与交互渲染",
     "linkTo": [],
     "referencedBy": [
       "09-第九阶段"
@@ -467,7 +467,7 @@
   },
   {
     "id": "06-水合与下一代渲染架构",
-    "title": "06-水合与下一代渲染架构",
+    "title": "水合与下一代渲染架构",
     "linkTo": [],
     "referencedBy": [
       "09-第九阶段"
@@ -488,7 +488,7 @@
   },
   {
     "id": "02-DevTools深潜-Performance全轨道解剖",
-    "title": "02-DevTools深潜-Performance全轨道解剖",
+    "title": "DevTools 深潜：Performance 全轨道解剖",
     "linkTo": [],
     "referencedBy": [
       "10-第十阶段"
@@ -496,7 +496,7 @@
   },
   {
     "id": "03-案例复盘集-加载类",
-    "title": "03-案例复盘集-加载类",
+    "title": "案例复盘集（一）：加载类",
     "linkTo": [],
     "referencedBy": [
       "10-第十阶段"
@@ -504,7 +504,7 @@
   },
   {
     "id": "04-案例复盘集-渲染类",
-    "title": "04-案例复盘集-渲染类",
+    "title": "案例复盘集（二）：渲染类",
     "linkTo": [],
     "referencedBy": [
       "10-第十阶段"
@@ -512,7 +512,7 @@
   },
   {
     "id": "05-毕业项目-全链路测量与优化报告",
-    "title": "05-毕业项目-全链路测量与优化报告",
+    "title": "毕业项目：全链路测量与优化报告",
     "linkTo": [],
     "referencedBy": [
       "10-第十阶段"
