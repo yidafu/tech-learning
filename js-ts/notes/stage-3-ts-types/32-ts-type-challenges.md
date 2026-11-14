@@ -324,3 +324,224 @@ type MinusOne<N extends number> =
 
 - `MinusOne<2>`：`Build<2>` 从 `[]` 起，`0 extends 2` 否 → `Build<2, [0]>` → `1 extends 2` 否 → `Build<2, [0, 0]>` → `2 extends 2` 是 → `[0, 0]`。匹配 `[...R, 0]` 得 `R = [0]`，`['length']` = **`1`**。
 - 换成 `[0, ...T]` 后**仍能得到 2**：`Build<3>` 只是换了个方向堆，产物仍是长度 3 的全 `0` 元组 `[0, 0, 0]`；消费端 `[...R, 0]` 去的是**末位**，`R = [0, 0]`，`['length']` 照样是 `2`。会踩坑的是把消费端也换成「去头」却在别处依赖顺序的写法——要点是**构造方向与消费方向要成对确认**：长度由谁决定（堆的次数）、切掉的是哪一端（rest 模式的位置），两件事各自独立验证。
+
+---
+
+## 机制深一层：延迟求值、分发三定律与递归预算
+
+> 收据口径：本节及以下各节的「实跑」均为 js-ts/node_modules 的 tsc 5.9.3 加 `--strict`、临时单文件于 /tmp 实跑。
+
+### 1. 延迟求值：条件类型是「挂起表达式」，不是立即 if
+
+类型参数未定型时，条件类型整体挂起（deferred）：`T extends U ? A : B` 的 T 是裸参数、还没有实参，这条式子就保持未求值状态，直到实例化那一刻才判定。这正是 Equal 能工作的前提：`(<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2)` 比较的是两个**未实例化的签名**是否同一——判定发生在签名层面，绕开了赋值性检查的宽容（笔记 12 §5 的 `ReturnType<typeof identity>` = unknown 是同一机制的另一面：未实例化时类型参数落回约束）。手推递归题要把「挂起」当默认状态：递归分支里的 `Includes<R, U>` 不会立刻展开，编辑器悬停看到的「未解析条件类型」不是卡住，是还没轮到它。Equal 的两个极端案例也能从延迟求值讲清：any 参与签名同一性时不享受「与谁都互相赋值」的万金油待遇（同一性算法不看可赋值性），所以 `Equal<any, 1>` 是 false；never 作为实参时整条分布式链空转，产物 never，`Expect` 检查也随之失明——两案都不是玄学，是「签名层判定」与「分发零次」的直接后果。
+
+### 2. 分发三定律：裸参数分发、括号阻断、空联合零次
+
+- **定律一**：只有「裸类型参数直接站在 extends 左侧」才触发联合分发；`T` 包进元组、或以映射值等其他位置出现，都不分发。
+- **定律二**：`[T] extends [U]` 的括号是阻断分发的标准写法——「判整体」与「判每个成员」的分界线就是这对括号。
+- **定律三**：空联合（never）分发**零次**，产物直接是 never——不是「never extends 判真走某分支」，是循环体一次都没执行。
+
+实跑收据：
+
+```ts
+type IsNever<T> = T extends never ? true : false;
+const probe: IsNever<never> = true;
+// 报 TS2322: Type 'true' is not assignable to type 'never'
+// —— IsNever<never> 是 never：分发零次，两个分支都没执行
+```
+
+修法一括号：`type IsNever2<T> = [T] extends [never] ? true : false;` 对 never 得 true。这道题是定律三加定律二的连招，也是 §3 里 never 假阳性讨论的根源。定律一的反面教材也常见：想写「T 是数组」的判断时写成 `T extends readonly unknown[]`，若 T 是联合，会逐成员判定再并——想整体判断就得先 `[T]` 括起来。「意外分发」与「意外不分发」是体操错答的两大来源，两者的修复动作分别是加括号与去括号，先分清要的是哪种再动手。
+
+### 3. 模板 infer 的贪心规则：首个最短，最后一个拿剩余
+
+`${infer L}${infer R}` 匹配 `'abc'`，实跑收据（产物放进元组再赋给 never，报错印出）得 `["a", "bc"]`——首个 infer 拿**最短可能**（一个字符），最后一个拿全部剩余。推广到带固定段的模式：`` S extends `${infer L}${From}${infer R}` `` 里 L 的取法是「在能让 From 匹配成功的所有切法里取最靠左最短」，可以为空串——`ReplaceAll<'abab', 'ab', 'x'>` 实跑得 `'xx'`（本册预测题 1 的收据），第一轮的 L 就是 `''`。理解贪心方向后，TrimLeft 的逐字符剥与 ReplaceAll 的最左匹配不再是玄学：同一条规则的两次应用。
+
+### 4. 递归预算：尾位约一千，非尾位约五十
+
+TS 4.5 起对条件类型做尾递归消除（一手依据：TS 4.5 Release Notes《Tail-Recursion Elimination on Conditional Types》）：递归调用处于「整个条件类型的直接产物」位置（尾位）时，深度预算大幅放大。两种写法的实测边界：
+
+```ts
+type Build<L extends number, T extends readonly 0[] = []> =
+  T['length'] extends L ? T : Build<L, [...T, 0]>;        // 尾位：递归调用直接返回
+type BuildNT<L extends number, T extends readonly 0[] = []> =
+  T['length'] extends L ? T : [...BuildNT<L, [...T, 0]>]; // 非尾位：包在展开里，外层还要收尾
+```
+
+实跑收据（同一编译器、同一组文件）：`Build<999>` 编译通过、`Build<1000>` 报 TS2589；`BuildNT<40>` 通过、`BuildNT<60>` 报 TS2589——尾位与非尾位差一个数量级，与「约 1000 / 约 50」的既有口径吻合。还有一个细节收据：超限时产物**退化成 any**（`Build<1500>` 的探针报错里印出 `Type 'any' ...`），所以 TS2589 的下游报错常常莫名其妙——见到「过深」先修类型，别顺着 any 往下游查。MinusOne 原题把 N 限制在 1000 以内，正是贴着尾位预算出的题面。预算数字的口径再交代一句：TS Wiki《Performance in TypeScript》公开写明递归深度建议与尾递归消除机制，本册两个实测边界（999 对 1000、40 对 60）与之吻合；但别把具体数字当规范承诺——编译器版本之间可能微调，出题或写生产类型时按「尾位千级、非尾位几十」留足余量，一旦逼近边界，正确动作是改写法而不是赌版本。把非尾改尾的手法也可背：中间结果全部塞进**累加器参数**（默认类型参数携带），让递归调用成为唯一的返回表达式；「返回值还要再加工」的写法（包展开、包模板串、包条件）都会把递归挤出尾位。
+
+### 5. 同态形态的免费收益：元组保形与修饰符继承
+
+对象题（题 ⑤⑥ 一族）的答案「顺手保留修饰符、数组性完好」不是巧合，是同态映射形态的免费收益，实跑三条证据（`type Ro<T> = { readonly [K in keyof T]: T[K] }`）：
+
+- 元组不退化：`Ro<[string, number?]>['length']` 实测为 `2 | 1`——长度还是字面量并集，元组形态完好；
+- 可选元素保留：`const ok: Ro<[string, number?]> = ['a']` 编译通过——`?` 随映射继承；
+- 数组按元素映射：`Ro<{ x: 1 }[]>` 可赋给 `readonly { readonly x: 1 }[]`——元素逐个只读化。
+
+这三条解释了本册题 ⑤ DeepPartial 注释里「数组走同态映射按元素映射」的机制本体，也解释了题 ⑥ Mutable 为什么 `-readonly` 不动 `?`（维度独立，见笔记 12 机制深一层 §1）。写对象题时的推论：只要保持 `[K in keyof T]` 的同态形态，修饰符与数组性就白拿；一旦套了 `Exclude` 之类的键计算，这些收益全部清零——体操题的「差一步」多半差在这里。顺带一个修辞细节：DeepPartial 显式写 `?` 会**覆盖**继承（可选变全可选），「原本可选的保持、原本必填的变可选」这种精细诉求得两段式（先 `-?` 归一再 `+?`）或接受简化口径——修饰符代数的加减号在这里依然是唯一词汇。
+
+### 6. 递归出口的三式与同族原则
+
+出口写法常见三式，各配一行模板：
+
+- **匹配失败兜底**（最常用）：`S extends 模式 ? 递归 : S`——失败时原样返回，天然与输入同族；
+- **显式长度判定**：`T['length'] extends 0 ? 出口 : 递归`——适合消费端要区分空/非空的题；
+- **显式 never 短路**：联合过滤题里 `never` 直接当出口——靠联合吸收「不产出」。
+
+同族原则一句话：**出口类型必须与递归分支的产物同一个容器族**——元组族出 `[]`、字符串族出 `''`、联合族出 `never`、对象族出 `{}`。违反的代价是传染：元组题出口写成 never，`[1, ...never]` 整体吸收成 never；字符串题出口写成 never，拼接同理。手推配方第 ③ 步「先定出口」就是在防这个。三式的选择依据：优先「匹配失败兜底」（它连出口代码都不用单写）；其次长度判定；never 短路只服务联合族——元组族套 never 短路是本册高频错答，出口族一错全盘吸收。
+
+## 手推配方：递归类型五步推演
+
+**① 定数据形态**：元组、字符串、联合还是对象——四种形态对应 §1 表格的四条主套路。
+
+五步的顺序有讲究：①② 定「用什么武器」，③ 定「安全网」，④⑤ 定「正确性」。新手最常见的顺序错误是一上来就写答案、出口事后补——事后补的出口多半随手写成 never（脑中第一个「空」），传染性错误由此而来。先把出口写下来再写递归体，是低成本高回报的习惯。
+**② 定模式与贪心**：元组用 `[infer F, ...infer R]`、字符串用 `${infer L}${infer R}`，并明确「谁拿最短」。
+**③ 定出口**：递归耗尽/匹配失败时返回什么；出口类型必须与递归分支产物**同族**（元组题出 `[]`，联合题出 never）。
+**④ 展开头两轮**：每轮写「输入、匹配结果、产出、余项」四元组，两轮足以看清节奏。
+**⑤ 收敛检查**：确认每轮输入严格变小（余项短一格、串短一段），否则等着 TS2589。
+
+推完别急着交卷：把手推结果与答案一起写进自证模板——`type Check = Expect<Equal<答案, 手推结果>>;`。Equal 版自证对 any 与 never 失明（§3 的黑洞），所以关键答案再加一条赋值探针，两条都绿才算过关。
+
+三个实例：
+
+**实例一**：`Trim<'  a\n'>`（收据结果 `'a'`）。轮 1（TrimLeft）：输入两空格加 `a` 加换行，匹配 `${Space}${infer R}`，剥一空格。轮 2（TrimLeft）：再剥一空格。轮 3（TrimLeft）：`a` 打头不是空白，出口原样返回。轮 4（TrimRight）：匹配尾部空白，剥换行。轮 5（TrimRight）：不以空白结尾，出口返回 `'a'`。每轮输入短一格，⑤ 收敛检查通过。
+
+**实例二**：`Flatten<[1, [2, [3]]]>`（出口 `[]`）。头 `1` 非数组，产出 `[1, ...拍平的尾]`；新头 `[2, [3]]` 是数组，产出 `[...拍平它, ...拍平[]]`；逐层下钻，`3` 非数组，`[]` 到出口。合并得 `[1, 2, 3]`。反例思考：出口若写成 never，`[1, ...never]` 把整体打成 never——「出口与产物不同族」的传染效果，机制上就是联合吸收（§易错 2 的原理版）。
+
+**实例三**：`MinusOne<3>`（收据 `2`）。Build 从 `[]` 起堆三轮到 `[0, 0, 0]`；消费端 `[...infer R, 0]` 匹配得 `R = [0, 0]`，取 length 得 2。`MinusOne<0>` 的 Build 产物是 `[]`，没有尾可去，匹配失败走 never（收据：赋值探针印出 never）——出口与「去尾」模式天然不兼容，这是题面要求特判 -1 的机制原因。
+
+**实例四**：`Join<['a', 'b', 'c'], '-'>`（收据 `'a-b-c'`，累加器套路）。逐轮追 Acc：轮 1，Acc 为空串，直接 `Acc = 'a'`；轮 2，Acc 非空，`Acc = 'a-b'`；轮 3，`Acc = 'a-b-c'`；轮 4，元组耗尽，出口返回 Acc。累加器的价值在这里一目了然：已拼好的 `'a-b'` 停在参数里不再参与匹配，余项永远只有「还没处理的尾巴」——若无累加器，拼好的段会混进下一轮的匹配面，ReplaceAll 的空串死循环就是这种混入的极端案例。
+
+**实例五**：`Get<{ a: { b: { c: 42 } } }, 'a.b.c'>`（收据 `42`，工程价值最高的一道）。轮 1，模板匹配把 `'a.b.c'` 拆成 `K = 'a'`、`Rest = 'b.c'`；核对 `K extends keyof O` 通过，下钻 `O['a']`。轮 2，拆 `'b.c'`，核对通过，下钻到 `{ c: 42 }`。轮 3，`'c'` 不含点，走「直接取键」分支得 42。错误路径 `Get<{ a: 1 }, 'a.z'>`：第二轮核对 `z extends keyof 1` 失败，走 never——**路径不存在这件事被翻译成编译期的 never**，调用方拿 never 去赋值必然报错，等于把「拼错路径」提前到编译期拦截。
+
+## 工程三陷阱
+
+**陷阱一：体操类型直接进生产，IDE 被拖垮。** 触发场景：路由表几百条路径跑 UnionToTuple、长配置串跑 ReplaceAll，输入一变 IDE 卡数秒。根因：instantiation 总数随输入长度与联合大小爆炸；尾位预算只救「每轮一次递归」的形态，救不了「每轮多个展开」的指数形态。经验数字：几十条路径、几 KB 的模板串是安全区；几百条路径的联合展开就要先量 instantiation 数再合入。规避：给体操输入设规模上限并在类型旁注释；疑似时用 `tsc --generatetrace` 看 instantiation 计数（§9 既有建议）；超规模改成运行时 codegen（生成 `.d.ts` 供类型引用，编译期零递归）。另一条降耗手法是把递归挪进尾位（机制深一层 §4）：同一道题，尾位写法把可用预算放大一个数量级，很多时候「卡 IDE」只是写法没调到尾位。
+
+**陷阱二：boolean 在分发场景被拆开。** 触发场景：`Exclude<boolean, true>` 期望原样 boolean，实跑得 false——boolean 按 true 与 false 分发，true 被删、false 合并幸存。收据：
+
+```ts
+const p: Exclude<boolean, true> = true;
+// 报 TS2322: Type 'false' is not assignable to type 'Exclude<boolean, true>'
+// —— 错误把产物印出来：false
+```
+
+规避：判整体用 `[T] extends [U]` 括号；需要保留 boolean 语义的过滤，改用 Equal 驱动的分发（Includes 的写法）。同族注意点：IsNever 必须括号版（机制深一层 §2 的连招）。同类副作用还有 `Extract<boolean, true>` 得 true、`Exclude<boolean, false>` 得 true——凡是对 boolean 做过滤的题，先在心里把它拆成 true 与 false 再推。
+
+**陷阱三：拿可赋值性回答相等性问题。** 触发场景：`Includes<[true], boolean>` 用 `F extends U` 判，得 true——true 确实可赋给 boolean，但「数组里有一项类型为 boolean」与「元素类型恰是 boolean」是两个问题。收据对照：
+
+```ts
+type BadIncludes<T extends readonly unknown[], U> =
+  T extends readonly [infer F, ...infer R] ? (F extends U ? true : BadIncludes<R, U>) : false;
+const b: BadIncludes<[true], boolean> = false;
+// 报 TS2322: Type 'false' is not assignable to type 'true'
+// —— 可赋值版假阳性实锤；Equal 版对同一输入给 false（§3 既有实证）
+```
+
+规避不变：判等只用泛型签名版 Equal。同时记住 `Expect<Equal<...>>` 的黑洞——产物是 never 时连报错都被吞掉（§3），测试常绿不等于答案正确；关键答案再用「赋值探针」（把结果赋给一个故意写反的类型）交叉验证一次。落到流程上：凡 Includes 一类的过滤与成员判断 PR，默认要求附 `Expect<Equal<...>>` 自证加一条赋值探针——判等错误的代价（静默漏判）远高于多写两行测试。探针的写法有讲究：目标故意写错（如 `const probe: never = 产物`），让错误信息把解析结果印出来；别名粘住不展开时，换条件探针 `[产物] extends [预期]`——本册所有收据都是这两式变体。
+
+## 与手写实现对照：体操套路的运行时镜像
+
+每一条类型体操套路在运行时 JS 里都有一个一一对应的镜像，对照着写一遍（两边同题），对「类型层在做什么」的理解会从背套路变成懂机制：
+
+| 类型层 | 运行时镜像 | 对照要点 |
+| --- | --- | --- |
+| 递归 + 出口 | while 循环 + 边界判断 | 出口同族 ⇔ 循环不变量；运行时无深度预算，类型层有 |
+| 元组头尾拆 `[infer F, ...infer R]` | `xs[0]` 加 `xs.slice(1)` | 每轮严格变小才收敛，两侧同理 |
+| 累加器默认参数 | `reduce` 的初始值参数 | 「已处理」与「待处理」分离，两侧同构 |
+| 元组计数 `T['length']` | `new Array(n).length` 或计数循环 | 类型层没有算术，长度是唯一的「数」 |
+| 模板 infer 拆串 | `slice`/正则捕获组 | 贪心方向 ⇔ 正则的最左匹配语义 |
+| 分布式条件类型 | `for...of` 遍历集合 | 裸参数分发 ⇔ 逐成员循环，never ⇔ 空集合不进循环体 |
+| Equal 签名同一性 | `Object.is` / 全等 | 判等不判兼容，运行时早有同样的分界 |
+| `Get` 模板拆路径 | lodash.get 的字符串路径解析 | 「路径拼错编译期报出」⇔ 运行时返回 undefined，前者更早更吵 |
+
+这张表还有一层工程含义：运行时镜像没有深度预算（一个百万级的数组照样 reduce），而类型层预算是千级——所以「超规模改 codegen」的本质，就是把超过类型层承载力的循环搬回它的镜像世界。评审体操代码时，顺着镜像问一句「这段递归在运行时对应什么循环、循环变量是什么」，读不懂的类型多半能读懂一半。反过来也成立：给同事解释一道体操题最快的路径，是先写出它的运行时版本，再逐行映射回类型层——两个世界的同构性就是最好的讲义。
+
+## 排查速查表
+
+体操相关报错集中在「预算、出口、约束」三处；其中 TS2322 与 TS2589 出现频率最高，前者是「答案错了」，后者是「写法超载」——先分清是哪一类再动手。
+
+| 报错（码 · 原文要点） | 根因 | 处置 |
+| --- | --- | --- |
+| TS2589 · Type instantiation is excessively deep and possibly infinite | 尾位递归超约 1000、非尾位超约 50，或无出口死循环 | 递归挪进尾位；补出口；降输入规模 |
+| TS2322 · Type 'false' is not assignable to type 'true' | `Expect<Equal<...>>` 失败，答案与预期不符 | 五步手推逐轮核对，重点查出口同族与贪心方向 |
+| TS2344 · Type 'number' does not satisfy the constraint 'string' | 类型实参违约（给 `S extends string` 传 number） | 检查实参；必要时先收窄再传入 |
+| TS2456 · Type alias 'X' circularly references itself | 递归别名在非延迟位置自引用 | 把自引用挪进条件分支、映射值、元组元素等可延迟位置 |
+| TS2313 · Type parameter 'T' has a circular constraint | 泛型约束互相引用成环 | 提取公共约束层，消环 |
+| TS2558 · Expected N type arguments, but got M | 类型实参个数不符 | 数一遍递归类型的形参表，别把累加器参数忘在签名里 |
+| TS2339 · Property 'x' does not exist on type 'never' | 联合被过滤空后继续取成员 | 检查分发方向，或先判 `[T] extends [never]` |
+| 报错只印别名不印结果（如 `Omit<...>`） | 错误消息保留类型别名不展开 | 元组或条件探针（赋给故意写反的目标）逼出解析产物 |
+| TS2322 · Type 'X' is not assignable to type 'never'（探针形态） | 这是「赋值探针」的标准输出：never 目标故意写反，源类型即答案 | 读错误消息里的源类型，就是待求类型的解析产物 |
+
+## 输出预测题（进阶）
+
+**题 1（递归预算）**：
+
+```ts
+type Build<L extends number, T extends readonly 0[] = []> =
+  T['length'] extends L ? T : Build<L, [...T, 0]>;
+type BuildNT<L extends number, T extends readonly 0[] = []> =
+  T['length'] extends L ? T : [...BuildNT<L, [...T, 0]>];
+type A = Build<999>;
+type B = BuildNT<60>;
+```
+
+A、B 各编译通过还是报错？把 BuildNT 里的 `[...BuildNT<...>]` 改成裸的 `BuildNT<...>`，B 行会怎样？
+
+**题 2（贪心推演）**：
+
+```ts
+type LR<S extends string> = S extends `${infer L}${infer R}` ? [L, R] : never;
+type Q2 = LR<'abc'>;
+type Space = ' ' | '\n' | '\t';
+type TrimLeft<S extends string> = S extends `${Space}${infer R}` ? TrimLeft<R> : S;
+type Q3 = TrimLeft<'\t a'>;
+```
+
+Q2、Q3 各是什么？
+
+**题 3（分发与拆分）**：
+
+```ts
+type IsNever<T> = T extends never ? true : false;
+type Q4 = Exclude<boolean, true>;
+type Q5 = IsNever<never>;
+type IsNever2<T> = [T] extends [never] ? true : false;
+type Q6 = IsNever2<never>;
+```
+
+Q4、Q5、Q6 各是什么？
+
+**题 5（累加器追值）**：
+
+```ts
+type Join<T extends readonly string[], Sep extends string, Acc extends string = ''> =
+  T extends readonly [infer F extends string, ...infer R extends string[]]
+    ? Acc extends '' ? Join<R, Sep, F> : Join<R, Sep, `${Acc}${Sep}${F}`>
+    : Acc;
+type Q9 = Join<['x', 'y', 'z'], '.'>;
+```
+
+逐轮写出 Acc 的变化，给出 Q9；并回答：第一轮为什么要用 `Acc extends ''` 分支特殊处理？
+
+**题 4（Equal 对照）**：
+
+```ts
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
+type EqualSimple<A, B> = A extends B ? (B extends A ? true : false) : false;
+type Q7 = Equal<boolean, true>;
+type Q8 = EqualSimple<any, 1>;
+```
+
+Q7、Q8 各是什么？两条判定路径的差别是哪一句话？
+
+## 进阶题解析
+
+**题 1**：A 通过（收据：tsc 5.9.3 实测，`Build<999>` 编译干净、`Build<1000>` 即 TS2589——999 是尾位预算内的边界档）；B 报 TS2589（收据：`BuildNT<60>` 炸、`BuildNT<40>` 过，非尾位预算在一个数量级以下）。把包裹去掉后 B 行等价于 `Build<60>`，通过——**同一逻辑深度，差一对中括号，预算差一个数量级**。改写口诀：递归调用要「裸」在条件类型真分支的返回位上，别包进任何还需加工的容器。顺带记一个诊断信号：见到 TS2589 先看递归调用的「位置」而不是「次数」——次数多可以调小输入，位置不对必须改写形态，两类修法完全不同。
+
+**题 2**：Q2 = `["a", "bc"]`（实跑收据：首个 infer 最短、最后一个拿剩余）。Q3 = `'a'`——制表符是 Space 联合成员，匹配剥去余 `' a'`；空格再剥余 `'a'`；`a` 打头非空白，出口返回。两题是同一条贪心规则的两次应用：固定段（Space）要求「必须匹配上」，infer 位只拿让匹配成立的最小片段。若把 Q2 的串换成空串：`''` 匹配不上「至少一个字符」的模板模式，走出口得 never——字符串题的出口行为在空串上最容易暴露，手推时记得补这一轮。
+
+**题 3**：Q4 = **false**（收据：把 true 赋给 `Exclude<boolean, true>` 报错，错误印出产物 false——boolean 按 true 与 false 分发，true 被删、false 合并幸存）。Q5 = **never**（收据：`Type 'true' is not assignable to type 'never'`——裸 never 分发零次，两个分支都没执行）。Q6 = **true**：`[never] extends [never]` 对「包了一层的整体」判定，不走分发，可赋值性成立走真分支。一裸一括，正是分发定律三与定律二的对照实验。把 Q6 的写法背熟还有个实用收益：`IsNever2` 是判「联合是否被过滤空」的标准探针，排查速查表里 TS2339 on never 一行的第一处置动作就是它。
+
+**题 4**：Q7 = **false**（收据：`Equal<boolean, true>` 探针报错印出 false）——泛型签名同一性判定区分「true 与 false 的联合」和 true 本身。Q8 = **true**（收据：`EqualSimple<any, 1>` 探针报错印出 true）——any 与任何类型双向可赋值，假阳性。判定路径的差别一句话：Equal 问「两个未实例化的签名是否同一」，EqualSimple 问「互相能否赋值」——前者走类型同一性算法，后者走宽容的赋值检查。判等题交给后者，any 与 never 两个极端立即失守（§3 与笔记 13 的呼应点）。面试口述压缩版：「Equal 让两个签名实例化后必须算出同一结果，EqualSimple 让两边互相放行——一句话，同一性不看可赋值性。」
+
+**题 5**：轮 1，Acc 为空串，走特殊分支，`Acc = 'x'`；轮 2，`Acc = 'x.y'`；轮 3，`Acc = 'x.y.z'`；轮 4，`[]` 匹配不上单元素头模式，出口返回 **`'x.y.z'`**（同型收据：`Join<['a','b','c'],'-'>` 实跑得 `'a-b-c'`）。第一轮特殊分支的存在理由：若不区分，空串 Acc 会拼出 `'.' + F` 这样多余的前导分隔符——`'x'` 加 `'.y'` 加 `'.z'` 的构造方式依赖「第一段不带分隔符」。累加器题的手推要点就是盯住 Acc 的初值语义与每轮的拼接方向。工程落点也交代一下：Join 一类的累加器套路在类型化「逐段拼接」API 时都会遇到——生成 SQL 片段、拼文件路径、类名串（`clsx` 风格）——凡输出是「按段拼出来的字符串」，类型层几乎总是累加器。

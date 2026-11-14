@@ -346,3 +346,238 @@ type E = { id: string; name: string; email: string };
 - `F2`：`async` 函数的推导返回类型是 `Promise<Awaited<T>>`；`r.json()` 是 `Promise<any>`，`Awaited<Promise<any>>` = `any`，故 `F2` = **`Promise<any>`**。
 - `F3`：`Awaited` 再拆一层 → **`any`**。
 
+
+---
+
+## 机制深一层：修饰符代数、同态克隆与交集过滤
+
+> 收据口径：本节及以下各节的「实跑」均为 js-ts/node_modules 的 tsc 5.9.3 加 `--strict`、临时单文件于 /tmp 实跑；lib 行号同时核对过 tsc 5.9.3 与全局 tsc 7.0.2 的 `lib.es5.d.ts`，两版一致。
+
+### 1. 修饰符是两个独立维度，代数只有「加减 + 继承」三条规则
+
+映射语法里可写的变化共四组：`+?`、`-?`、`+readonly`、`-readonly`，省略加减号时默认 `+`。每个属性元数据里，可选性与可变性是**互不相干的两个维度**，映射时按维度各自结算，规则三条：
+
+- 同态映射没写某维度的变化 → 该维度原样继承；
+- 写了加减变化 → 只结算被点名的那个维度；
+- 非同态映射 → 两个维度全部清零，只有显式写出来的修饰符生效（`?` 写了才可选，`readonly` 写了才只读）。
+
+最有信息量的实验是**一次结算两个维度**的同态映射（`-?` 与 `-readonly` 可以同写在一条映射里，这是很多人不知道的合法语法）：
+
+```ts
+type Concrete<T> = { -readonly [K in keyof T]-?: T[K] };
+
+const c1: Concrete<{ readonly a?: 1; b: 2 }> = { a: 1, b: 2 };
+c1.a = 3; // 报 TS2322: Type '3' is not assignable to type '1'
+          // 注意报错码不再是 TS2540「read-only」——-readonly 已摘掉可变性，
+          // 剩下的只是字面量类型 1 不收 3 这个值
+const c2: Concrete<{ readonly a?: 1 }> = {};
+// 报 TS2741: Property 'a' is missing in type '{}' but required in type
+//   'Concrete<{ readonly a?: 1 | undefined; }>' —— -? 把可选摘成了必有
+```
+
+错误码从 TS2540 变成 TS2322，正是「两个维度被独立结算」的直接证据。由此可推出组合表：`Required<Partial<T>>` 只动 `?`、readonly 全程保留（配套收据：给 `Required<Partial<{ readonly a?: 1 }>>` 的属性赋值报 TS2540）；`Mutable<T>` 只动 readonly、`?` 原样继承（同为同态形态，与 Concrete 同理）。还有一条容易被问倒的：**什么都不写的同态映射 ≡ 源类型**——`{ [K in keyof T]: T[K] }` 不加任何修饰符变化，可选性与 readonly 全维度继承，结构上与 T 相同。「同态」的本义就在这里：产物与源同构。也因此，`Required<T>` 永远摘不掉 readonly——它的映射语法只写了 `-?`，readonly 维度按「继承」结算；想同时动两个维度，就要写成 Concrete 那样显式点名的形式。还有一条零成本约定值得带走：组合工具类型按「先浅后深」命名（`ShallowX` 对 `DeepX`），读者从名字就知道作用层数——工程里「Partial 为什么不管内层」的一半疑问，其实是命名先撒了谎。
+
+### 2. NonNullable 的 `T & {}`：交集分发 + never 吸收
+
+现行 lib（lib.es5.d.ts:1635）用一行交集替代条件分发：`type NonNullable<T> = T & {};`。机理是两条独立规则的合力：
+
+1. **交集对联合分发**：`(A | B) & C` 归约为 `(A & C) | (B & C)`，交集被打散到每个联合成员上结算；
+2. **null / undefined 与 `{}` 交集得 never**：null 与 undefined 没有任何成员，不满足 `{}` 这个「所有非空值都具备的空约束」，交集直接归约成 never；never 再被联合吸收。
+
+于是 `(string | null | undefined) & {}` = `(string & {}) | never | never` = `string`。实跑收据：把 `string | null | undefined` 与 `{}` 求交后赋给 never，报 `Type 'string' is not assignable to type 'never'`——产物确实只剩 string。为什么用 `{}` 不用 `unknown`？因为 `T & unknown` 恒等于 `T`（unknown 是交集的单位元），对 null 毫无过滤作用；`{}` 是「能拦住 null 与 undefined 的最弱约束」，lib 选的正是这个精确位置。
+
+顺手回答 §4 的遗留疑问：`NonNullable<unknown>` 现行版得 `{}`，因为 unknown 与任何类型求交都得对方；经典条件版得 unknown，是因为假分支原样放行。交集版不是「退化」，而是顺手多做了一层过滤——至少 null 与 undefined 从此赋不进来了。
+
+再看一个「非联合直觉」的输入：`NonNullable<boolean | null>`。boolean 在分发场景按 `true | false` 处理，于是交集分发给三个成员：`true & {}` 与 `false & {}` 各自不变，null 得 never 被吸收，合并回 **boolean**。实跑收据用条件探针确认：`[NonNullable<boolean | null>] extends [boolean]` 求值为 true（探针写法是把结果类型放进元组再判 extends，目标故意写反，报错信息直接印出答案）。这解释了为什么「非空过滤」对 boolean 不产生 `true | false` 的副作用——拆开再合并，闭合如初。
+
+### 3. 同态克隆发生在实例化时：Partial 对联合逐成员展开
+
+同态映射的 T 是裸类型参数时，实例化按联合**逐成员**进行：`Partial<A | B>` 不是「对联合的键表做一次映射」，而是先分发成 `Partial<A> | Partial<B>`。这与条件类型的分发同源，一手依据是 TS Handbook《Mapped Types》对同态映射拷贝修饰符的说明与《Conditional Types》的 Distributive 一节。
+
+而 `Omit` 对联合的压扁，根子在 `Exclude<keyof T, K>` 这一步先把键取成了**交集**——`keyof (A | B)` = `keyof A & keyof B`，联合类型上只有「两边共有的键」才是确定存在的键。Pick 拿着交集键去映射，产物只能是单个对象。实跑收据（IsEmpty 探针）：
+
+```ts
+type IsEmpty<T> = keyof T extends never ? true : false;
+declare const p: Omit<{ a: 1; shared: string } | { b: 2; shared: string }, "shared">;
+const probe: IsEmpty<typeof p> = false;
+// 报 TS2322: Type 'false' is not assignable to type 'true'
+// —— Omit 对联合的产物是 {}，键集为空
+```
+
+（探针原理：空对象的 keyof 是 never，`never extends never` 成立得 true；非空对象的键联合 extends never 得 false。目标类型故意写成 `false`，真实结果是 true 时才报错，报错信息直接把答案印出来。）同一条分发规则连 undefined 都不特判：实跑 `declare const p: Partial<{ a: 1 } | undefined>` 再赋给 never，报错详情行印出 `Type 'undefined' is not assignable to type 'never'`——产物的联合里原样保留了 undefined 成员。工程读法：给「可能为空的配置」套 `Partial` 并不会帮你去掉 undefined，空值防御仍要在调用侧做。
+
+### 4. Awaited 的判定次序：先短路 null 与 undefined，是给非严格模式让路
+
+lib.es5.d.ts:1570 第一分支的注释原文是「special case for `null | undefined` when not in `--strictNullChecks` mode」。这个次序不是随手写的：非严格模式下 null 与 undefined 可赋给任何类型，「对象且带可调用 then」的判定会被它们闯入；先短路才能保证 `Awaited<null>`、`Awaited<undefined>` 在两种模式下都原样返回（运行时 `await null` 的结果就是 null，类型必须与语义对齐）。
+
+再补 §7 没覆盖的边界。实跑混合联合：
+
+```ts
+type Thenable = { then(onfulfilled: (value: number) => any): any };
+declare const q: Awaited<Thenable | Promise<string>[] | null>;
+const probe2: never = q;
+// 报 TS2322: Type 'number | Promise<string>[] | null' is not assignable to type 'never'
+```
+
+三个成员各走一条路：null 进短路分支原样返回；Thenable 的 then 首参可调用，挖出 number 后因 number 不是对象而止步递归；`Promise<string>[]` 是数组类型，**自身没有名为 then 的成员**，进「非 thenable 原样返回」分支。结论：Awaited 只看类型自身的形状，不深入数组成员逐个解包——想解包要自己写映射或用 `Promise.all` 的同态映射签名。
+
+### 5. 同态判定的精确表述：约束「可追溯」
+
+篇 11 的判定规则可以收紧成一句话：映射 `[P in K]` 同态，当且仅当 `in` 右侧是 `keyof T` 本身，或 K 是**约束可追溯到 `keyof T`** 的类型参数。可追溯的意思是顺着约束链走，每一层都是「类型参数的约束」，直到落在 `keyof T` 上。三种情况对照：
+
+- `[P in keyof T]` → 直接命中，同态；
+- `[P in K]`（`K extends keyof T`）→ 一层追溯，同态；
+- `[P in Exclude<keyof T, K>]` → in 右侧是**计算结果**而非类型参数，追溯链条断裂，非同态——这正是朴素 Omit 丢修饰符的形式根源（§2 坑一）。
+
+手写时把这条当体检标准：想保修饰符，就让 in 右侧保持「裸 keyof 或约束为裸 keyof 的类型参数」；中间只要套了一层 Exclude、Extract 之类的计算，同态即告失效。一手依据：Handbook《Mapped Types》对同态映射的说明段，加上篇 11 的实证规则。
+
+### 6. Record 的键域视角：映射按 K 逐成员生成键表
+
+`Record<K, T>` 的映射语法是 `[P in K]`——对 K 的**每一个成员**生成一个键。K 不限于字面量：可以是模板字面量联合，`${"a" | "b"}-${"x" | "y"}` 之类的键会按模板展开成笛卡尔积键表；也可以是 never——`Record<never, string>` 的键集为空，产物就是 `{}`（IsEmpty 探针实跑确认）。键域生成加交叉合并是工程里搭「精确形状」的常用组合：先按模块分别 `Record<各自键, 类型>`，再用交叉 `&` 拼合（§3 例 D 的思路）；反过来，想「删键」Record 帮不上忙——它造的是全新属性表、没有源可克隆，这正是它非同态的代价。
+
+### 7. 同态映射的数组与元组特例：映射发生在元素位置
+
+同态映射还有一份「免费午餐」：源类型是数组或元组时，映射发生在**元素位置**而不是键上。实跑探针：
+
+```ts
+type Ro<T> = { readonly [K in keyof T]: T[K] };
+type LT = Ro<[string, number?]>['length'];
+const l: 3 = undefined as unknown as LT;
+// 报 TS2322: Type '2 | 1' is not assignable to type '3'
+// —— 长度仍是字面量并集，证明元组没有被退化成数组
+const opt: Ro<[string, number?]> = ['a'];     // 通过：可选元素保留
+declare const arr: Ro<{ x: 1 }[]>;
+const ok: readonly { readonly x: 1 }[] = arr; // 通过：数组元素逐个只读化
+```
+
+三条证据合起来：同态映射对元组保留「长度与可选元素」，对数组产出「元素逐个映射后的只读数组」。这正是 §8 里 `DeepReadonly<{ x: 1 }[]>` 免费工作、以及笔记 32 题 ⑤「数组走同态映射按元素映射」那句的机制本体——不需要给数组写专门分支，同态形态自带。反例也顺手记住：非同态形态没有这个特例，它把数组当普通对象看（键表里是 length 与各种方法名），数组性整体丢失。一手依据：Handbook《Mapped Types》对「映射作用于数组与元组」的说明段。
+
+## 手推配方：三步推演工具类型实例化
+
+拿到任何一行「工具类型套工具类型」的代码，按固定三步推，不跳步：
+
+配方之外先给一个快速体检动作：结果与预期不符时，先看 in 右侧是不是被计算过（Exclude 一类），再看联合是不是在非同态处被压扁——八字口诀「先看右侧，再看联合」，能定位大多数意外产物。
+
+**第一步：判同态。** 找映射语法 `in` 右侧的东西。是 `keyof T`，或是约束可追溯到 `keyof T` 的类型参数（Pick 的 `[P in K]`）→ 同态；否则非同态。同态 → 属性元数据（键名、值类型、`?`、readonly）整份克隆再叠加你写的修饰符变化；非同态 → 全新属性表，只有显式写的修饰符生效。
+
+**第二步：判分发。** 裸类型参数出现在条件类型 extends 左侧 → 联合逐成员分发；同态映射的源 T 是联合 → 同样逐成员分发；两者都被 `[T]` 括号或非同态形态拦住时不分发。
+
+**第三步：逐属性结算。** 对最终参与映射的每一个键，写出「键名、值类型、`?`、readonly」四元组，套用机制深一层第 1 节的代数，产出最终形态。
+
+四个实例走一遍：
+
+**实例一**：`Omit<{ readonly id: number; name?: string }, "name">`。第一步：Omit 展开为 `Pick<T, Exclude<keyof T, K>>`，Pick 的 K 约束是 `keyof T` → 同态。第二步：T 不是联合，不分发。第三步：`keyof T` = `"id" | "name"`，Exclude 删 `"name"` 剩 `"id"`；键 id 的四元组为「id、number、非可选、readonly」，无修饰符变化 → `{ readonly id: number }`。
+
+**实例二**：`Partial<{ a: 1 } | { b: 2 }>`。第一步：同态。第二步：联合 → 分发成 `Partial<{ a: 1 }> | Partial<{ b: 2 }>`。第三步：各自叠 `?` → `{ a?: 1 | undefined } | { b?: 2 | undefined }`。产物仍是**两成员联合**，不是压扁对象；对它做成员判断要按联合逐个成员来。
+
+**实例三**：`Parameters<Ov>`（Ov 是带两个调用签名的接口）。条件类型 extends 对多签名类型只匹配**最后一个**调用签名（§5 既有实证）。第一步：无映射，跳过。第二步：T 非联合，不分发。第三步：拿最后签名 `(x: number, y?: boolean)` 做模式匹配，rest 位的 `infer P` 捕获整个形参表 → `[x: number, y?: boolean]`，标签与可选性一并保留。推到这里自然能预测：任何包装重载函数的工具都会丢掉前面的签名——瓶颈在 extends 的签名选择规则，不在包装写法。
+
+**实例四**：`Awaited<Promise<Promise<number>>>`。第一步：条件类型非映射，跳过。第二步：单一对象类型，不分发。第三步：`Promise<Promise<number>>` 是对象且带可调用 then，从 onfulfilled 首参挖出 `Promise<number>`，递归进入下一层；它又是 thenable，再挖出 number；number 不是对象，递归止步 → `number`。注意这道递归**没有显式出口分支**——出口藏在「解出来不再是 thenable 就原样返回」的兜底里。手推递归类型先找出口再看分支，顺序反了容易把兜底误当异常路径。
+
+## 与手写实现对照：内建版与手写版的逐条差异
+
+手写是本册练习的主线（15 个仿写在 `exercises/ts-utility-types/`）。下表按「官方签名 → 常见手写版 → 差异要点」逐条过，差异点即考点：
+
+| 工具类型 | 官方实现 | 常见手写版 | 关键差异 |
+| --- | --- | --- | --- |
+| Partial / Required / Readonly | `[P in keyof T]` 逐个叠修饰符 | 同款 | 无差异；手写重点是说出「同态」二字 |
+| Pick | `[P in K]`，K 约束 keyof T | 同款 | 手写若把 K 的约束改写成计算结果，同态即失 |
+| Omit | `Pick<T, Exclude<keyof T, K>>` | 直接 `[P in Exclude<...>]` 映射 | 直接映射版非同态、丢全部修饰符（§2 坑一） |
+| Record | `[P in K]`，K 约束 `keyof any` | 同款 | 键域宽度由约束决定，手写收紧会失去「任意键」能力 |
+| Exclude / Extract | 裸 T 条件分发 | 同款 | 手写常忘 never 入参：空联合不分发，直接得 never |
+| Parameters / ReturnType | 先验函数约束 + infer | 同款 | 约束写成 `Function` 时报错不友好且拿不到参数元组 |
+| Awaited | null 短路 + object 判定 + 递归 | 多数写 `T extends Promise<infer V>` | 漏 thenable 裸对象、漏 null 短路、漏「首参不可调用得 never」 |
+| NonNullable | `T & {}`（现行 lib） | 经典条件版 | 常规联合等价；unknown 上分叉（机制深一层 §2） |
+| DeepReadonly | 内建没有 | 同态映射 + 递归 | 官方「缺失」本身就是答案：深浅取舍刻意留给用户 |
+
+两段补充。**Awaited 的手写三漏怎么补**：先写 `T extends null | undefined ? T` 短路；thenable 判定写成 `object & { then(onfulfilled: infer F, ...args: infer _): any }`——object 前置把原始类型拦在门外，`...args: infer _` 容纳多参 then；最后 `F extends (value: infer V, ...args: infer _) => any ? Awaited<V> : never` 兜住「then 存在但首参不可调用」。对照官方源码逐行抄一遍再脱稿写，是检验递归理解最快的路径。**NonNullable 的手写选型**：写经典条件版即可，语义直白、常规联合上与现行版等价；但「unknown 分叉」这张差异卡要背下——被追问时能说出交集版在 unknown 上得到 `{}` 的原因（两条交集规则），比「背结论」高一个档次。表的最后一行留给自查习惯：调用 `Object.freeze` 时接受它的 `Readonly<T>` 返回类型（lib 自带重载已经这么做了），让「运行时冻结」与「类型层只读」在同一行会合——§8 讲过机制，这里补的是把机制落成惯例的那一步。
+
+## 工程三陷阱
+
+**陷阱一：把 `Partial<T>` 当「全深度可选」。** 触发场景：`updateConfig(patch: Partial<Config>)`，Config 含嵌套对象；调用方只传 `{ nested: { flag: true } }`，编译器报 nested 的其余必填字段缺失，有人就用断言糊过去。根因：映射只作用于最外层，`T[P]` 原样照搬，内层必填性原封不动。规避：写递归版 `DeepPartial` 并给函数与数组分支留出口（§8 与笔记 32 的题 ⑤）；或在 API 边界提供逐字段 setter，避免「深 patch」语义。
+
+**陷阱二：`Record<string, Row>` 被当「精确字典」。** 触发场景：`const byId: Record<string, User> = {}` 之后 `byId[id].name` 直接链式取值，键不存在时运行时炸「Cannot read properties of undefined」。根因：string 键域无限宽，该类型只承诺「每个 string 键查出来都是 User」，不承诺「你访问的键真的写过」。规避：键域封闭用字面量联合（`Record<"a" | "b", User>` 少一个键都报错）；键域开放就认账——开 `noUncheckedIndexedAccess`（笔记 15 §2.1）让读出的值并上 undefined，或显式判空再取成员。字面量表还有一招「声明行拦截」：用 `satisfies Record<"a" | "b", User>` 核对字面量对象，缺键在声明处就报错，不必等读取时才暴露。
+
+**陷阱三：对带重载的函数套 `ReturnType<typeof fn>`。** 触发场景：SDK 的请求方法带多个重载，包装层用 `ReturnType<typeof sdk.request>` 标返回类型，调用方拿到的只有**最后一个**签名的返回类型，前几个签名的参数组合静默失效。根因：extends 匹配多签名取最后一个（手推配方实例三）。规避：包装层写成泛型直转发——形如 `<T extends (...args: infer A) => infer R>(...args: A): R`，让每个调用点的重载解析发生在调用点自身；或显式枚举需要的签名形态。「包一层再解包」救不回签名列表，信息瓶颈在规则里。
+
+## 排查速查表
+
+| 报错（码 · 原文要点） | 根因 | 处置 |
+| --- | --- | --- |
+| TS2540 · Cannot assign to 'x' because it is a read-only property | 同态映射克隆了 readonly（如 `Required<Partial<T>>` 之后） | 预期行为；确要可写用 `Mutable<T>`（`-readonly`）并复核上游只读契约 |
+| TS2741 · `Property 'x' is missing in type '{}' but required in type ...` | 朴素映射或朴素 Omit 把 `?` 摘成了必有 | 换官方 Omit，或写成同态形态 `[P in K]?: T[P]` |
+| TS2322 · Type 'number \| undefined' is not assignable to type 'number' | Record 或索引读出的值并上了 undefined | `??` 兜底或判空收窄；开 `noUncheckedIndexedAccess` 前先盘点访问点 |
+| TS18048 · 'x' is possibly 'undefined' | 索引、可选链的产物未收窄就取成员 | 先判空或 `??` 兜底，收窄后再取成员 |
+| TS2345 · Argument of type '"xxx"' is not assignable to parameter of type '"a" \| "b"' | `K extends keyof T` 或 `StrictOmit` 拦下拼错的键 | 改键名；确需宽松键集用官方 Omit 的 `keyof any` 约束 |
+| TS2589 · Type instantiation is excessively deep and possibly infinite | `DeepReadonly`/`DeepPartial` 撞上循环引用或无出口递归 | 补出口（函数、原始类型分支）；有环数据限制深度或移到运行时处理 |
+| TS2313 · Type parameter 'x' has a circular constraint | 工具类型互相引用成环（A 的约束依赖 B，B 又依赖 A） | 提取公共约束层，消除环引用 |
+| TS2558 · Expected N type arguments, but got M | 给工具类型多传或漏传类型实参（如 `Partial<T, U>`） | 对照 lib.es5.d.ts 的官方签名修正个数 |
+| TS2339 · Property 'x' does not exist on type 'never' | Exclude/Extract 把联合过滤成 never 后继续取成员 | 先判 `[T] extends [never]`，或倒转过滤方向（Extract 换 Exclude） |
+
+## code review 检查单
+
+- [ ] `Omit` 处确认用的是官方版（借道同态 Pick、保修饰符）而非手写朴素版；拼错键需要拦截就换 `StrictOmit`。
+- [ ] 用 `Partial`/`Readonly` 的地方检查被包装类型有无嵌套对象——有则明确「浅层」是有意为之，或换 Deep 版。
+- [ ] `Record` 的键域：字面量联合查「缺键」，string 键查「访问点判空」；两者混用是高危信号。
+- [ ] `Parameters`/`ReturnType` 的目标函数是否带重载；带则确认「只保最后一个签名」调用方可接受，或改泛型直转发。
+- [ ] 提取 async 函数返回值用 `Awaited<ReturnType<typeof fn>>` 而非裸 `ReturnType`。
+- [ ] 每个非平凡工具类型都有类型层测试（`Expect<Equal<...>>` 或 `expectTypeOf`），且至少覆盖一个「修饰符加联合」的复合边界。
+- [ ] `[T]`、`T extends any` 这类控制分发的写法旁边有注释说明意图。
+- [ ] `NonNullable` 之后没有把「非 null」当「真值」用：空串、0、false 仍会穿透。
+- [ ] `Parameters` 类工具的约束是否恰到好处：`(...args: any) => any` 宽到收下所有函数、又窄到让非函数早早报错；写成 `Function` 则两头落空。
+- [ ] 修饰符叠加链（`Readonly<Required<T>>` 一类）旁有注释标明每层意图与顺序，读者不必重新推演。
+
+## 输出预测题（进阶）
+
+**题 1（修饰符代数）**：
+
+```ts
+interface Base { readonly id: number; label?: string; tags: string[] }
+type A = Required<Partial<Base>>;
+type B = { -readonly [K in keyof A]-?: A[K] };
+type C = { [K in keyof A]: A[K] };
+const x: A = { id: 1 };
+```
+
+不运行，写出 A、B、C 的精确形态；`x` 那一行报不报错、报什么码；C 与 A 有无差异。
+
+**题 2（联合分发与压扁）**：
+
+```ts
+type Q2 = Partial<{ a: 1; shared: string } | { b: 2; shared: string }>;
+type Q3 = Omit<{ a: 1; shared: string } | { b: 2; shared: string }, "shared">;
+```
+
+写出 Q2、Q3 的精确产物；对 Q2 的产物做「键 a 是否存在」的运行时判断，结果由什么决定？
+
+**题 3（Awaited 边界）**：
+
+```ts
+type Thenable = { then(onfulfilled: (value: number) => any): any };
+type Q4 = Awaited<Thenable | Promise<string>[] | null>;
+```
+
+写出 Q4 的精确产物，并解释数组成员为什么「活着出来」。
+
+**题 5（组合推演）**：
+
+```ts
+declare function f(): Promise<Promise<string>>;
+type Q5 = NonNullable<Awaited<ReturnType<typeof f>> | null>;
+```
+
+写出 Q5 的精确产物，并按手推配方三步给出过程。
+
+**题 4（NonNullable 两版对照）**：对 `NonNullable<unknown>` 分别给出 TS 5.x 经典条件版与现行交集版的产物，并用机制深一层第 2 节的规则解释为什么现行版得到 `{}` 而不是 unknown。
+
+## 进阶题解析
+
+**题 1**：`Partial<Base>` 叠 `?`、readonly 原样继承 → `{ readonly id?: number | undefined; label?: string | undefined; tags?: string[] | undefined }`；`Required` 再 `-?` 摘可选、readonly 依旧不碰 → `A = { readonly id: number; label: string; tags: string[] }`。B 一次结算两个维度（实跑过的 Concrete 同款）→ `B = { id: number; label: string; tags: string[] }`。C 什么都不写、全维度继承 → **C 与 A 无差异**（含 readonly 与必有性），这正是「同态」的本义。`x` 行报 **TS2741**（Property 'label' is missing ... but required in type 'A'）——`?` 已被 `-?` 摘掉，「可选」回不来了。
+
+**题 2**：Q2 同态分发 → `{ a?: 1 | undefined; shared?: string | undefined } | { b?: 2 | undefined; shared?: string | undefined }`，是**两成员联合**而非压扁对象。运行时「键 a 存在与否」由那个真实对象属于哪个成员、又是否赋过值决定：第一成员的实例可有可无，第二成员的实例压根没有 a——类型层两个成员都有 a 这个键（可选），运行时判断看的是值不是类型。Q3 实跑收据（IsEmpty 探针）为 **`{}`**：`keyof` 对联合取交集只剩 `"shared"`，删空后 Pick 映射出空对象；想逐成员删除用 §2 的 `DistributiveOmit`。顺带回收机制深一层 §3 的交集规则：想问「键 a 在联合所有成员上都存在吗」，类型层写法是 `"a" extends keyof Q2`——keyof 对联合取交集，答案是 false（a 只在第一成员上有）。
+
+**题 3**：`Q4 = number | Promise<string>[] | null`（实跑收据：赋给 never 报 `Type 'number | Promise<string>[] | null' is not assignable to type 'never'`）。null 进短路分支原样返回；Thenable 进 thenable 分支挖出 number，number 不是对象、递归止步；数组类型自身没有 then 成员，进「非 thenable」分支原样返回。Awaited 判的是「类型自身形状」，不深入数组成员逐个解包——想解包要么写映射（`{ [K in keyof T]: Awaited<T[K]> }`），要么直接用 `Promise.all` 的官方签名。
+
+**题 4**：经典条件版 `unknown extends null | undefined ? never : unknown`：unknown 是 top type，不能赋给 null 与 undefined，判定为假，走假分支原样放行 → **unknown**。现行交集版按「unknown 是交集的单位元」结算，`unknown & {}` = `{}` → **`{}`**。安全性差异：`{}` 至少拦住 null 与 undefined 的赋值（两者不满足空约束），unknown 则什么都不拦。所以现行版在 unknown 上「更窄」是过滤的副产品，不是行为 bug——但若代码依赖「NonNullable 后仍是 unknown」的宽顶类型语义（比如再喂给只接受 unknown 的入口），升级 lib 后要复查这一处。
+
+**题 5**：从里往外推。`typeof f` = `() => Promise<Promise<string>>`；`ReturnType` 挖返回值得 `Promise<Promise<string>>`；`Awaited` 递归拆两层 thenable 得 `string`；`NonNullable<... | null>` 交集分发，null 与 `{}` 交集得 never、被联合吸收 → **`string`**。这条链是「ReturnType 不递归、Awaited 递归、NonNullable 过滤」三个工具各司其职的缩影——每一环的规则都能独立说出口，组合题就不可怕。
