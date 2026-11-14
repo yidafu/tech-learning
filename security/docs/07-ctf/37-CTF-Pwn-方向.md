@@ -1,4 +1,4 @@
-# 37 - CTF Pwn 方向：从 ret2text 到堆利用
+# 37. CTF Pwn 方向：从 ret2text 到堆利用
 
 > 日期：2026-11-04
 > 所属大纲阶段：7. CTF 实战（Pwn 方向）
