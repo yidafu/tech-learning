@@ -2,7 +2,7 @@
 sidebar_position: 4
 ---
 
-# Exporter 与应用埋点
+# 4. Exporter 与应用埋点
 
 > 指标从哪来？两条路：**exporter**（把第三方系统的指标翻译成 /metrics）与**client library**（应用代码内直接埋点）。
 > 本篇覆盖 exporter 分类、node_exporter / blackbox_exporter 常用指标、中间件 exporter 一览，

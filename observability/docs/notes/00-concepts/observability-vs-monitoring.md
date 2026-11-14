@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# 可观测性（Observability）vs 监控（Monitoring）
+# 1. 可观测性（Observability）vs 监控（Monitoring）
 
 > 阶段 0 · 概念基础 / 笔记 1
 >

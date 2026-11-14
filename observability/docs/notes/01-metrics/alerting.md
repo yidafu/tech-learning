@@ -2,7 +2,7 @@
 sidebar_position: 7
 ---
 
-# 告警体系：规则 + Alertmanager + 设计原则
+# 7. 告警体系：规则 + Alertmanager + 设计原则
 
 > 告警是指标的"最后一步价值"：让正确的人在正确的时间做正确的事。
 > 本篇讲 Prometheus 告警规则语法（expr / for / labels / annotations）、severity 分级、

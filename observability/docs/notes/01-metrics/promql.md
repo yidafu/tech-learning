@@ -2,7 +2,7 @@
 sidebar_position: 3
 ---
 
-# PromQL 详解
+# 3. PromQL 详解
 
 > PromQL 是 Prometheus 的查询语言，也是 Grafana 面板、告警规则、recording rules 的共同基础。
 > 本篇按"查询类型 → 核心函数 → 聚合 → 分位数推导 → 向量匹配/join → 高级特性 → 实战查询 → 反模式"展开。

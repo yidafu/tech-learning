@@ -2,7 +2,7 @@
 sidebar_position: 4
 ---
 
-# Alertmanager 深入：路由、分组、抑制、静默与告警治理
+# 4. Alertmanager 深入：路由、分组、抑制、静默与告警治理
 
 > 阶段 4 · 笔记 4。Prometheus 只负责"判定告警是否成立"，**通知的分组、去重、
 > 抑制、静默、路由全部由 Alertmanager 负责**——它是值班同学生活质量的第一决定因素。

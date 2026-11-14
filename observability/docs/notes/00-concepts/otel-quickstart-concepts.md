@@ -2,7 +2,7 @@
 sidebar_position: 5
 ---
 
-# OpenTelemetry 核心对象速查（Quickstart Concepts）
+# 5. OpenTelemetry 核心对象速查（Quickstart Concepts）
 
 > 阶段 0 · 概念基础 / 笔记 5
 >

@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# 三大支柱：Metrics / Logging / Tracing
+# 2. 三大支柱：Metrics / Logging / Tracing
 
 > 阶段 0 · 概念基础 / 笔记 2
 >

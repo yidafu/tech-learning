@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# 采样策略（Sampling）：head-based 与 tail-based
+# 1. 采样策略（Sampling）：head-based 与 tail-based
 
 > 阶段 5 · 生产进阶 · 笔记 5-1
 >

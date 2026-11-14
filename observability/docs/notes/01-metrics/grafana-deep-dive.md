@@ -2,7 +2,7 @@
 sidebar_position: 6
 ---
 
-# Grafana 进阶：配置、认证与权限、Explore、Transformations、Alerting as Code
+# 6. Grafana 进阶：配置、认证与权限、Explore、Transformations、Alerting as Code
 
 > [grafana-visualization.md](grafana-visualization.md) 讲"怎么画好一块面板"（使用者视角）；
 > 本篇讲"**怎么把 Grafana 当成一个生产系统来运营**"（管理员与进阶用户视角）：

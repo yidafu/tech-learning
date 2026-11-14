@@ -2,7 +2,7 @@
 sidebar_position: 5
 ---
 
-# Grafana 可视化
+# 5. Grafana 可视化
 
 > Prometheus 存数据，Grafana 让数据"可读"。本篇讲：数据源配置、dashboard/panel/variable 三层模型、
 > 面板类型选型（什么数据配什么图）、阈值与单位、dashboard as code（provisioning + JSON）与查询优化。

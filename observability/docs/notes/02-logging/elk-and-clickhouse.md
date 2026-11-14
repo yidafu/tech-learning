@@ -2,7 +2,7 @@
 sidebar_position: 4
 ---
 
-# 日志存储选型：ELK / ClickHouse / Loki 与云托管
+# 4. 日志存储选型：ELK / ClickHouse / Loki 与云托管
 
 > Loki 解决了"便宜"，但不是所有场景都该用 Loki：需要任意词全文检索、需要复杂聚合分析、
 > 或者团队已经有 ES/CH 运维能力时，答案会不同。本篇把主流方案放在同一张桌子上比较，

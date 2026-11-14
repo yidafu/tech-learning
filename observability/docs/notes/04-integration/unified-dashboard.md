@@ -2,7 +2,7 @@
 sidebar_position: 5
 ---
 
-# 统一仪表盘与排障 SOP：让凌晨三点的你不需要动脑
+# 5. 统一仪表盘与排障 SOP：让凌晨三点的你不需要动脑
 
 > 阶段 4 · 笔记 5。三支柱关联（[correlation.md](correlation.md)）解决的是
 > "能不能跳"，本篇解决"**往哪跳、按什么顺序跳**"：好的服务总览 dashboard

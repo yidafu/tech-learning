@@ -2,7 +2,7 @@
 sidebar_position: 4
 ---
 
-# 语义约定（Semantic Conventions）
+# 4. 语义约定（Semantic Conventions）
 
 > 阶段 0 · 概念基础 / 笔记 4
 >

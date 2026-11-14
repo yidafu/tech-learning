@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# Prometheus 数据模型与指标类型
+# 2. Prometheus 数据模型与指标类型
 
 > 一切 PromQL 都建立在数据模型之上。本篇讲清楚：指标名 + 标签如何唯一确定一条时间序列；
 > 四种指标类型（counter / gauge / histogram / summary）各自的语义、适用场景与经典误区；

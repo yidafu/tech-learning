@@ -2,7 +2,7 @@
 sidebar_position: 3
 ---
 
-# 持续性能剖析（Continuous Profiling）
+# 3. 持续性能剖析（Continuous Profiling）
 
 > 阶段 5 · 生产进阶 · 笔记 5-3
 >

@@ -2,7 +2,7 @@
 sidebar_position: 6
 ---
 
-# APM 平台全景：商业标杆、开源一体化与 OpenTelemetry 的颠覆
+# 6. APM 平台全景：商业标杆、开源一体化与 OpenTelemetry 的颠覆
 
 > [jaeger-vs-tempo.md](jaeger-vs-tempo.md) 比较的是"追踪后端"；本篇把镜头拉远：
 > **APM（Application Performance Monitoring）平台**——同时包揽 trace + 日志 + 指标 +

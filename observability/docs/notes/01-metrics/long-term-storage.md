@@ -2,7 +2,7 @@
 sidebar_position: 8
 ---
 
-# 指标长期存储与水平扩展：Thanos / VictoriaMetrics / Mimir
+# 8. 指标长期存储与水平扩展：Thanos / VictoriaMetrics / Mimir
 
 > 单机 Prometheus 有三个天花板：**保留期**（本地盘放不下 13 个月）、**高可用**
 > （一个实例挂了查询就断）、**全局视图**（100 个实例 = 100 个孤岛 TSDB，跨集群查不了）。

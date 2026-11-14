@@ -2,7 +2,7 @@
 sidebar_position: 5
 ---
 
-# 采集器对比与配置：Vector / Fluent Bit / Filebeat
+# 5. 采集器对比与配置：Vector / Fluent Bit / Filebeat
 
 > 应用把日志写到 stdout/文件后，中间需要一层"采集器"完成：发现日志源、解析、
 > 脱敏/富化、多行合并、路由、批量传输、断点续传。这层的选择与配置质量，

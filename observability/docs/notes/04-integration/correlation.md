@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# 三大支柱关联：Metrics × Logging × Tracing 的互相跳转
+# 1. 三大支柱关联：Metrics × Logging × Tracing 的互相跳转
 
 > 阶段 4 · 笔记 1。三支柱各自独立时只是三座孤岛；关联起来才构成"一次排障的完整故事线"。
 > 本篇讲清楚：为什么要关联、trace_id 如何注入日志（Python/Go 代码）、Grafana 三向关联

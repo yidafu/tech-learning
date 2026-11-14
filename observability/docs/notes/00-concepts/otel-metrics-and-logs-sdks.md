@@ -2,7 +2,7 @@
 sidebar_position: 7
 ---
 
-# OTel Metrics SDK 与 Logs 信号：把另外两根支柱的 SDK 讲透
+# 7. OTel Metrics SDK 与 Logs 信号：把另外两根支柱的 SDK 讲透
 
 > [otel-sdk.md](../03-tracing/otel-sdk.md)（阶段 3）把 Traces SDK 讲透了；但 OTel 是
 > **三信号 SDK**，Metrics 与 Logs 的对象模型、聚合细节、与后端的映射各有专精。

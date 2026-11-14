@@ -2,7 +2,7 @@
 sidebar_position: 3
 ---
 
-# OpenTelemetry 基本概念总览
+# 3. OpenTelemetry 基本概念总览
 
 > 阶段 0 · 概念基础 / 笔记 3
 >

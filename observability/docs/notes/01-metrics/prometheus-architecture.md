@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# Prometheus 架构详解
+# 1. Prometheus 架构详解
 
 > Prometheus 是 CNCF 毕业项目、事实上的云原生指标监控标准。本篇聚焦其架构设计与核心概念：
 > 拉模型（pull）、抓取（scrape）、目标（target）与服务发现（service discovery）、本地时序数据库 TSDB、

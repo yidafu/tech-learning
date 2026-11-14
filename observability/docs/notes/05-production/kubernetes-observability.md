@@ -2,7 +2,7 @@
 sidebar_position: 5
 ---
 
-# Kubernetes 可观测性
+# 5. Kubernetes 可观测性
 
 > 阶段 5 · 生产进阶 · 笔记 5-5
 >

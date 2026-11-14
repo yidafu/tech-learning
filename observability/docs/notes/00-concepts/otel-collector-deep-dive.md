@@ -2,7 +2,7 @@
 sidebar_position: 6
 ---
 
-# OpenTelemetry Collector 生产化：组件模型、配置工程、可靠性与自监控
+# 6. OpenTelemetry Collector 生产化：组件模型、配置工程、可靠性与自监控
 
 > [opentelemetry-overview.md §7](opentelemetry-overview.md#7-collector-架构) 讲了
 > Collector 是什么，[lab00](../../labs/lab00-otel-collector-basics/README.md) 跑通了第一个管道；

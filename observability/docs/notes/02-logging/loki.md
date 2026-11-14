@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# Grafana Loki 深入：只索引 label 的日志数据库
+# 2. Grafana Loki 深入：只索引 label 的日志数据库
 
 > Loki 的自我定位是"像 Prometheus 一样省钱省事的日志系统"：**只给标签建索引，
 > 日志正文原样压缩存进对象存储**。理解这一句话，就理解了 Loki 的全部设计、能力边界与常见坑。

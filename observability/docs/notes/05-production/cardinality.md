@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# 高基数问题（Cardinality）：TSDB 的头号杀手
+# 2. 高基数问题（Cardinality）：TSDB 的头号杀手
 
 > 阶段 5 · 生产进阶 · 笔记 5-2
 >

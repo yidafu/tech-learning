@@ -2,7 +2,7 @@
 sidebar_position: 6
 ---
 
-# 前端可观测性 / RUM：Web Vitals、Grafana Faro 与 Sentry
+# 6. 前端可观测性 / RUM：Web Vitals、Grafana Faro 与 Sentry
 
 > 后端三支柱再完美，也回答不了"用户为什么看到白屏/点了没反应/按钮错位"——
 > **用户浏览器里发生的故障，只有用户浏览器里的数据能证明**。
