@@ -1,4 +1,4 @@
-# DevTools 深潜：Performance 全轨道解剖
+# 02. DevTools 深潜：Performance 全轨道解剖
 
 > [← 第十阶段导览](01-导览.md) · 全链路收束。前九个阶段的知识分散在 17 步时间线上，本册把它们装进同一个工具：Performance 面板的每条轨道，都是某几个阶段的「可视化出口」——Network 轨道收拢第二至五阶段的连接与协议知识，Main 轨道收拢第七阶段的解析编译执行，Compositor/Raster/GPU 轨道收拢第八阶段的渲染管线，Timings 与交互轨道收拢第九阶段的指标。学完本册，一段 trace 不再是一团彩色方块，而是整条链路账本的展开图。
 

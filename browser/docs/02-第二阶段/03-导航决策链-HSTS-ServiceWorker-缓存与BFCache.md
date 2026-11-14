@@ -1,4 +1,4 @@
-# 导航决策链：HSTS、Service Worker、缓存与 BFCache
+# 03. 导航决策链：HSTS、Service Worker、缓存与 BFCache
 
 > [← 第二阶段导览](01-导览.md) · 时间线 ②。URL 确认是导航后、第一个 DNS 包飞出前，浏览器按固定顺序查四条「不发网络请求」的捷径。这一册是「为什么有的加载几乎零请求」的完整答案。
 

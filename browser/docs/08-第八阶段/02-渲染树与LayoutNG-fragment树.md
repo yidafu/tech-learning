@@ -1,4 +1,4 @@
-# 渲染树与 LayoutNG：fragment 树
+# 02. 渲染树与 LayoutNG：fragment 树
 
 > [← 第八阶段导览](01-导览.md) · 时间线 ⑮。第七阶段结束时，浏览器手里有 DOM、CSSOM 和每个节点的 ComputedStyle——但全是「样式与逻辑」，没有「几何」。这一册讲几何的载体怎么搭：LayoutObject（RenderObject 的现代叫法）怎么和 DOM 对应、display:none 与 visibility:hidden 在树上的真实差异、伪元素与匿名盒这些「DOM 里查不到的盒子」从哪来，以及现代 Blink 布局引擎 LayoutNG 为什么要把布局结果设计成不可变的 fragment 树。
 
