@@ -12,7 +12,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
-const SITES = ['architecture', 'compiler', 'js-ts/docs-site', 'observability', 'react', 'react-native', 'security', 'webgl'];
+const SITES = ['architecture', 'browser', 'compiler', 'gui', 'js-ts/docs-site', 'observability', 'react', 'react-native', 'security', 'webgl'];
 
 for (const site of SITES) {
   const siteRoot = join(repoRoot, site);
@@ -32,4 +32,4 @@ for (const site of SITES) {
 
   console.log(`sync-theme: ✓ ${site}`);
 }
-console.log('sync-theme: 统一主题已同步到 8 站。');
+console.log(`sync-theme: 统一主题已同步到 ${SITES.length} 站。`);
