@@ -451,3 +451,205 @@ interface Api {
 
 `Keys<Api>["fetch"]"` 是 `() => Promise<void>`。要点：① 过滤按**值类型**走条件，键通过 `as ... : never` 丢弃；② `as` 重映射仍是同态映射，方法简写被原样复制（还是方法简写形态，而不是 `(x) => void` 属性形态）。
 
+---
+
+## 机制深一层：条件类型的求值时机与「尾递归豁免」
+
+正文 §2 讲清了「怎么分发」，这一节补两个更工程的问题：「编译器什么时候才算」与「递归为什么有时不爆」。口径：一手 Release Notes / Handbook + 本机 tsc 5.9.3（`--strict`）实测收据，凡写「实测」的都真跑过。
+
+**求值分两个问题：要不要分发、要不要延迟。** 拿到一个形如 `T extends U ? X : Y` 的类型时，编译器先回答「检查类型是不是裸类型参数」——是，就对联合逐成员分发；不是（比如包了一层元组的 `[T] extends [U]`），就整体判断。再回答「两侧还有没有未实例化的类型参数」——有，整个条件类型保持延迟形态原样出现在结果里；没有，就地求值成真假分支之一。两条规则叠加能解释一个高频困惑：为什么泛型函数签名里写条件类型不报错、也不「执行」——延迟形态是合法的中间状态，只有实例化（用具体类型代入 T）那一刻才真正计算。
+
+**验证手段：故意赋错值的「探针法」。** 类型层的求值结果不会出现在运行时产物里，想看到编译器算出了什么，就把结果当注解、故意赋一个错值，让 TS2322 把求值结果原样打印出来：
+
+```ts
+type ToArray<T> = T extends any ? T[] : never;
+const probe: ToArray<boolean> = '故意写错';
+// error TS2322: Type 'string' is not assignable to type 'false[] | true[]'.
+```
+
+这一行实测确认了三件事：`boolean` 被拆成 `true | false` 逐一分发；每个成员各自得到 `T[]`；结果联合没有被合并回 `boolean[]`（报错信息里成员顺序显示为 `false[] | true[]`）。正文 §2.2 的结论从此可以按收据复述，而不是靠背。这个手法是后面所有「类型层收据」的基础：不装任何插件，让编译器自己把答案写进错误信息。
+
+**尾递归豁免：递归条件类型不是一刀切 50 层。** 「递归深度约 50 层就报 TS2589」只对**非尾递归**形态成立。TS 4.1 起编译器对尾递归形态的条件类型——递归调用占据真假分支的**整个表达式**、返回时不残留任何待拼接结构——大幅放宽了实例化深度预算。两条收据的对照（都真跑过）：
+
+```ts
+// 形态一（尾递归）：实测文件里 P60 是 60 层 Promise<Promise<...Promise<1>...>>
+type DeepAwait<T> = T extends Promise<infer V> ? DeepAwait<V> : T;
+const ok: DeepAwait<P60> = 1; // 实测：无任何报错，60 层全部解完
+```
+
+```ts
+// 形态二（非尾递归）：分支里是 [...Rev<R>, F]，先递归、再拼接
+type Rev<T extends readonly unknown[]> =
+  T extends readonly [infer F, ...infer R] ? [...Rev<R>, F] : [];
+// 实测：对 60 个元素的元组求 Rev，立刻报
+// error TS2589: Type instantiation is excessively deep and possibly infinite.
+```
+
+差别不在递归次数，而在**返回位是否残留结构**：`DeepAwait<V>` 是「结果即递归」，一层解完就走；`[...Rev<R>, F]` 是「递归完还要加工」，每层都要留一个待展开的展开运算，深度预算迅速耗尽。实测还送了一个细节：TS2589 的连带报错里能看到「算到一半」的中间形态 `[...any[], any, 0, 0, ...]`——编译器把自己卡住的现场打出来了，看它就能数出实际推进了多少层。
+
+工程含义：写递归工具类型尽量让递归调用独占分支（`UnboxPromise`、`Flatten` 都是好形态）；必须拼接结果的（`Reverse`、`Join`、`Paths`）先估数据深度——几十层以内可用，别拿去全量展开配置树；两者混用的（递归 + 拼接 + 模板）按非尾递归的预算来算。
+
+## 手推配方：三个高频工具类型的编号推演
+
+以下推演都建议先用探针法写下预期，再跑 tsc 对答案；配方本身的手推过程不需要跑任何命令。
+
+**配方 A：`OptionalKeys<T>`——找出所有可选键。** 依据：strict 下可选属性 `T[K]` 的值类型是 `X | undefined`（正文 §1.2 已证），加上 `undefined` 可赋给一切含它的类型这个单向事实。步骤：
+
+1. 对每个键 K 问一个只有可选属性才答「是」的问题：`undefined extends T[K]` 吗？必填属性（`a: number`）答否，可选属性（`b?: string`，实际是 `string | undefined`）答是；
+2. 把判定器写成条件类型：`IsOpt<K> = undefined extends T[K] ? K : never`——注意方向必须是 `undefined extends ...` 而不是反过来，原因见第 4 步；
+3. 塞进 `as` 重映射：`type OptionalKeys<T> = { [K in keyof T as undefined extends T[K] ? K : never]: T[K] }`；
+4. 推演 `{ a: number; b?: string }`：K = 'a' 时 `undefined extends number` 为假，键映射到 never 被丢弃；K = 'b' 时 `undefined extends string | undefined` 为真，键保留。结果 `'b'`。
+
+第 2 步的反方向 `T[K] extends undefined` 是错的：`string | undefined extends undefined` 为假——联合类型不会「收窄成单个成员再比较」，它按整体判断。记住这个不对称：**undefined 走出去容易（可赋给一切含它的类型），联合走进来难（必须整体满足）**。
+
+**配方 B：`IsUnion<T>`——判断 T 是不是多成员联合。** 思路：让「裸 T 分发」与「元组阻断」在同一道题里对撞。步骤：
+
+1. 先拦空联合：`[T] extends [never] ? false : ...`（否则分发一步直接坍缩成 never，见正文 §2.3）；
+2. 存一份副本 `C = T`。关键：默认类型参数 `C` 在分发时**不参与分发**，它始终保持整个联合；
+3. 对裸 T 分发，每个成员问自己「`[C] extends [T]` 吗」：单成员联合里 C 就是自己，为真；多成员里 C 是整个联合而 T 只是其中一个成员，永远为假；
+4. 汇总成配方：`type IsUnion<T, C = T> = [T] extends [never] ? false : T extends C ? ([C] extends [T] ? false : true) : never`；
+5. 推演 `IsUnion<'a' | 'b'>`：分发两轮，每轮 `[C] extends [T]` 都是假，各得 true，联合去重得 true。推演 `IsUnion<string>`：单成员，`[string] extends [string]` 为真，得 false。
+
+**配方 C：`CamelCase<S>`——把 `foo-bar` 改写成 `fooBar`。** 步骤：
+
+1. 出口：S 不匹配 `` `${infer H}-${infer R}` ``（没有连字符）时原样返回；
+2. 匹配一轮：H 拿第一个片段，R 拿剩余全部——模板里**末位单个 infer 吞到串尾**（下一节预测题 2 有收据）；
+3. 递归处理 R，最后拼接 `` `${H}${Capitalize<Next>}` ``——注意这里有拼接，属于非尾递归形态，段数极多时留意 TS2589；
+4. 推演 `'foo-bar-baz'`：第一轮 H = 'foo'、R = 'bar-baz'；第二轮 H = 'bar'、R = 'baz'；第三轮无连字符走出口。倒着拼回去得 `'fooBarBaz'`。
+
+## 工程三陷阱：类型编程上生产线的三个翻车点
+
+**陷阱一：用 `Record` 重述接口响应，可选字段悄悄变必有。** 触发场景：把三方返回的 DTO 手抄成 `Record<'id' | 'memo', string>`（原字段 `memo?: string`），下游把 `memo` 当必有字段用；某天上游不回 memo 字段，运行时 undefined 顺着调用链扩散。根因：`Record` 的映射约束是裸联合参数而非 `keyof T`，属于非同态映射，不复制 `?` 与 `readonly`（正文 §1.2 的判定规则），`memo` 从「可省略」变「必给」。规避：重述已有类型时保持同态形态（`` { [K in keyof DTO]: ... } ``）；确要改值类型就用映射类型，`Record` 只用来「从零造键」。这是 11、12 两册共同的高频事故源，review 遇到手抄 DTO 优先核对修饰符。
+
+**陷阱二：模板字面量联合的笛卡尔积拖垮 IDE。** 触发场景：路由类型写成 `` `/${Locales}/${Pages}` ``，Locales 有 40 个语言、Pages 有 30 个页面，展开即 1200 个字面量；再对每个成员叠 `Capitalize` 或映射类型，悬停与补全开始数秒级卡顿，最后有人默默删掉类型注解，防线失守。根因：模板里的联合按笛卡尔积展开，成本是各占位符联合大小之**积**；模板套模板或映射套模板还会再乘一层。规避：控制占位符联合的成员数，超过几十就降级为模式类型（`` `/${string}/${string}` ``）；拿不准就先用 `type RouteProbe = \`/${Locales}/${Pages}\`` 这种独立探针看它实际展开多大，再决定要不要在业务类型里展开。
+
+**陷阱三：工具类型的兜底分支返回 `any`，静默传染整条链。** 触发场景：对「不是函数」的类型用了 `ReturnType`——lib.es5.d.ts 里它的假分支是 `any`——拿到 any 之后所有成员访问全部放行，类型防线在那个调用点之后整体失效，而 review 时看不到任何红色。根因：内置工具类型为了兼容老代码，兜底分支选了 `any` 而不是 `never`；`Parameters` 的兜底同理是 `any[]`。规避：给泛型参数收紧约束（`F extends (...args: any[]) => unknown`），让「不是函数」的误用直接变成 TS2344 编译错误；或自写兜底为 `never` 的版本，让误用至少炸在使用点。看到 `ReturnType<typeof 某常量>` 而那个常量不是函数，直接当 bug 处理。
+
+## 排查速查表：类型编程高频错误码（本机实测口径）
+
+前四条错误码均在 tsc 5.9.3 `--strict` 下实测复现（命令：`node_modules/.bin/tsc --strict --noEmit --target es2022 --module esnext --moduleResolution bundler --lib es2022,dom 临时文件`）；后两行是无错误码的行为差异，用探针法定位：
+
+| 错误码与关键信息 | 典型触发 | 根因 | 处置 |
+| --- | --- | --- | --- |
+| TS2456 `Type alias 'A' circularly references itself` | `type A = A` 或别名顶层直接自引用 | 自引用没经过对象属性/函数参数等间接层 | 把自引用挪进属性位（树形结构天然合法） |
+| TS2344 `Type 'K' does not satisfy the constraint 'string'` | 映射里直接 `` Capitalize<K> `` | `keyof T` 含 number/symbol 键 | 约束处或使用处加 `& string` |
+| TS2536 `Type 'K' cannot be used to index type 'T'` | 泛型 `T[K]` 而 K 无约束 | 索引类型没被 `keyof T` 约束 | 给 K 写 `extends keyof T` |
+| TS2589 `excessively deep and possibly infinite` | 拼接式递归处理长元组 | 非尾递归耗尽实例化深度（尾递归有豁免） | 改尾递归形态、加出口、砍数据深度 |
+| （无错误码）分发结果与预期不符 | `ToArray<boolean>` 得 `true[] \| false[]` | 裸类型参数加联合触发分发 | 探针法读真实结果；要整体判断就 `[T] extends [U]` |
+| （无错误码）拿到 any 而非报错 | 对非函数用 `ReturnType` | 内置工具类型兜底分支是 `any` | 收紧泛型约束让误用变 TS2344 |
+
+排查口令：先探针（读出真实求值结果），再对照「分发 / 同态 / 尾递归」三个关键词定位规则，最后才允许怀疑编译器——绝大多数「TS 算错了」，是自己没按这三条规则写。
+
+## code review 检查单：类型编程相关评审 8 条
+
+- [ ] 手抄三方 DTO 时用的是同态映射形态（`keyof T`），不是 `Record<键联合, 值>`？后者会抹掉可选与只读修饰符。
+- [ ] 条件类型的检查类型若是裸类型参数，写注释声明「这里会按联合分发」了吗？boolean / never / any 三个特例有人推演过吗？
+- [ ] 递归类型有明确出口吗？递归调用独占分支（尾递归）还是带拼接（非尾递归）？后者处理的数据深度有上界吗？
+- [ ] `infer` 出现多次时，候选位置是同为协变或同为逆变吗？混用时结果与直觉不符的风险评估过吗？
+- [ ] 模板字面量里的联合占位符成员数可控吗（两位数以内）？有没有先用独立探针看过展开规模？
+- [ ] 自写工具类型的兜底分支是 `never` / 抛 TS2344 约束，而不是 `any`？调用点误用会立刻编译失败吗？
+- [ ] 泛型索引 `T[K]` 的 K 有 `extends keyof T` 约束吗？`keyof T & string` 这类收窄写在与字符串工具类型交接的地方了吗？
+- [ ] 探针法（故意赋错值读 TS2322）验证过核心工具类型的求值结果吗？验证代码有没有留在测试或注释里供后人复跑？
+
+## 输出预测题（进阶）
+
+先写答案，再用探针法跑 tsc 对照——三题全部实测过，收据见答案。
+
+**题 1**：
+
+```ts
+type Cond<T> = T extends string ? 's' : 'n';
+type P1 = Cond<boolean>;
+type P2 = Cond<any>;
+type P3 = [never] extends [never] ? 'yes' : 'no';
+```
+
+**题 2**：
+
+```ts
+type Drop<S extends string> = S extends `api/${infer R}` ? Drop<R> : S;
+type D1 = Drop<'api/v1/users'>;
+type D2 = Drop<'api/api/x'>;
+type D3 = Drop<'web/users'>;
+```
+
+**题 3**：
+
+```ts
+type Last<T extends readonly unknown[]> =
+  T extends readonly [...unknown[], infer L] ? L : never;
+type L1 = Last<[1, 2, 3]>;
+type L2 = Last<[]>;
+type L3 = Last<number[]>;
+```
+
+## 进阶预测题答案
+
+**题 1**：P1 = `"n"`。`boolean` 分发成 `true | false`，两个成员都不是 string，各得 `"n"`，联合去重后只剩 `"n"`——「分支不含 T 时拆分不可见」的实测形态（收据：探针报 `Type '"x"' is not assignable to type '"n"'`）。P2 = `"s" | "n"`：检查类型为 `any` 时条件类型取两分支之并（收据：`not assignable to type '"s" | "n"'`）。P3 = `"yes"`：元组阻断分发，`[never]` 与 `[never]` 是同构的单元素元组，走真分支（收据：`not assignable to type '"yes"'`——探针只塞了单字符串，能确定结果不是并集）。
+
+**题 2**：D1 = `"v1/users"`。模板匹配中**末位单个 infer 只吞一次匹配**：第一轮 R = `"v1/users"`，递归后这个串不再有 `api/` 前缀，递归终止——所以这个类型每层只剥一层前缀，不是全剥（收据：`not assignable to type '"v1/users"'`）。D2 = `"x"`：第一轮剥成 `"api/x"`，它仍匹配前缀，第二轮剥到 `"x"`（收据：在 `D2` 处赋 `'x'` 不报错，证明结果恰为 `"x"`）。D3 = `"web/users"`：前缀不匹配走假分支，原样返回。
+
+**题 3**：L1 = `3`；L2 = `never`——空元组连「末位恰好一个元素」都凑不出，匹配失败走 never 分支；L3 = `never`，这是本组最有价值的收据：`[...unknown[], infer L]` 这个模式要求「前面若干个 + 确定的一个末位」，而无界数组 `number[]` 没有确定的末位元素，整体匹配失败。想对数组求「最后一个元素的类型」不能直接套这个配方，得先分流（`T extends readonly unknown[]`）或退而求其次用 `T[number]` 拿元素联合。
+
+---
+
+## 规范原文对照：类型编程三处一手原文与解读
+
+三句原文均取自 TS Handbook 第二版对应页面，解读结合本册收据。读原文的方法：先记结论，再回原文对**限定词**——每句原文里的限定词都对应一条行为边界，漏掉限定词的复述迟早翻车。
+
+**原文一（映射修饰符）。** Handbook《Mapped Types》：
+
+> "There are two additional modifiers which can be applied during mapping: `readonly` and `?` which affect mutability and optionality respectively. You can remove or add these modifiers by prefixing with `-` or `+`. If you don't add a prefix, then `+` is assumed."
+
+解读：三句话说了三件事。其一，映射类型里你能动的修饰符只有 `readonly` 与 `?` 两种；其二，加减号是算术（正文 §1.3 的 `-readonly`、`-?` 由此而来）；其三，**不加前缀默认是加号**。最容易误读的是第三点与同态复制的关系：`{ [K in keyof T]: T[K] }` 里一个符号都没写，`readonly` 之所以保留，靠的是同态复制机制而非「默认加号」——默认加号只会作用在你显式写了符号的修饰符上。原文一没有展开同态判定规则，那部分Handbook 用示例讲行为，判定条件靠实测补齐（正文 §1.2 的三条判定）。同页对 `as` 重映射的原话是 "You can filter out keys by producing `never` via a conditional type"——「过滤键」的规范表述就是「把键映射到 never」，与正文 §1.4 完全一致。
+
+**原文二（分发）。** Handbook《Conditional Types》：
+
+> "When conditional types act on a generic type, they become distributive when given a union type."
+
+解读：限定词是 "act on a generic type"——分发的前提是检查类型为**裸类型参数**，与正文 §2.2 的「裸」一一对应；探针收据（`ToArray<boolean>` 求值结果 `true[] | false[]`）就是这句原文的实例化：`boolean` 在类型系统里本就是 `true | false` 的别名，落进分发规则自然被拆开。同页还有一句常被忽略的：
+
+> "When inferring from a type with multiple call signatures (such as the type of an overloaded function), inferences are made from the last signature (which, presumably, is the most permissive catch-all case)."
+
+解读：对重载函数做 `infer`，取的是**最后一条签名**——意味着 `Parameters<typeof 重载函数>` 只描述最后一个签名，前面几条对它不可见。工程上遇到「Parameters 推出来的参数表不对」，第一步先查目标是不是重载函数；是的话改用手写联合，或用括号断言挑具体签名，别指望编译器替你做重载消解（原文括号里那句 "It is not possible to perform overload resolution based on a list of argument types" 就是官方拒绝的理由）。
+
+**原文三（模板联合展开）。** Handbook《Template Literal Types》：
+
+> "When a union is used in the interpolated position, the type is the set of every possible string literal that could be represented by each union member."
+
+以及：
+
+> "For each interpolated position in the template literal, the unions are cross multiplied."
+
+解读：两句合起来就是「笛卡尔积」的规范表述，也是工程三陷阱之二的原文依据——成本公式「各占位符联合大小之积」不是经验之谈，是规范原文的直译。`${string}`、`${number}` 这类模式占位符在同一页有专门小节，作用是把精确集合降级为模式；陷阱二里给的降级方案（写成 `/${string}/${string}`）正是用回这一节的原始能力，而不是什么新特性。
+
+**附带一条 TS 4.7 收据：`infer` 约束。** TS 4.7 Release Notes 的 "extends Constraints on infer Type Variables" 小节允许在推断的同时给推断变量加约束，推断结果会再与约束求交。实测（tsc 5.9.3）：
+
+```ts
+type Wrap<S extends string> = S extends `id-${infer N extends number}` ? N : never;
+const w: Wrap<'id-42'> = 'x';
+// error TS2322: Type '"x"' is not assignable to type '42'.
+```
+
+模板匹配 + 数字约束的组合，直接从字符串里解出了字面量 `42`。「解析路由段」「解析 id 后缀」这类工具类型的官方形态就是它；在 TS 4.7 之前要绕两步（先 `${infer S}` 拿字符串再转数字），4.7 起一行到位。同一版还有 "Control-Flow Analysis for Bracketed Element Access"（元素访问收窄，09 册进阶部分引用了它的实测边界）与 "Optional Variance Annotations for Type Parameters"（`in`/`out` 方差标注，13 册进阶部分讨论）两个小节，三处都在同一份发布说明里，可顺路读。
+
+---
+
+## 补充配方：`PartialBy` 与「类型 / 运行时双账本」纪律
+
+**配方 D：`PartialBy<T, K>`——只把指定的键变可选。** 目标形态：`type PartialBy<T, K extends keyof T> = { [P in K]?: T[P] } & Omit<T, K>`。步骤：
+
+1. 第一半 `{ [P in K]?: T[P] }` 对键联合 K 逐个映射并显式叠加问号。按 §1.2 判定规则的第二条（映射约束是类型参数、且约束为 keyof T），这一半是同态映射——原属性的 `readonly` 会被复制，结果是「只读且可选」；
+2. 第二半 `Omit<T, K>` 负责剩余键。Omit 是否也保留修饰符？先猜再验证：实测探针（tsc 5.9.3）对 `Omit<{ readonly id: number; memo?: string; note: string }, 'note'>` 做两问——`obj.id = 5` 报 TS2540（`Cannot assign to 'id' because it is a read-only property`），证明 readonly 保留；`const q: number = obj.memo` 报 `Type 'string | undefined' is not assignable to type 'number'`，证明可选性保留。所以 Omit（经由 Pick）同样是同态映射，答案：保留；
+3. 两半用交叉类型拼接。交叉里同键冲突会被收窄为交集，这里两半键集合互斥（一半是 K、一半是排除 K 的余集），不产生冲突；
+4. 推演 `PartialBy<{ id: number; memo?: string; note: string }, 'note'>`：note 从必有变可选，id 与 memo 原样（含各自修饰符），结果 `{ id: number; memo?: string; note?: string }`。
+
+**「双账本」纪律：类型层与运行时各记一本账，漂移即事故。** 正文 §4.3 的 `on()` 示例其实藏着一条工程纪律：类型层用 `Capitalize<E>` 造出 `onClick` 这个键名，运行时用 `event[0].toUpperCase() + event.slice(1)` 造出**同一个**键名——两本账各记一份「同样的转换」。风险在于：任何一边单独改规则（比如运行时改成小写前缀），另一边不会跟着变——类型继续声称 `onClick` 存在，运行时的键却换了名字，调用点静默拿到 undefined，连编译警告都不会有。规避三选一：转换逻辑只在一处实现、另一处靠测试锁死；让类型层直接从运行时常量表推导（`const EVENTS = ['click', 'focus'] as const` 配 `typeof EVENTS[number]`），消灭手写的第二本账；或干脆用声明合并把运行时表注册进类型（`declare const` + `typeof`）。code review 时看到「类型层字符串转换 + 运行时字符串转换」同时出现，标准动作就是问一句：这两本账谁对齐谁，拿什么对齐。类型编程的价值在于让第一本账自动生成，而不是让人多抄一本。
+
+## 收尾自测（增补）
+
+1. 同态映射的判定条件是哪三条？`Omit` 为什么保留修饰符而 `Record` 不保留？——前者映射约束落在 keyof 链上（`Pick` 的 K 约束为 keyof T，Omit 经由 Pick 继承同态性），后者约束与任何 `keyof T` 无关；实测探针见「补充配方」第 2 步的两问收据。
+2. `[T] extends [U]` 阻断的到底是什么？——阻断的是「检查类型为裸类型参数时的联合分发」，不是可赋值性判断本身；进阶预测题 1 的 P3 演示了元组包裹后 `[never]` 以整体身份参与判断。
+3. 递归工具类型在什么形态下享有深度豁免？判据是「返回位是否残留待拼接结构」，请各举一个豁免形态（`DeepAwait`）与不豁免形态（`Rev`），并说出各自适用的数据深度量级。
+4. 探针法完整口诀：求值结果 → 故意赋错值 → 读 TS2322 → 把结果写进注释或测试。为什么不能用 `console.log` 打印类型层的求值结果？——类型在编译后全部擦除，运行时没有任何对应物，这是本册全部结论的公共前提，也是「环境声明不产生值」（14 册）的同源事实。
+

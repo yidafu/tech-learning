@@ -306,3 +306,235 @@ type R2 = never extends string ? 's' : 'n';  // ?
 ### 收尾一句话（增补）
 
 类型理论的工程目标只有一个：**让"错的程序"在编译期被拒绝，且拒绝的理由能被人类理解**——TS 的全部规则（包括那些"怪"规则）都是这条目标与渐进式迁移现实之间的折衷。
+
+---
+
+## 机制深一层：方差的位置推导法、「不变」的精确条件与 readonly 的两种待遇
+
+正文 §5 给了方向表与 strictFunctionTypes 的格局，这一节把「怎么推」变成算法、把「不变」的成立条件用实测钉死。全部收据为本机 tsc 5.9.3（`--strict`）。
+
+**位置极性与乘积规则。** 给 T 的每个出现位置标极性：函数的参数位记负、返回位记正；位置嵌套时极性相乘（负负得正）。结论规则：全正 → 协变；全负 → 逆变；正负混合（存在可写口）→ 不变。三条实测收据演示乘积：
+
+```ts
+class Animal { name = 'a'; }
+class Dog extends Animal { fetch() { return 1; } }
+
+type Cb<T> = (cb: (x: T) => void) => void;      // T 在「参数的参数」：负 × 负 = 正
+declare const cD: Cb<Dog>;
+const cA: Cb<Animal> = cD;   // 实测通过：协变方向放行
+declare const cA2: Cb<Animal>;
+const cD2: Cb<Dog> = cA2;    // 实测 TS2322：逆变方向被拒
+
+type HandlerFn<T> = { on: (f: (x: T) => void) => void; fire: () => T };
+declare const h1: HandlerFn<Dog>;
+const h2: HandlerFn<Animal> = h1; // 实测通过：on 里负负得正，fire 为正，全正 → 协变
+```
+
+「要狗的客户给得起任何动物处理器吗」的直觉题在乘积规则下不用背：T 藏得越深，方向越可能翻转，偶数层参数嵌套会翻回协变。
+
+**「不变」的精确条件：看有没有严格逆变检查的成员。** 正文 §5 的表格把 `Box<Dog>` 与 `Box<Animal>` 记作互不兼容，那是「读写两用 + 严格写口」的形态。实测把精确条件钉了出来：
+
+| 容器形态 | Dog → Animal 方向 | 结论 |
+| --- | --- | --- |
+| `interface PropBox<T> { value: T }` 纯可变属性 | 实测通过 | 属性协变放行——不健全，但结构规则如此 |
+| `interface MethodBox<T> { value: T; set(v: T): void }` 方法简写写口 | 实测通过 | 方法双变让写口不设防 |
+| `interface FnBox<T> { value: T; set: (v: T) => void }` 函数属性写口 | 实测 TS2322 | 反向（Animal → Dog）同样 TS2322，双向皆拒 |
+
+也就是说，TS 没有 Java 式的「泛型默认不变」——结构展开后每个成员按自己的方向检查，整体表现是各成员方向的合取。想让泛型容器真正「不变」，就给它装一个**函数属性形态的写口**（strictFunctionTypes 生效处）；写成方法简写，写口就因双变豁免失守。这也是正文 §5「目标侧是方法简写走双变」实测规则的价值所在。
+
+**readonly 的两种待遇（实测里最出乎意料的一条）。** 对象属性的 readonly 不参与方向检查：readonly 属性可以赋给可变属性位（实测通过），反过来亦可——对象属性的 readonly 只是类型层的「视角」，不设防。而**数组的 readonly 修饰符参与方向检查**：`Dog[]` 可赋给 `readonly Animal[]`（协变方向，实测通过），但 `readonly Dog[]` 赋给 `Animal[]` 报 TS4104（`The type 'readonly Dog[]' is 'readonly' and cannot be assigned to the mutable type 'Animal[]'`）。数组作为整体有自己的方向语义，这是全册唯一一处 readonly 真正拦住赋值的地方。工程结论：想要「只放行读、拦住写」的容器签名，用 `readonly T[]`（或 `ReadonlyArray<T>`），别指望对象属性的 readonly——它防君子不防赋值。
+
+## 规范原文对照：结构类型、双变豁免与健全性目标
+
+**原文一（结构类型的定义）。** TS Handbook《Type Compatibility》开篇：
+
+> "Type compatibility in TypeScript is based on structural subtyping. Structural typing is a way of relating types based solely on their members. This is in contrast with nominal typing."
+
+以及基本规则：
+
+> "The basic rule for TypeScript's structural type system is that x is compatible with y if y has at least the same members as x."
+
+解读：限定词两个。"solely on their members"——只看成员，不看名字与继承关系（正文 §1 的结构判定、§4 的 brand 模式必要性都由此而来）；"at least"——「至少有」，多出来的成员不妨碍赋值（宽度子类型的原文依据；正文 §2 的多余属性检查是叠在这条规则上的独立防错层）。同页区分两种兼容性的话也值得背：
+
+> "In TypeScript, there are two kinds of compatibility: subtype and assignment. These differ only in that assignment extends subtype compatibility with rules to allow assignment to and from any, and to and from enum with corresponding numeric values."
+
+解读：日常遇到的可赋值性检查默认走 assignment 兼容——比子类型多了 any 与 enum 的豁免。`any` 的「双向豁免」由此有了精确出处：它不是联合也不是交集，是 assignment 兼容层的特批。
+
+**原文二（健全性是 non-goal）。** 官方《TypeScript Design Goals》Non-goals 第 3 条：
+
+> "Apply a sound or 'provably correct' type system."
+
+原文随即给出替代口径：在正确性与生产力之间取平衡（"strike a balance between correctness and productivity"）。解读：正文 §8 的「TS 并非完全 sound」不是缺陷陈述，是设计目标的**自述**。把本册的几处刻意不健全对号入座：`as` / `any` / 非空断言是逃生舱（作者显式声明越过检查）；数组协变与方法双变是兼容性妥协（为存量代码让路，TS 2.6 原文已引在正文 §5）；纯可变属性容器的协变放行（上一节 PropBox 收据）是结构规则的自然结果、没有被额外拦堵。三类的共同点：都能用「平衡」解释；不同点：工程防御手段完全不同——第一类靠纪律，第二类靠写法（函数属性），第三类靠 `readonly T[]`。
+
+**原文三（方差标注的定位）。** TS 4.7 Release Notes 的 "Optional Variance Annotations for Type Parameters" 小节引入 `in` / `out` 标注（`interface Producer<out T>`、`interface Consumer<in T>`）。解读与实测口径：官方定位是给复杂类型的创作者一个显式声明方差的手段，主要服务文档与工具链；实测本机 5.9.3 下把标注写反（`interface BadOut<out T> { set(v: T): void }`）**编译器并未报错**——至少在本机版本里它不是防线。把它当文档读，别当闸门用；真正的闸门仍是成员方向检查（FnBox 形态）。
+
+## 手推配方：四步推方差
+
+给任意泛型类型手推 T 的方差方向：
+
+1. **圈位置**：把 T 的每一处出现抄下来，别漏嵌套位置（函数返回值里的参数、Promise 里的回调参数都算）；
+2. **标极性**：函数参数位记负、返回位记正；读写分离的对象属性拆成读口（正）与写口（负）两个位置；嵌套位置极性相乘；
+3. **下结论**：全正 → 协变；全负 → 逆变；正负混合 → 不变；拿不准就先按不变对待；
+4. **双向实测**：写两个方向的赋值（`F<Dog>` 赋 `F<Animal>` 与反向），用探针法读编译器裁决——极性推理给预期，实测给收据；两者对不上时以实测为准，回头检查第 2 步是否漏了位置。
+
+worked example（正文 §5 方向表的推导过程）：
+
+```ts
+type Producer<T> = { get: () => T };              // T 全正 → 协变
+type Consumer<T> = { set: (x: T) => void };       // T 全负 → 逆变
+type Both<T>     = { get: () => T; set: (x: T) => void }; // 正负混合 → 不变（FnBox 实测双向皆拒）
+type Cb<T>       = (cb: (x: T) => void) => void;  // 负 × 负 = 正 → 协变（实测通过）
+```
+
+注意第 4 步的仲裁地位：极性推理是模型，编译器是裁判——本册「表格与实测的唯一出入」（纯属性容器其实放行协变）正是靠第 4 步发现的。理论与实测冲突时，更新的是笔记，不是编译器。
+
+## 工程三陷阱：方差与标记类型的三个翻车点
+
+**陷阱一：回调参数写窄了，报错后用 any 灭火。** 触发场景：把 `(e: MouseEvent) => void` 接到期望 `(e: Event) => void` 的槽位——参数逆变方向被拒（实测 TS2322，报错里能看到 `Types of parameters ... are incompatible`）；有人顺手把回调签名改成 any。根因：参数位逆变，只有「槽位要什么就吃什么」的函数合法；写窄的函数在槽位传入父类事件时必然炸。规避：回调参数永远写「能接受的最宽」——逆变方向写宽不吃亏；事件 payload 拿不准就收窄到基类事件再 `instanceof` 或谓词细分；用 any 灭火等于永久关掉这处检查，写宽只花一次工夫。
+
+**陷阱二：readonly 的两种待遇混为一谈。** 触发场景：团队以为给字段标 readonly、参数标 `Readonly<T>` 就「不可变」了；实际上对象属性的 readonly 不参与赋值方向检查（实测放行）、不阻止别名引用背后的修改、也不递归嵌套。真正设防的场景：函数签名用 `readonly T[]` 才拦得住调用方向里 push（实测 TS4104）；对象字面量的不可变要靠约定加防御性拷贝（`toSorted`、`structuredClone` 这类返回新值的 API）。根因：readonly 是类型层的视角标注，不是运行时冻结；`Object.freeze` 才是运行时机制，但类型层又表达不完整。规避：接口设计先分清「防编译错误」还是「防运行时修改」——前者用 `readonly T[]` 与函数属性写口，后者用 freeze 与拷贝，两边别互相当替身。
+
+**陷阱三：brand 在序列化边界泄漏。** 触发场景：`UserId` 是 `Brand<number, 'UserId'>`，构造处只有 `makeUserId` 一个签发口；某天缓存层写了 `const id = JSON.parse(raw) as UserId`——裸 number 直接披上 brand 外衣，校验环节全被绕过，类型层全绿。根因：brand 只存在于类型层（运行时 `uid` 就是 `1001`，正文 §4），而 as 可以凭空「签发」；签发口靠的是自觉，不是编译器。规避：序列化边界（JSON.parse、URL 参数、postMessage）拿到的类型一律先落 unknown 再走校验谓词；把「`as Brand` 只许出现在 makeXxx 函数体内」写进团队规范；要更强可换 unique symbol 做 brand 键（正文 §4 提到的加强版），至少让跨模块的误用变难。
+
+## code review 检查单：类型理论相关评审 8 条
+
+- [ ] 回调参数写的是「能接受的最宽」吗？有没有用 any 灭逆变报错的火（陷阱一）？
+- [ ] 「只读容器」签名用的是 `readonly T[]` 或 `ReadonlyArray` 吗？对象属性的 readonly 有没有被当成运行时冻结的保证（陷阱二）？
+- [ ] 泛型容器的写口是有意选方法简写（放宽检查）还是函数属性（严格检查）？意图写进注释了吗（机制深一层）？
+- [ ] brand 类型的 `as` 签发是否全部集中在唯一的 make 函数里？序列化边界有没有直接断言 brand 的（陷阱三）？
+- [ ] 「先存变量再赋值」绕过多余属性检查的代码，是在利用规则还是防御错误（正文 §2）？
+- [ ] 用 unknown 接住外部数据后走了完整收窄链吗？有没有 `as` 直通（正文 §7 与 09 册 §12）？
+- [ ] 共享可变数组的两个变量意识到了吗？写入点有没有被 `readonly T[]` 签名拦住（正文 §5 的 Cat 案例与 node 收据）？
+- [ ] 「TS 这里怎么这么笨」的抱怨点，核对过设计目标 Non-goals 吗——是缺陷还是平衡（规范原文对照原文二）？
+
+## 输出预测题（进阶）
+
+先写答案再验证；三题全部经 tsc 5.9.3（`--strict`）实测，收据写在解析里。
+
+**题 1**（never 与 unknown 矩阵）：
+
+```ts
+type A = never extends unknown ? 1 : 0;
+type B = unknown extends never ? 1 : 0;
+type C = unknown extends string ? 1 : 0;
+type E = [unknown] extends [never] ? 1 : 0;
+type D = string & number;
+const a: A = 'x'; const b: B = 'x'; const c: C = 'x';
+const e: E = 'x'; const d: D = 'x';
+```
+
+五行各自的求值结果是什么？
+
+**题 2**（「不变」的精确条件）：
+
+```ts
+class Animal { name = 'a'; }
+class Dog extends Animal { fetch() { return 1; } }
+interface PropBox<T> { value: T }
+interface MethodBox<T> { value: T; set(v: T): void }
+interface FnBox<T> { value: T; set: (v: T) => void }
+declare const p1: PropBox<Dog>;   const p2: PropBox<Animal> = p1;    // 甲
+declare const m1: MethodBox<Dog>; const m2: MethodBox<Animal> = m1;  // 乙
+declare const f1: FnBox<Dog>;     const f2: FnBox<Animal> = f1;      // 丙
+declare const g1: FnBox<Animal>;  const g2: FnBox<Dog> = g1;         // 丁
+```
+
+甲、乙、丙、丁各通过与否？
+
+**题 3**（弱类型检测的现行表现）：
+
+```ts
+interface Opt { a?: number; b?: number }
+const v1: Opt = { c: 1 };
+const v2: Opt = { a: 1, c: 2 };
+declare const w: { a: number; b: number; c: number };
+const v3: Opt = w;
+```
+
+三行各报什么？
+
+## 进阶预测题答案
+
+**题 1**（收据：探针报错逐条给出求值结果）：A = `1`——never 是一切类型的子类型，恒走真分支；B = `0`——unknown 是全集，全集不是空集的子集；C = `0`——unknown 只能赋给 unknown 与 any；E = `0`——元组阻断后做可赋值性判断，unknown 不可赋 never；D = `never`——交集为空（报错原文 `not assignable to type 'never'`）。五条合起来是 top 与 bottom 的完整坐标：never 只进不出、unknown 对外只出不进。
+
+**题 2**（收据即机制深一层的表）：甲通过——纯可变属性协变放行；乙通过——方法简写写口被双变豁免；丙报 TS2322——函数属性写口下 strictFunctionTypes 生效，参数逆变被拒；丁报 TS2322——value 读口虽然协变放行，set 的参数方向反过来又被拒。丙与丁双向皆拒，才是正文 §5 表格「不变」的精确形态——精确条件是「存在函数属性形态的写口」。
+
+**题 3**（收据：三行的实测表现）：v1 与 v2 都报 TS2353（`Object literal may only specify known properties, and 'c' does not exist in type 'Opt'`）——弱类型检测（零公共属性）与多余属性检查（显式写出的未知键）在本机 5.9.3 收敛为同一条报错形态；v3 通过——w 是变量不新鲜，结构规则放行多余成员。记忆点：字面量直赋处处设防、变量赋值只查结构，正文 §2 的 freshness 规则在弱类型场景完全适用。
+
+## 收尾自测（增补）
+
+1. 位置极性的乘积规则是什么？各举一个「负负得正」的实测类型（Cb）与「全正」的容器（HandlerFn），并说出各自的判定收据。
+2. 「不变」的精确成立条件是什么？三种 Box 形态各自的裁决来自哪条检查规则？
+3. readonly 在对象属性与数组两种场合的待遇差异是什么？想拦住调用方写数组，正确签名怎么写（TS4104 收据）？
+4. 设计目标 Non-goals 第 3 条如何同时解释 as 与 any、数组协变、方法双变三处不健全？三者各自的工程防御手段分别是什么？
+
+---
+
+## 机制深一层（二）：协变写操作的事故现场与「协变的两个防守位」
+
+**独立复跑的事故现场（node 收据）。** 正文 §5 的 Cat 案例值得用最小脚本独立复跑一遍——三个类、一次协变赋值、一次 push、一次遍历：
+
+```js
+class Animal {}
+class Dog extends Animal { fetch() { return 1; } }
+class Cat extends Animal {}
+const dogs = [new Dog()];
+const animals = dogs;            // 协变赋值，类型层放行
+animals.push(new Cat());         // 类型层完全合法（Cat 是 Animal）
+for (const d of dogs) d.fetch(); // 运行时炸
+```
+
+node v24 实测输出：`TypeError: d.fetch is not a function`，栈顶正是遍历那一行。三个要点：其一，事故不是编译器的锅——每一行类型检查都按规则正确通过了，崩的是「协变放行 + 写口不设防」这个组合；其二，栈顶在**读**的那一行（fetch），根因却在**写**的那一行（push），排查时方向容易搞反；其三，JS 侧没有任何防护，全部防线都在类型层——这正是「类型层有意不健全」时工程防线必须补位的原因。
+
+**两个防守位。** 防守位一在**签名层**：对外暴露的容器参数一律声明 `readonly T[]`（实测 TS4104 拦住调用方把 readonly 数组转回可变数组再写），写口用函数属性形态（机制深一层的 FnBox）让双向皆拒。防守位二在**数据层**：共享可变集合在跨界处做防御性拷贝（`toSorted`、`slice`、`structuredClone`），把「协变放行的入场券」隔离在拷贝边界之外。两个防守位针对同一事故链条的两个环节：签名层拦「外部往里写」，数据层拦「别名共享导致的隐式写」——正文 §5 的 dogs 与 animals 正是后者，拷贝之后 `animals.push` 就伤不到 `dogs` 了。
+
+## 排查速查表：类型理论症状速查（本机实测口径）
+
+六行全部在 tsc 5.9.3（`--strict`）或 node v24 下实测复现：
+
+| 症状（报错或行为） | 触发场景 | 根因 | 处置 |
+| --- | --- | --- | --- |
+| TS2322 `Types of parameters ... are incompatible` | 回调参数写窄、父类泛型赋子类位 | 参数逆变（strictFunctionTypes 对函数属性生效） | 参数写宽；确需收窄在函数体内做 |
+| TS2322 且涉及 `__brand` | brand 互赋、裸值赋 brand | 字面量标记使结构不再重合（正文 §4） | 走 makeXxx 签发口；别 `as` 绕过 |
+| TS2352 `Conversion of type ... may be a mistake because neither type sufficiently overlaps` | 不相关类型间 as | 断言的重叠性检查拦下（09 册 §11） | 确认类型错了就改类型；确要越狱用 `as unknown as` 并写理由 |
+| TS4104 `The type 'readonly ...[]' is ... and cannot be assigned to the mutable type` | readonly 数组转可变数组 | 数组 readonly 修饰符参与方向检查 | 保持只读视角；要改就显式拷贝出新数组 |
+| TS2353 `Object literal may only specify known properties` | 字面量直赋带未知键 / 零公共属性的弱类型 | 多余属性检查与弱类型检测 | 改对键名；先存变量绕过是利用规则不是修复 |
+| 运行时 `TypeError: d.fetch is not a function` | 协变数组 push 异类后按原类型读 | 数组协变 + 写口不设防（机制深一层（二）） | `readonly T[]` 签名 + 防御性拷贝双防守 |
+
+排查心法：类型理论的报错先把**方向**念出来——「谁赋给谁、哪个成员拦的」，再对照方差规则判断是「规则 correctly 拦住了你」还是「规则放过了你」；前四行是规则在拦，后两行是规则放过、防线在别处。
+
+## 输出预测题（补充）：协变事故与断言守门
+
+**题 4**（协变事故现场）：不运行，预测上一节 JS 脚本的输出与崩溃行。
+
+**答案**：正常打印无输出（脚本没有成功打印任何东西就崩了），抛 `TypeError: d.fetch is not a function`，栈顶在 `for (const d of dogs) d.fetch()` 这一行（node v24 实测）。三个易错直觉：以为崩在 push（push 在类型层和运行时都合法——Cat 确实是 Animal）；以为 `const animals = dogs` 会拷贝数组（它只复制引用，两个变量共享同一存储）；以为类型检查会在编译期拦住（数组协变刻意放行，这是 Non-goals 第 3 条的妥协现场）。
+
+**题 5**（断言守门）：`const b = a as B`（A 只有 x、B 只有 y）报什么？把意图改成「明知不重叠就是要转」该写什么？
+
+**答案**：报 TS2352，原文 `Conversion of type 'A' to type 'B' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.`——注意报错文本**自带**了双重断言的写法提示，正文 09 册 §11 说「双重断言绕过 2352」的机制依据就是这句：重叠性检查只拦一步，`as unknown` 先落全集再转即可绕过。所以正解分两层：类型真的错了就改类型声明；明知不重叠、确需过渡（例如修不了的第三方声明）才用 `as unknown as B`，并且必须留注释写清运行时依据——守门的门是 TS2352，钥匙是注释纪律。
+
+## 册末补记：类型理论的一页卡片
+
+把本册压成四条卡片，每条都挂着实测收据。
+
+**卡片一：结构类型的两条规则。** 判定只看成员（"solely on their members"）、成员「至少有」即可（"at least"）——宽度子类型是主规则，多余属性检查与弱类型检测是叠在字面量上的两道防错层（TS2353 收据）。所有「为什么这个能赋」的问题，先问形状，再问是不是字面量。
+
+**卡片二：方向来自位置。** 参数逆变、返回协变、位置嵌套取乘积（Cb 收据）；「不变」不是默认而是「存在函数属性写口」的结果（三种 Box 收据）；方法简写的历史豁免写在 TS 2.6 原文里，豁免的代价是 Cat 进了狗窝（node 收据）。
+
+**卡片三：top 与 bottom 各司其职。** unknown 是安全屋（进得来、出不去，TS18046 收据在 09 册）、never 是空集（谁也进不去、它进得去一切，进阶预测题 1 的矩阵收据）；交集为空即 never（string 与 number）；any 是双向豁免的特批，出处就是 assignment 兼容与子类型差别的原文。
+
+**卡片四：不健全是设计目标，不是事故。** Non-goals 第 3 条同时解释三处妥协；每处妥协都有对应的工程防线——as 与 any 靠纪律与注释，方法双变靠写法选择，数组协变靠 `readonly T[]` 加防御性拷贝。卡片的结论句：**每条「怪」规则先问「防什么错」——防不了的那个口子，就是它换来的生产力**。
+
+面试场景里，这四张卡片的用法是「顺着问题找卡片」：问兼容性走卡片一，问泛型方向走卡片二，问 any 与 unknown 走卡片三，问「TS 为什么不检查这个」走卡片四。每张卡片至少挂着一条本机复现的收据，口述完可以补一句「本机 tsc 5.9.3 实测过」——理论与证据同时交付，是这套笔记的最终口径。
+
+## 规范原文对照（续）：TS 2.6 双变豁免原文的逐句拆读
+
+正文 §5 引过 TS 2.6 Release Notes 的原文，这里逐句拆——因为每个从句都对应一条今天仍然生效的行为：
+
+> "The stricter checks apply to all function types, except those originating in method or constructor declarations."
+
+「all function types」——函数属性、函数类型别名、内联回调全部受严格检查；「except those originating in method or constructor declarations」——豁免看的是**声明形态**（方法简写语法本身），不是「语义上是不是方法」：同一个签名写成方法简写就豁免、写成函数属性就严格。机制深一层的三种 Box 收据，正是这句原文在当代编译器上的逐字验证。
+
+> "Methods are excluded specifically to ensure generic interfaces like `Array<T>` continue to relate covariantly."
+
+「specifically」二字把动机钉死：这不是疏忽，是刻意——若方法参数也严格逆变，`Array<T>` 的 `push(x: T)` 会让 `Array<Dog>` 不再可赋给 `Array<Animal>`，存量代码（含 DOM 回调签名）大面积编译失败。由此得到一条今天仍然成立的推论：**数组协变能成立，恰恰依赖方法双变给它让路**——两条「不健全」是共生关系，不是并列关系。写库时把这句当选择器：想要「对子类型友好、写口宽松」的接口（数组、事件总线）用方法简写；想要「写口严格、双向设防」的接口（不可变容器、函数式工具类型）用函数属性。两种 API 形态的选择，从类型理论的高度有了各自的名字。

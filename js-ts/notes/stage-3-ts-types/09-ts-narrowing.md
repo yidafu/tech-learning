@@ -314,3 +314,241 @@ console.log(label({ kind: 'square', a: 2 }));
 - TS 2.0 Tagged union types（可辨识联合引入）：[https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-0.html](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-0.html)
 - 下一笔记：`notes/stage-3-ts-types/10-ts-generics.md`（阶段 3.2 泛型深入）
 
+---
+
+## 机制深一层：控制流分析的五条实测边界
+
+正文 §1 到 §5 给了收窄的模型与主要特性，这一节把「模型在哪些地方停下来」用本机 tsc 5.9.3（`--strict`）实测刻度尺量出来。每条边界先给最小实验形态，再给实测结果——全部真跑过，命令同正文可运行示例一节。
+
+**边界一：函数调用不擦属性收窄，赋值才擦。** 对属性收窄最常见的担忧是「中间隔了个函数调用会不会失效」。实测：不会。
+
+```ts
+type P = { x: string | number };
+function take(o: P): void { void o; }
+function f(o: P): void {
+  if (typeof o.x === 'string') {
+    take(o);        // 把整个对象递给别的函数
+    o.x.length;     // 实测：无报错——收窄仍在
+  }
+}
+```
+
+真正擦掉收窄的是对属性本身的赋值：同一段代码把 `take(o)` 换成 `o.x = 1`，下一行立刻报 TS2339（`Property 'length' does not exist on type 'number'`）。可选属性的 truthiness 收窄同样跨调用存活（`if (q.s)` 之后隔一个调用再访问 `q.s.length` 无报错）。这条边界让「先判后用」的直列代码可以放心写；危险只来自赋值，而赋值在你的代码里，不在被调函数的黑盒里。
+
+**边界二：闭包回退看「最后一次赋值」与「作用域」两个条件。** 正文 §5 说 TS 5.4 起「最后赋值之后再创建闭包则收窄保留」，实测补两个精度点：
+
+1. 判定只看**变量自己的**最后一次赋值：闭包创建在最后一次赋值之后 → 保留；创建之后还有赋值 → 丢失，回退到联合（TS2339）；
+2. 这条规则**在函数体与模块顶层有效，在全局脚本顶层无效**：同样的 `let t: string | number = 'a'; t = 'b'; const cb = () => { t.length; }`——放进函数体或带 `export {}` 的模块顶层都通过，放在无 export 的脚本顶层却报 TS2339。脚本顶层的 let 是真全局，任何其他脚本都可能插一句赋值，分析器对它一律保守。把顶层实验代码包进函数，是让 5.4 规则生效的最简单办法。
+
+**边界三：元素访问收窄看索引稳定性。** TS 4.7 起对带方括号的元素访问做控制流分析（Release Notes 小节 "Control-Flow Analysis for Bracketed Element Access"）。实测边界：
+
+- 字面量或 const 索引 + const 数组：收窄成立，且**跨调用存活**——`typeof arr[0] === 'string'` 之后隔一句 `arr.push('d')`、甚至把数组递给别的函数，再访问 `arr[0].length` 都不报错；
+- `let` 索引：即使从未重新赋值，收窄也不成立（`typeof arr[i] === 'string'` 之后的 `arr[i].length` 报 TS2339）。
+
+分析器的立场可以概括成一句话：它信任「不可再赋值的绑定」，其余一律按可能被改写处理——宁可让你少一层保护，也不为不稳定的索引冒险。
+
+**边界四：try / catch 是「状态回退 + 出口汇流」。** 实测三连：
+
+```ts
+let x: string | null = null;
+try {
+  x = 'abc';
+} catch {
+  x.length;            // 实测 TS18047: 'x' is possibly 'null'
+}
+console.log(x.length); // 实测 TS18047 同样报错
+```
+
+catch 子句里 x 回退到**声明类型** `string | null`——try 内任何一行都可能抛出后跳进 catch，抛出点之前的赋值不保证发生过。try/catch 整体走完后，控制流是「try 正常出口」与「catch 出口」两股汇流：前者 x 是 string，后者是 `string | null`，汇流取并集，所以最后一行照样 possibly null。catch 不是「重新判断一次」的地方，是回到最宽状态的地方。
+
+**边界五：赋值分析只作用于局部绑定，强度足以收窄到 never。** 两个实测形态：
+
+```ts
+let x: string | null = null;
+if (x !== null) {
+  x.length; // 实测 TS2339: Property 'length' does not exist on type 'never'
+}
+```
+
+初值是 null，赋值分析把 x 收窄成 null；`x !== null` 为真的分支里「只能是 null 却要求非 null」，集合为空，即 never。报错信息里的 never 就是赋值分析的直接证据。对照：把同样的判断写进函数、对**参数**做 `if (v !== null)`，分支里一切正常——参数没有「已知的初始赋值」，不参与赋值分析。正文说练习 03 的证据函数必须把 s 声明成参数，根子就在这条边界：const 声明的字面量对象会让赋值分析直接钉死收窄结果，实验就失效了。
+
+顺带一条 TS 4.4 的实证补充：别名条件与别名判别式同样生效——`const isStr = typeof w === 'string'` 之后 `if (isStr)` 收窄成立；`const k = s.kind` 之后 `switch (k)` 对 s 按 tag 收窄也成立（均实测无报错）。把判断抽成 const 不是收窄的敌人，只要抽的是 const 而不是 let。
+
+## 工程三陷阱：收窄失效的三种事故形态
+
+**陷阱一：收窄是「位置属性」，跨函数不传递。** 触发场景：调用方写了 `if (isUser(u))` 再把 u 传给 `processUser(u)`，而 `processUser` 的参数声明是宽类型（User 与 Guest 的联合），函数体里直接按 User 用——函数体内编译报错，有人顺手把参数改成宽类型加 `as`，或把外层判断删了。根因：收窄绑定在具体代码位置的控制流上，函数边界把类型还原成声明类型；调用点的收窄救不了函数体内部。规避：参数类型直接声明成收窄后的窄类型，让「没判就调」在调用点报错；确需宽进严出的，helper 内部第一行先收窄（`if (!isUser(u)) return` 或断言函数）。`Array.prototype.filter` 配谓词能把**结果数组**的元素类型收窄而原数组不变（实测：`mixed.filter((x): x is string => ...)` 的返回是 `string[]`，`mixed[0]` 仍是 `string | number`），是「想要收窄后的集合」时最干净的写法。
+
+**陷阱二：`in` 检查可选字段造成分支错位、静默吞数据。** 触发场景：接口演进取消了 tag 必填（`tag?: string`），旧数据没有 tag 字段。代码里 `if ('tag' in x)` 想分流新旧格式——旧数据全部走 else 分支，被当成新格式处理，字段全 undefined；类型全程绿色。根因有两层：其一（实测），`'tag' in o` 为真时 `o.tag` 仍是 `string | undefined`（TS18048 possibly undefined）——in 只证「声明里有」，不证「此刻必有值」；其二，in 为假也不证「值一定缺」——可选字段可以存在于对象上而值为 undefined，运行时 in 看的是键在不在。两层 gap 叠起来，「用 in 猜版本」的代码两头都不牢。规避：判别字段永远必填、永远是字面量类型；格式分流的判断交给 schema 校验（校验产出收窄后的类型）或谓词函数，再配 assertNever 兜底。
+
+**陷阱三：断言在重构后静默失效。** 触发场景：原代码 `if (typeof x === 'string') { use(x as string) }`，重构把 if 挪进别的函数，调用点的 `as string` 留下了——编译通过，判断已经不在同一控制流里。`!` 同理：`map.get(k)!` 的前提「一定存在」原本由上文的 set 保证，重构挪走 set 之后 `!` 还在原地。根因：as 与 `!` 是编译期的一次性豁免，不跟着控制流走；删掉判断不会让断言报错，豁免继续生效。规避：每处非空断言与 as 都要求注释写明依赖的前提；优先换成会随控制流失效的等价物——`??` 默认值、`?.` 可选链、显式 if、谓词函数。这些等价物在前提消失时，会把问题暴露成编译错误或清晰的运行时分支，而不是静默放行。
+
+## 手推配方：手工计算任意 if / switch 的收窄类型
+
+面试与排查都用得上：给定一段带守卫的代码，纸笔算出每个位置的收窄类型。六步：
+
+1. **列声明类型**：写下每个相关绑定的声明类型 D，这是所有计算的起点；
+2. **维护真路径集合 S**：初始 `S = D`。进入分支对真路径计算，离开分支后对假路径继续（假路径通常取 S 减去被排除的成员）；
+3. **按守卫种类切集合**，规则表：`typeof x === 't'` 按 ECMA-262 的八种返回值映射成员（object 档注意 null 同档）；`'k' in x` 按「声明里有没有 k」切；`x === 字面量` 只留可等于该字面量的成员；`x instanceof C` 留与 `InstanceType<typeof C>` 匹配的成员；谓词函数按声明切；真值性 `if (x)` 只去掉 null 与 undefined（falsy 的 0、`''`、NaN 在类型层不可切分，正文 §3）；
+4. **剪枝**：return、throw、continue、break 让对应路径不再参与后续汇流——正文 §1 的三连 return 就是靠这一步把 `string | number | null` 逐级剪成 string；
+5. **处理赋值与调用**：赋值把流类型改成右值的类型；函数调用按边界一不动局部变量与属性的收窄；数组元素访问按边界三看索引是否稳定；
+6. **处理闭包**：捕获的 let 按「闭包创建是否在最后一次赋值之后」与「所在作用域是否脚本顶层」决定保留或回退声明类型（边界二）。
+
+示例（每行注释即手工推演结果，全部经 tsc 5.9.3 验证）：
+
+```ts
+function g(x: string | number | null): void {
+  if (x == null) return;   // 剪掉 null 路径
+  if (typeof x === 'number') {
+    x.toFixed();           // x: number
+  } else {
+    x.toUpperCase();       // x: string（number 进了 then，假路径只剩 string）
+  }
+}
+```
+
+推演时最常见的三个错漏：忘了假路径是「补集」（算成从头再判一遍）；忘了 catch 回退与汇流（边界四）；把 truthiness 当成「判空」（它判的是 ToBoolean）。对着这份清单逐个位置报出类型，哪一处讲不出，就回去看对应边界。
+
+## code review 检查单：收窄相关评审 10 条
+
+- [ ] 守卫函数的**声明与逻辑一致**吗？`x is T` 是声明不是验证，谓词写反照样编译通过（正文 §8），这是收窄相关最危险的一类代码。
+- [ ] 可辨识联合的判别字段是**必填的字面量类型**吗？宽 string 或可选 tag 都会让 switch 失去分辨力（正文 §10 与陷阱二）。
+- [ ] 每个 switch 联合处理函数都有 assertNever 式 default 吗？要求新增成员时编译器在漏改处硬报错。
+- [ ] 有没有把「调用方判过」当函数体内的前提？参数类型应声明成收窄后的类型，helper 内部自行收窄（陷阱一）。
+- [ ] 每处 `!` 与 `as` 都有注释说明依赖的前提吗？能换成 `??`、`?.`、显式判断或谓词吗（陷阱三）？
+- [ ] `x || default` 里的 x 可能是 `''` 或 `0` 吗？合法 falsy 值必须用 `??`（正文 §3）。
+- [ ] catch 变量按 unknown 纪律处理了吗？先 `instanceof Error` 再取 message，不裸取属性（正文 §12）。
+- [ ] 对 `arr[i]` 的收窄假设成立吗？要求索引是字面量或 const、数组绑定是 const（边界三），否则别依赖。
+- [ ] 外部输入（JSON.parse、fetch、postMessage）是否先落 unknown、再走守卫链，而不是 any 加 as（正文 §12）？
+- [ ] 闭包里捕获的 let 是否满足「创建在最后一次赋值之后」且不在脚本顶层（边界二）？满足不了就在闭包开头重新判断。
+
+## 输出预测题（进阶）
+
+先写答案再验证；三题全部经 tsc 5.9.3 实测，收据写在解析里。
+
+**题 1**（赋值分析的强度与边界）：
+
+```ts
+let x: string | null = null;
+if (x !== null) {
+  x.length; // A：报不报错？报的话错误信息里是什么类型？
+}
+
+function f(v: string | null) {
+  if (v !== null) {
+    console.log(v.length); // B：报不报错？
+  }
+}
+```
+
+**题 2**（catch 回退与出口汇流）：
+
+```ts
+let y: string | null = null;
+try {
+  y = 'abc';
+} catch {
+  y.length; // C
+}
+console.log(y.length); // D
+```
+
+**题 3**（元素访问收窄的索引稳定性）：
+
+```ts
+const arr: (string | number)[] = ['a', 1];
+if (typeof arr[0] === 'string') {
+  arr[0].length; // E
+}
+let i = 0;
+if (typeof arr[i] === 'string') {
+  arr[i].length; // F
+}
+```
+
+## 进阶预测题答案
+
+**题 1**：A 报错，错误信息是 `Property 'length' does not exist on type 'never'`——初值 null 经赋值分析把 x 收窄成 null，`x !== null` 为真意味着「只能是 null 却要求非 null」，空集即 never。B 不报错：参数 v 没有已知的初始赋值，不参与赋值分析，`if (v !== null)` 正常把它收窄成 string。A 与 B 的对照就是边界五：赋值分析只作用于局部绑定，而且强到能收出 never。
+
+**题 2**：C 报 TS18047（`'y' is possibly 'null'`）：catch 子句里 y 回退到声明类型 `string | null`（边界四），try 里的赋值不保证发生过。D 同样报 TS18047：try/catch 结束点是「正常走完」与「catch 兜底」两股控制流的汇流处，并集仍是 `string | null`。两句都错才是正确答案——「在 catch 里或 try 之后直接用」正是收窄假设的高发翻车点。
+
+**题 3**：E 不报错：const 数组加字面量索引命中 TS 4.7 的元素访问控制流分析，且该收窄跨数组方法调用存活（边界三实测）。F 报 TS2339：`let` 索引即使从未重新赋值，分析器也不信任它——收窄只认「不可再赋值的索引」。两行的唯一差别是绑定方式，这是「收窄保守性」最干净的切片。
+
+## 收尾自测（增补）
+
+1. 边界一到边界五，各自的触发条件与不触发场景各复述一遍；哪些是版本行为（TS 4.4 / 4.7 / 5.4），哪些是恒定规则？
+2. 陷阱一至陷阱三各对应哪条边界？每条事故链里「类型全绿但已经错了」的环节发生在哪一步？
+3. 手推配方第 3 步的规则表里，哪几类守卫能切掉 null？哪几类切不掉？为什么 `if (x)` 切不掉 falsy 的原始值成员？
+4. 把正文练习 03 的要求（证据函数必须把 s 声明成参数）与边界五连起来复述——为什么用 const 声明的字面量对象做实验，tag 收窄的对照就会失效？
+
+---
+
+## 规范原文对照：收窄的三句一手原文与解读
+
+三句原文分别来自 TS Handbook《Narrowing》与 ECMA-262，解读接住本册实测。读原文的方法同 11 册：先记结论，再对限定词。
+
+**原文一（收窄的定义）。** Handbook《Narrowing》：
+
+> "TypeScript follows possible paths of execution that our programs can take to analyze the most specific possible type of a value at a given position. It looks at these special checks (called type guards) and assignments, and the process of refining types to more specific types than declared is called narrowing."
+
+解读：一句话钉死三件事——「at a given position」（收窄是位置属性，陷阱一的规范依据）；「type guards 与 assignments」两类输入（手推配方第 3 步与边界五的出处）；「比声明类型更具体的精炼过程」（「声明类型不变、各位置有收窄类型」的口述标准答案直接来自这句）。同页还有一句值得背：
+
+> "When a variable is analyzed, control flow can split off and re-merge over and over again, and that variable can be observed to have a different type at each point."
+
+「split off and re-merge」就是边界四汇流的原文依据：catch 出口与正常出口合并时取并集，不是实现细节，是控制流模型的自然推论。面试被问「收窄是运行时机制吗」，把这两句英文背下来再翻译，比任何中文二手总结都有说服力。
+
+**原文二（typeof 的一手表格）。** ECMA-262《The typeof Operator》给出返回值表：Null 档返回 `"object"`，与 Undefined、Boolean、Number、String、BigInt、Symbol、Function 各占一行。解读：`typeof null === 'object'` 不是浏览器 bug，是规范文本本身——收窄因此必须把 null 与真正的对象类型同档对待（正文 §2 的陷阱与边界五的 never 收据都建立在这一点上）。这条也是「TS 收窄忠实于运行时语义」的最好例证：分析器没有替你修正历史包袱，只是把规范定义的等价类如实映射成集合运算；你想修正它，得自己写谓词。
+
+**原文三（谓词的引入动机）。** Handbook《Narrowing》type predicates 一节开头：
+
+> "We've worked with existing JavaScript constructs to handle narrowing so far, however sometimes you want more direct control over how types change throughout your code."
+
+解读：内置守卫（typeof、in、instanceof）本质是「借用 JS 运行时语义做类型层推断」；遇到语义在 JS 里、名字不在守卫清单里的判断（正则匹配、schema 校验、协议检查），就需要 `x is T` 把推断权手动接管过来。这正是正文 §8「把收窄能力声明出来」的规范语境——也顺带解释了为什么声明不验证：接管之后，正确性责任从规范移交给了函数作者，评审自然要盯住守卫函数。
+
+## 排查速查表：收窄失效症状速查（本机实测口径）
+
+全部症状在 tsc 5.9.3 `--strict` 下实测复现过：
+
+| 症状（报错或行为） | 触发场景 | 根因 | 处置 |
+| --- | --- | --- | --- |
+| TS2339 且类型显示 `never` | 对初值已定死的 let 做互斥判断 | 赋值分析收窄成空集（边界五） | 别对字面量初值变量做矛盾判断；实验代码改用参数 |
+| TS2339 回退到联合类型 | 闭包内访问捕获的 let | 创建后仍有赋值，或脚本顶层（边界二） | 挪进函数体、先赋值后建闭包，或闭包内重判 |
+| TS18047 possibly null | catch 子句里、try/catch 之后 | 回退与汇流（边界四） | 在这两个位置重新判断或加守卫 |
+| TS18048 possibly undefined | `in` 为真后访问可选字段 | in 只证声明有、不证此刻有（陷阱二） | 可选字段先 `??` 或再判一次空 |
+| TS2339 只出现在 `arr[i]` 上 | 索引是 let 变量 | 元素收窄只认稳定索引（边界三） | 索引改 const 或字面量，或先存局部 const 再判断 |
+| TS18046 `'v' is of type 'unknown'` | 对 unknown 取属性或做运算 | unknown 单向豁免（正文 §12） | 走 typeof、instanceof、谓词收窄链 |
+| 无报错但运行时炸 | 谓词写反、断言前提被重构掉 | 声明不验证、断言不跟控制流（正文 §8、陷阱三） | 检查单第 1、5 条；给每处断言写前提注释 |
+| 类型全绿但走错分支 | 可选 tag 配 in 分流 | 运行时键存在性与类型声明脱节（陷阱二） | tag 必填 + 校验函数 + assertNever |
+
+排查心法与 14 册同源：先看错误信息里的**类型**（never、联合、unknown、possibly X 各自指向一条边界），再看**位置**（闭包、catch、元素访问是三大高发区），最后才怀疑编译器。八行症状对应五条边界加两条纪律，逐行对号入座，比推倒重写守卫快得多。
+
+## 输出预测题（补充）：谓词的作用范围与 in 的未列出属性
+
+**题 4**（谓词收窄的生效范围）：
+
+```ts
+const mixed: (string | number)[] = ['a', 1, 'b'];
+const strs = mixed.filter((x): x is string => typeof x === 'string');
+strs[0].toUpperCase();   // G
+mixed[0].toUpperCase();  // H
+```
+
+两行各报不报错？为什么 filter 的返回类型变了、原数组没变？
+
+**答案**：G 不报错，H 报 TS2339（`Property 'toUpperCase' does not exist on type 'string | number'`）。机制：`Array.prototype.filter` 的签名对谓词函数有专门重载——回调是 `(x): x is string` 时，返回类型从 `(string | number)[]` 变成 `string[]`；这是一次**新数组的类型转换**，发生在 filter 表达式所在的位置。原数组 mixed 的声明类型没有被触碰，它的每个位置仍是联合——谓词收窄与所有收窄一样是位置属性（边界一的同源规则），不会顺着引用回写到原对象。工程含义：想要「收窄后的集合」用 filter 加谓词；想要「原地断言」用断言函数或显式判断；想让原变量本身变窄，只能重新声明或重新赋值（赋值分析会接住）。
+
+**题 5**（`in` 对未列出属性的收窄，TS 4.9）：
+
+```ts
+interface Config { url: string }
+declare const c: Config;
+if ('timeout' in c) {
+  c.timeout; // I：这行报不报错？通过的话是什么类型？
+}
+```
+
+**答案**：不报错，`c.timeout` 是 `unknown`。TS 4.9 Release Notes 的 "Unlisted Property Narrowing with the in Operator" 一节规定：对声明里**不存在**的属性做 in 检查时，类型不再原样保留，而是与 `Record<'timeout', unknown>` 求交叉——于是访问放行，但拿到的只有 unknown。这个设计的分寸值得体会：既不撒谎说该属性存在且类型明确，也不像 4.9 之前那样直接拒绝访问，把「继续收窄」的责任留给作者（正文 §12 的 unknown 纪律正好接上）。对照记忆：属性在声明里**存在但可选**时，行为完全不同——in 为真仍是 `T | undefined`（陷阱二的实测收据）。同一运算符、两种声明状态、两种收窄策略，这是「in 语义」最完整的考试范围。最后把两道题并成一句复述：**谓词与 in 都是「在某处为某值做证」的工具，证词只在那一份证据处生效**；想让类型在别处也成立，要么在那里重新举证（再判一次），要么让类型系统直接从证据源（常量表、校验函数返回值）推导。
+
+## 册末补记
+
+本册全部增量内容可以压成一句话：**收窄是编译器在「位置」上对「控制流可达状态」的保守计算**——位置、控制流、保守，三个词各自给出本章增量的一半。排查任何「为什么不收窄」，先问三个词里哪个出了问题：位置错了（收窄跨不过函数与闭包边界）；控制流断了（try/catch 回退与汇流、闭包回退到声明类型）；还是计算本来就保守（元素访问只认稳定索引、脚本顶层一律不信任）。五个实测错误码（TS2339、TS18046、TS18047、TS18048、TS4104）与两条纪律（谓词声明必须与逻辑一致、每处断言必须写前提）是这句话的全部注脚——背句子，再背注脚，面试与排查就都有抓手了。
+
