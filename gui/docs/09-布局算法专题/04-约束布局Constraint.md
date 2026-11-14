@@ -1,4 +1,4 @@
-# 约束布局 Constraint：锚点线性方程与 Kahn 工作清单
+# 04. 约束布局 Constraint：锚点线性方程与 Kahn 工作清单
 
 > [返回：布局算法专题导览](01-导览.md)
 > 本册走读 `gui/labs/mini-gui/src/core/render/constraint.ts`（255 行）与 `constraint.test.ts`（85 行，7 条手算断言）。读完你应当能：把任何「A 左缘贴 B 右缘再偏 8、宽 100、底贴父底」的布局要求翻译成线性方程组，用纸解出每个子的位置尺寸，并判断哪类要求无解、哪类会成环。这是 Android ConstraintLayout、Apple Auto Layout 的算法内核（教学子集）。实跑口径：断言全部出自 vitest 实跑（全仓 25 文件 201 断言全绿，2026-11-14）。

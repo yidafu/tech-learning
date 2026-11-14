@@ -1,4 +1,4 @@
-# Flex 布局：主轴、交叉轴与弹性分配
+# 05. Flex 布局：主轴、交叉轴与弹性分配
 
 > [返回：第四阶段导览](01-导览.md)
 > 对应大纲条目：第四阶段 4。Row / Column 是日常界面 80% 的布局答案。本册逐段走读 `gui/labs/mini-gui/src/core/render/flex.ts`（215 行）与 `stack.ts`（87 行）：RenderFlex 的四步算法（非弹性子先排、剩余空间按 flex 分配、定尺寸、按对齐摆位）、轴向映射的五个换算函数、两个防呆（无界主轴、溢出记账），以及 Stack/Positioned 的锚点算术。所有黄金断言来自 `layout.test.ts` 实跑；panel 场景数字另用探针实跑验证。

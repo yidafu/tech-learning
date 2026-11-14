@@ -1,4 +1,4 @@
-# 绝对定位 Absolute：锚边四元组的算术
+# 05. 绝对定位 Absolute：锚边四元组的算术
 
 > [返回：布局算法专题导览](01-导览.md)
 > 本册走读 `gui/labs/mini-gui/src/core/render/stack.ts`（87 行，`RenderPositioned` + `RenderStack` 定位分支）与 `layout.test.ts` 的 Stack 组断言。读完你应当能在纸上算出：任意 (left, top, right, bottom) 组合下，浮层拿什么约束、摆在哪里、尺寸从哪来——角标、浮层、遮罩、快捷键提示条全靠这四条边。实跑口径：断言出自 vitest 实跑（全仓 25 文件 201 断言全绿，2026-11-14）。

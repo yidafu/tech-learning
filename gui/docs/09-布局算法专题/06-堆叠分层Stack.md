@@ -1,4 +1,4 @@
-# 堆叠与分层 Stack / Z：第三根轴的完整算法
+# 06. 堆叠与分层 Stack / Z：第三根轴的完整算法
 
 > [返回：布局算法专题导览](01-导览.md)
 > 本册走读 `gui/labs/mini-gui/src/core/render/stack.ts`（87 行）、`events/hit-test.ts`（43 行）、`render-object.ts` 的绘制遍历（317 行中 paint/paintInto 段）、`owner.ts` 的 flushPaint（144 行）。读完你应当能：判断任意叠放界面「谁在最上、点击落到谁」、算出 Stack 的基准尺寸，并理解图层合成（blit）为什么必须处理偏移——本册末尾完整复盘一个**实测抓到的双重平移 bug**（右面板漂到 2× 偏移处），它是「绘制序/合成序」两套坐标合同的活教材。实跑口径：25 文件 201 断言全绿（2026-11-14）。
