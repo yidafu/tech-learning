@@ -271,7 +271,7 @@ console.log(log);
 | 单例 | 私有构造 + getInstance | 模块顶层对象（模块即单例）/ const 冻结 |
 | 工厂方法 | 类继承 + 工厂基类 | 泛型工厂函数 + 构造签名 |
 | 建造者 | Builder 类链 | 多态 this 返回 this（33 册 §6） |
-| 策略 | 接口 + 策略类 | 函数值 / Record<策略名, 实现> |
+| 策略 | 接口 + 策略类 | 函数值 / `Record<策略名, 实现>` |
 | 观察者 | Subject/Observer 接口 | EventEmitter / signal 订阅 |
 | 装饰器 | 包装类组合 | TS 5.0 装饰器语法 / 高阶函数 |
 | 状态/状态机 | 状态类 + 上下文 | 可辨识联合 + 穷尽 switch（13 册） |
