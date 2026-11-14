@@ -304,3 +304,108 @@ $ npx vitest run src/core/render/constraint.test.ts
 ```
 
 （下册预告：Absolute 把「锚点」简化到极致——四条边、没有方程求解；以及为什么它是最快也最危险的布局。）
+
+## 附录 A：工程三陷阱
+
+### 陷阱一：percent 与 width 双给——percent 静默胜出，floor 留下零头
+
+触发场景：声明时写了 `percentWidth: 0.5` 又留了 `width: 180` 当「兜底」，或者兄弟们各分 0.33 期望凑满整行。读码收据：`src/core/render/constraint.ts` 第 180 到 185 行，`solveAxis` 定型尺寸的顺序是「先查 percent、再查 sizeHint」——`percent > 0` 时 `size = Math.floor(轴尺寸 × percent)`，`else if (sizeHint >= 0)` 才轮到 width/height。两条后果：其一，width 是死参数，读代码的人以为有回退，实际永远不会生效；其二，percent 的基数是**容器全尺寸**，不是扣除兄弟后的剩余空间——三个 0.33 的兄弟各得 floor 后的 33（父宽 100 时），合计 99，剩下的 1px 没有任何分配规则认领。根因：教学版把 percent 当「一条方程」处理，没有引入工业求解器的优先级仲裁与余数分摊。规避：percent 与 width 二选一声明；需要「剩余空间按比例分」的语义就别用约束布局——那是 `RenderExpanded`（Flex 的弹性子）的地盘，见第四阶段 [05-Flex布局](../04-第四阶段/05-Flex布局.md)。
+
+### 陷阱二：混入非约束子——静默出局，永远 0×0
+
+触发场景：往 `RenderConstraint` 里直接塞一个 `RenderPadding` 或 `RenderText`，以为它会像别的容器一样被布局。读码收据：`constraint.ts` 第 131 到 133 行，`performLayout` 收集工作清单时只收 `child instanceof RenderConstrained`；随后的主循环只处理 pending 里的节点——非约束子的 `layout()` 从未被调用，width/height 停留在字段初值 0、x/y 停在 (0,0)，`needsLayout` 永远为 true。症状：不报错、不绘制（0×0 画不出东西）、不参与方程组——「隐身」。根因：`RenderConstraint` 的协议是「每个子一组方程」，普通子没有方程可解，实现选择直接无视而不是抛错。规避：任何要显示的内容都包一层 `RenderConstrained`（它自己的 performLayout 会透传约束给内部子树，第 94 到 104 行），给它声明锚点；纯贴角场景考虑包 Stack（见本专题 [06-堆叠分层Stack](06-堆叠分层Stack.md)）。
+
+### 陷阱三：轮数 = 扫描方向 × 声明顺序——§6.2 口径核对
+
+触发场景：纸上推演 `solvePasses`，结果与实跑对不上。读码收据：`constraint.ts` 第 235 行，工作清单的扫描是**下标逆序**——`for (let i = pending.length - 1; i >= 0; i--)`，pending 数组的**末位先被尝试**。两个推论：其一，同一轮里，被依赖者只要排在数组更靠后（下标更大），就会先被解出，依赖者同轮跟进；被依赖者排在更靠前（下标更小）时，依赖者才要等下一轮。其二，对照 §6.2 的三行表单：声明序 `[r3, r2, r1]` 的实际扫序是 r1 → r2 → r3（下标 2、1、0），第一轮 r1 解出后 r2、r3 依次就绪——**一轮全解，solvePasses 是 1**。§6.2 的纸上推演按「每轮从声明首项解锁一层」叙述（那是把正序扫描当成了扫序），推出了 3 轮；几何结论不受影响（三行最终 y = 12/56/100、宽 328 与轮数无关），但轮数口径要按代码修正。裁决办法：把该声明翻成一条 vitest 断言 `expect(root.solvePasses).toBe(1)` 实跑一次。本文附录 C 的配方严格按第 235 行的实际扫序推演。「轮数 = 最长依赖链边数 + 1」这条公式本身仍成立——链在数组里怎么摆，决定的只是**哪一轮**解出哪个节点，最坏 O(n²) 的账（第 7 节）也不受扫描方向影响。
+
+## 附录 B：决策速查表
+
+| 决策点 | 选哪个 | 判据 |
+|---|---|---|
+| 尺寸跟内容走 | width / height 数字 | 文案、图标这类自身有自然尺寸的子 |
+| 尺寸跟容器走 | percentWidth / percentHeight | 「占父宽一半」这类比例分割；注意 floor 零头与全尺寸基数（附录 A 陷阱一） |
+| 尺寸跟邻居走 | 双锚拉伸（left+right） | 分隔线、底栏这种「两端定了中间自动」的构件 |
+| 只想居中 | centerX / centerY 单锚 + 尺寸 | A3 式解法；单子居中且无其他约束时，`Align` 更便宜（零方程） |
+| 锚父还是锚兄弟 | 结构性贴边锚父；对齐关系锚兄弟 | 每条兄弟锚多一条依赖边，直接进轮数账（第 7 节的 O(n²) 就从这来） |
+| id 取名 | 唯一、非空 | 空串是父容器的保留字（`constraint.ts` 第 45 行 `PARENT = ""`），子 id 空串会与父锚混淆语义 |
+| 悬空引用 | 声明期对一遍名牌 | 教学版与环同报错（第 5 节的设计判断）；工业实现用 id 注册表提前拦 |
+| 长表单逐行贴 | 改用 Flex column + gap | 链式锚定是 O(n) 轮 × O(n) 查找；行高推进这种事游标一遍就够 |
+| 「后画的在上」 | Constraint 外包 Stack | z 轴不在方程组里，约束只解平面几何（本专题 06 册） |
+| 布局器降级 | 先问「是不是排队」 | 判决树见正文第 9 节：能 Flex/Flow/Grid/Align 就不上方程 |
+| 垂直轴给什么 | 与水平轴同一张表 | `solveAxis` 两轴同构（`horizontal` 布尔切换字段），top/bottom/centerY 对应 A1/A2/A3 与 B1 到 B3；手算时先水平后垂直，别发明第二套规则 |
+| 容器自身多大 | 取父约束的 max（`setSize(c, max)`） | `RenderConstraint` 自己永远是「占满父给的尺寸」——方程组解的是子的位置，容器本身不参与方程 |
+| 想要边距语义 | 直接写进 offset（贴父左 + 12） | 没有 margin 属性；偏移是方程常数，负值内缩、正值外扩全靠符号表达 |
+| 想要「内容随解出的尺寸缩放」 | 靠紧约束下发自然发生 | 解出的尺寸以紧约束传给子树（第 4.2 节走读的 `node.layout`），子树里的文本会按新宽度重新断行——约束改一条，文本重排是免费的联动 |
+
+## 附录 C：手算/走查配方：工具栏五件套的两轮推演
+
+容器 500×320（`tightRoot` 挂进去，参照 `constraint.test.ts` 的 `solved400` 装配法）。声明（**故意把被依赖者排在数组前面**，触发多轮）：
+
+```text
+children 顺序：[logo, close, status, side, title]
+logo:    left=父左+12,  top=父顶+12,  width=40, height=40
+close:   right=父右−12, top=父顶+12,  width=32, height=32
+status:  left=父左+0,   right=父右+0, bottom=父底+0, height=28
+side:    left=父左+0,   percentWidth=0.2, top=logo.bottom+12, bottom=status.top−8
+title:   left=logo.right+12, right=close.left−8, centerY=logo.centerY, height=24
+```
+
+第 1 步，算父参照的数值：父右 = 500，父底 = 320，父中 = 250。
+
+第 2 步，工作清单第 1 轮（下标逆序，尝试顺序 title → side → status → close → logo）：
+
+- title（下标 4）：left 锚参照 logo——账本里没有 → `solveAxis` 返回 false，跳过；
+- side（下标 3）：top 锚参照 logo——没有 → 跳过；
+- status（下标 2）：三锚全指向父。水平：B1（left+right）→ L = 0，W = 500 − 0 = 500；垂直：尺寸已知（28）+ bottom 锚 → B = 320，T = 320 − 28 = 292。解出，入账本；
+- close（下标 1）：水平 A2 → R = 500 − 12 = 488，L = 488 − 32 = 456；垂直 A1 → T = 12，B = 44。解出；
+- logo（下标 0）：水平 A1 → L = 12，R = 52；垂直 A1 → T = 12，B = 52（centerY 基准 = 12 + 40/2 = 32）。解出。本轮 progressed，进入第 2 轮。
+
+第 3 步，第 2 轮（扫序不变）：
+
+- title：logo.right = 52 → L = 52 + 12 = 64；close.left = 456 → R = 456 − 8 = 448；尺寸待解 → B1：W = 448 − 64 = 384；centerY 参照 logo → C = 32；尺寸已知（24）→ T = 32 − 12 = 20，B = 44。解出；
+- side：logo.bottom = 52 → T = 52 + 12 = 64；status.top = 292 → B = 292 − 8 = 284；尺寸 = floor(500 × 0.2) = 100 → L = 0，H = 284 − 64 = 220。解出。pending 清空。
+
+第 4 步，对账：`solvePasses = 2` = 依赖链边数（title→logo 一条、side→logo/status 各一条，最长 1）+ 1；紧约束下发后 title 的宽被钉死为 384——它内部子树拿到的约束 min === max，`RenderExpanded` 之类在里面的弹性诉求归零。全部数字：logo (12,12,40,40)、close (456,12,32,32)、status (0,292,500,28)、side (0,64,100,220)、title (64,20,384,24)。每一条都能回代验证：title 的 R 448 = 64 + 384；side 的 B 284 = 64 + 220 = 292 − 8。纸面配方到此闭合。
+
+## 附录 D：code review 检查单
+
+- [ ] 每个子 id 唯一且非空？（空串是父的保留字，兄弟互锚时撞上语义就乱了）
+- [ ] 有尺寸的节点至少一条位置锚、无尺寸的节点恰好两条独立锚？（欠定在布局期才 throw，声明期没有任何检查）
+- [ ] percent 与 width/height 是否只声明了一个？（percent 静默胜出，双给是死参数）
+- [ ] `RenderConstraint` 的直接子是否全部是 `RenderConstrained`？（混入普通子被静默忽略、永不布局，见附录 A 陷阱二）
+- [ ] 兄弟锚链有没有超过两层？长表单是否已改 Flex + gap 或分块？（链长直接进轮数）
+- [ ] 测试是否锁了 `solvePasses` 的下界或精确值？（扫描方向被未来改动时，这是唯一能报警的断言）
+- [ ] 三类错误的正则断言都有对应用例吗？（循环或悬空、锚都没有、有界——`constraint.test.ts` 各有对号）
+- [ ] 需要叠放的约束子是否包了 Stack？（z 序不在方程组里）
+- [ ] 解算结果是紧约束下发——子树里有没有被紧约束破坏的弹性逻辑（Expanded 在紧主轴下分不到空间，查 [05-Flex布局](../04-第四阶段/05-Flex布局.md)）？
+- [ ] 错误是否让它在开发期炸出来而不是 try 后吞掉？（现状口径：宿主 demo 全合法约束、运行期零 throw）
+
+## 附录 E：反模式对照
+
+| 反模式 | 症状 | 正确做法 |
+|---|---|---|
+| 一切布局都上约束（含简单排队） | solvePasses 随节点数涨；满屏 id 字符串名牌 | 排队交给 Flex/Flow（游标 O(1) 每子），约束留给「贴边/居中/比例」几何合同 |
+| 用兄弟锚链逐行推进行高（几十行 top = 上一行 bottom + 12） | 轮数 = 行数，O(n²)；改一行牵动全链重解 | Flex column + gap 一遍游标；确需锚定再分块，块间用常量行高 |
+| 动态列表项全量互锚（id 用循环变量拼） | 锚点图成网状，谁也解不出或悬空一个就全容器抛错 | 锚点只连结构性邻居；列表条目交给容器布局器，不进方程组 |
+| percent 后面写 width 当兜底 | width 永不生效，读者误以为有回退 | 二选一；「剩余空间按比例」用 Flex 的 Expanded，不用 percent |
+| 拿 RenderConstraint 当普通容器装内容 | 普通子 0×0 隐身、无告警（附录 A 陷阱二） | 每个可见内容包 RenderConstrained 声明锚点，或改挂 Stack |
+| 布局期 throw 被 try-catch 吞掉 | 循环约束静默失败，界面缺一块无人知晓 | 让错误炸在开发期；测试用正则点名（错误文本自带节点名单） |
+| 纸上推演扫序凭直觉（把声明序当扫序） | 推出的轮数与实跑不符（附录 A 陷阱三） | 先读第 235 行的下标逆序，再推演；轮数写进断言锁死 |
+
+## 附录 F：与真实框架对照（概念对照，非本机实测）
+
+| mini-gui 概念 | Android ConstraintLayout | Apple Auto Layout | Cassowary 求解器 | 差异要点 |
+|---|---|---|---|---|
+| `anchor(id, side, offset)` | `app:layout_constraintStart_toEndOf` 系 XML 属性 | `NSLayoutConstraint`（item:attribute:relatedTo:multiplier:constant:） | 约束对象（变量、表达式、关系、强度） | 三家 API 形状同源：参照边 + 偏移；Auto Layout 多出 multiplier（比例内建在方程系数里）与关系符（等号或大于等于） |
+| 六式解算表（A1 到 B3） | 约束先化简再交给求解器（内部有一轮优化传递） | 活跃约束集 + Cassowary 增量求解 | 单纯形法解整张表 | 教学版按情况分类直接解；工业版把方程全部丢进同一张表，靠算法统一处理，换来不等式与优先级能力 |
+| Kahn 工作清单轮数 | 依赖图拓扑 + 化简，长链同样有代价 | 增量求解：小改动只局部回解 | 增量 update（dual simplex 热启动） | 教学版每帧全量重解；工业版「改一条约束」不必从零再来——这是第 7 节 O(n²) 之外的第二道性能鸿沟 |
+| `percentWidth` | Guideline + `layout_constraintPercent` 系 | multiplier（anchor 乘数） | 方程系数（表达式自带标量乘法） | 概念一致：比例是方程的一部分，不是布局器的特判 |
+| 循环或悬空引用报错 | 构建期 linter 与运行期诊断并报 | 控制台输出「Unable to simultaneously satisfy constraints」并列出冲突约束 | unsatisfiable 状态 + 诊断信息 | 教学版点名参与节点已够用；工业版会把整条冲突链打印出来供人读 |
+| 无约束子静默出局（附录 A 陷阱二） | 不存在——每个子必须有约束或走默认约束 | 同样要求每子有约束（否则按 frame 语义另算） | 无此概念 | 教学版的选择是「不进方程组就不动」，工业框架要么报错要么有明确的默认行为 |
+
+三点观察。其一，教学版的「等式 + 依赖序」恰好是 Cassowary 的严格子集：去掉不等式（大于等于）、优先级（required 与可选之分）、stay 变量（改动时倾向保持旧值）之后，剩下的等式系统用分类解法表就能全解——这正是本册能压进 255 行的原因，也是「六式归一」一节代数视角的由来（第 6.3 节）。其二，Auto Layout 与 Android 的内核都做了「约束集维护」这一层：约束有激活与停用生命周期，求解器在活跃集上增量运算；mini-gui 每次布局全量重建 pending 数组，代价是动态增删控件时全表重解——若做毕业项目的表单类应用，分块（第 7 节）与「只重解受影响块」是两级都值得做的优化。其三，报错的信息设计值得抄：工业求解器的报错把「哪几条约束互相冲突、各自的方程是什么」整段列出，人能直接读；教学版点名节点 id 是同一思想的最小实现——错误信息的读者是人不是机器，把参与解的名字给全，调试时间差一个量级。
+
+## 附录 G：读码收据索引与自证路径
+
+本册附录的每条论断在仓库里的落点汇总：API 与数据模型（`AnchorRef`、`anchor` 工厂、`Side` 常量、空串保留给父）在 `src/core/render/constraint.ts` 第 24 到 45 行；`RenderConstrained` 的可空锚点字段与「width 为 -1 表示待解」在第 47 到 105 行；`RenderConstraint.performLayout` 的完整解算——有界检查（第 121 到 123 行）、只收约束子（第 131 到 133 行）、`refValue` 的父与兄弟双路径（第 145 到 165 行）、`solveAxis` 的尺寸定型与六式判定（第 168 到 229 行）、工作清单主循环与逆序扫描（第 232 到 253 行）。附录 A 陷阱一引用的 percent 优先与 `Math.floor` 在第 180 到 185 行；陷阱三引用的扫描方向在第 235 行。七条既有断言在 `src/core/render/constraint.test.ts`：乱序锚点链（用例 1 的 `solved400` 装配与 solvePasses 下界）、B2 定宽（用例 2）、底栏贴边与 floor（用例 3）、循环点名（用例 4）、悬空（用例 5）、欠定（用例 6）、容器无界（用例 7）。想自证附录 C 的工具栏配方，照 `solved400` 的装配法换一个 500×320 的 `tightRoot`，按附录 C 的声明序挂五个 `RenderConstrained`，断言五个节点的 x/y/width/height 与 `solvePasses` 等于 2——纸上每一步都给了可回代的数字。想自证陷阱三的口径，把 §6.2 的三行表单照抄成声明序 `[r3, r2, r1]` 的用例，断言 `solvePasses` 等于 1：这两条新用例合起来，就把「扫描方向 × 声明顺序」的账永久钉进了测试。

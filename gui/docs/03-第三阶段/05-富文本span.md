@@ -412,3 +412,100 @@ if (Math.floor(elapsed * 2) % 2 === 0) {          // 每秒闪一次（1Hz 方�
 8. `xToOffset` 的「中点吸附」在 RTL（从右向左）文本下还成立吗？差在哪一步？
 9. maxLines=2、overflow=ellipsis、`"aaaa bbbb cccc"`@w30：写出 mergedText、keep、末行文本与宽度，并说明 owners 数组长度为什么与文本等长。
 10. 对齐 center 时 `size.width` 变了吗？「占满可用宽」该由谁负责？这和第四阶段哪个布局协议概念挂钩？
+
+## 附录 A：工程三陷阱
+
+### 陷阱一：断行与摆位各拿一把尺子（块字号与 span 字号）
+
+触发场景：给某个 `TextSpan` 单独设大字号（标题词 20、正文 10），块字号 10，可用宽度按正文口径给足。读码收据：`src/core/text/text-layout.ts` 第 66 行，`breakLinesIndexed` 收到的是 `fontSize: opts.fontSize`——第一遍断行只认块字号这一把尺；而第二遍摆位在 run-length 分组里按 `span.fontSize ?? blockFontSize` 逐 piece 量宽（第 146 行 `measurer.measure(pieceText, fontSize)`）。根因：断行决策必须整行共用一个度量单位才能比较「放不放得下」，混排字号若各自参与判定，贪心装箱就没了共同口径；教学版的选择是「按块字号断、按真实字号摆」。症状：大字号 span 所在的行，摆完的实际行宽会超过 `opts.width`——附录 B 的配方里 18px 的预算摆出了 36px 的行。而 `size.width` 取的是摆位后的 `maxLineWidth`（第 156 行），外层容器看到的文本块比申请的宽度预算更宽。这不是崩溃，是「悄悄变胖」：本框架的容器不裁剪，超宽部分照画不误。规避三选一：混排时给 width 留出最大字号的余量；统一字号、只用颜色区分；或在验收时明确接受这条近似（真字体下断行估宽与真实摆位的误差表已在《03-文本度量》第 5 节记账）。
+
+### 陷阱二：align 给了、width 没给——对齐静默失效
+
+触发场景：想要居中文本，写了 `align: "center"` 但忘了给 `width`（或走 `RenderText` 的无界路径——`text-object.ts` 第 64 到 67 行只在 `c.maxWidth !== Infinity` 时才设置 `opts.width`）。读码收据：`text-layout.ts` 第 158 行 `const widthLimit = opts.width ?? 0;`——width 缺省时对齐基准是 0；第 160 行 `slack = Math.max(0, widthLimit - line.width)` 里 `0 − 行宽` 恒为负，钳 0 后 `dx = 0`，第 162 行的 `if (dx > 0)` 直接跳过平移。根因：对齐的定义是「在可用宽与行宽的空隙里按比例站位」，没有可用宽这个分母，对齐在数学上就没有输入——实现选择静默不作为，而不是抛错。症状：无报错、无日志，文本永远靠左；等到有人把这块文本挪进有界容器（比如定宽卡片）才发现从未居中过。规避：把「align 与 width 成对出现」写成约定（本册正文 6.3 节的三个决定之一），code review 时对照附录 C 检查单第 4 条；需要「无界环境里的居中」就换结构——外层套 `RenderAlign`（slack 乘法用的是容器自己的约束），而不是指望文本块自己居中。
+
+### 陷阱三：命中换算与绘制换算不同基准（TextField 的 12px）
+
+触发场景：第五阶段的 `RenderTextField`（`src/core/widgets/text-field.ts`）。读码收据三处：`paintSelf` 第 168 行把文本画在 `p.text(this.text, 12, 10, ...)`——文本在控件局部坐标里从 12 开始；第 171 行画光标用 `12 + offsetToX(...)`——绘制侧记得加回左内边距；而 `onPointerDown` 第 133 行是 `xToOffset(this.textLayout2, 0, ev.x - wx, ...)`，其中 `wx` 是沿父链累加 `node.x` 得到的控件绝对 x（第 127 到 132 行），换算只做了「窗口坐标减控件原点」，**没有减去左内边距 12**。根因：`offsetToX`/`xToOffset` 的坐标系以「文本行左边界」为原点，绘制侧的 12 是补上原点差，命中侧漏了扣。手推症状（fontSize 10、Mock 等宽每字符 6px）：点击第一个字符本身（控件局部 x 在 12 到 18 之间）传给 `xToOffset` 的是 12 到 18；中点吸附逐字符比对——字符 0 中点在 3、字符 1 在 9 都不大于 12，字符 2 中点在 15 被命中——光标落在 offset 2 而不是 0 或 1，整体系统性右偏约两个字符宽。规避：命中与绘制共用同一句换算（命中侧同样减 12，或先把布局平移 12 再问几何）；这类「两处换算各写一遍」的常数漂移靠肉眼极难发现，最可靠的防线是给「点击即落点」写一条往返断言（点击坐标 → offset → offsetToX → 应落回点击附近的字符边界）。教训与第 4 节的真 bug 同源：**同一个几何事实只允许有一个换算出口**。
+
+## 附录 B：手算/走查配方：从 spans 到 TextLayout 的七步纸面推演
+
+约定：MockMeasurer（`src/core/text/measurer.ts`，advance = 0.6 × fontSize），块字号 10（每字符 6px）、span 字号 20（每字符 12px），可用宽度 18。输入：
+
+```ts
+const spans = [
+  { text: "订单", fontSize: 20, color: RED },
+  { text: "明细", color: BLACK },
+];
+```
+
+1. **拼全文 + owner**：`full = "订单明细"`（4 个码元）；`owner = [0, 0, 1, 1]`。四个字符的 Unicode 码点都在 0x2e80 到 0x9fff 区间内，`chunkify`（`src/core/text/line-break.ts`）把每个 CJK 字符单独成块——四块，每块 6px（块字号度量）。
+2. **断行**（块字号 10）：`fits = curWidth + chunkWidth <= width`（第 113 行）。逐块推：「订」6 ≤ 18 收下；「订单」12 ≤ 18 收下；「订单明」18 ≤ 18 恰好收下（注意是小于等于）；「细」18 + 6 = 24 超预算 → `pushLine` 后「细」成为新行首。得 `["订单明", "细"]`，`srcIndices` 为 `[0,1,2]` 与 `[3]`。
+3. **owner 翻译**：第一行 owners `[0,0,0]`，第二行 `[1]`。
+4. **run-length 分组**：第一行三个字符同 owner，合成一个 piece，文本「订单明」，`spanIndex = 0`；第二行一个 piece「明细」的「细」，`spanIndex = 1`。
+5. **摆位量宽**（真实字号）：piece 1 宽 = 3 × 12 = 36，x = 0；piece 2 宽 = 12，x = 0。行宽分别 36 与 12。
+6. **块尺寸**：`maxLineWidth = 36`；`lineHeight = round(10 × 1.25) = 13`；`size = 36 × 26`（两行）。第 5 步已现形：**18px 预算摆出了 36px 的行**——陷阱一的实况。
+7. **光标几何**：`offsetToX(第 0 行, offset 2)` = piece.x 0 + measure(「订」, 20) = 12。`xToOffset(第 0 行, 18)`：字符 0 中点 6 不大于 18，字符 1 中点 18 时 `18 < 18` 不成立（严格小于），字符 2 中点 30 命中 → offset 2；往返 `offsetToX(2) = 12 → xToOffset(12)`：字符 1 中点 18，`12 < 18` 成立 → 2。**往返稳定**。
+
+变体（验证对齐）：同一输入改 width = 48、align = "center"。`widthLimit = 48`；第一行 slack = 48 − 36 = 12，dx = 6，piece.x 从 0 平移到 6；第二行 slack = 36，dx = 18。此时 `offsetToX(第 0 行, offset 2)` = 6 + 12 = 18。`size.width` 仍是 36（对齐不改块宽，正文 6.3 节的决定 3）——两问一答，全在纸上可核。
+
+## 附录 C：code review 检查单
+
+- [ ] 新增的派生信息（归属、样式、语言标记）是进了 owner/srcIndices 记账，还是在事后按位置推算？（后者在第 4 节被真 bug 击毙过）
+- [ ] 合成字符（ellipsis 的空格与三个点、未来的连字符）的归属规则是否在合并现场写明，而不是落进 `?? 0` 兜底？
+- [ ] 断行字号与摆位字号的口径差异是否写在调用点旁边？混排大字号时 width 是否留了余量？
+- [ ] 所有传 `align` 的调用点是否同时保证 `width` 有值？（含 `RenderText` 的无界路径——`opts.width` 那时不会被设置）
+- [ ] 光标换算（offsetToX/xToOffset）与绘制换算是否共用同一基准？控件内边距是谁加谁减，两处是否逐字一致？
+- [ ] offset 的语义全程是 UTF-16 码元——emoji（代理对）会被拆开，这条边界是否在 API 注释里写明（`line-break.ts` 文件头已写，调用方是否传达）？
+- [ ] maxLines 的 clip 与 ellipsis 两分支是否有同输入的成对测试？
+- [ ] 行高取的是 `layoutText` 入口的 `Math.round` 值还是 `metrics()` 的未取整值？（两处口径必须分清，正文 6.1 节）
+- [ ] 无界哨兵口径是否统一：`constraints.ts` 的 `loose` 用 Infinity，`text-layout.ts` 的 width 缺省用 `Number.MAX_SAFE_INTEGER`，`text-field.ts` 两个都查——新代码选定一种并写明？
+- [ ] `paintText` 是否保持零逻辑薄层（不查缺省、不发额外命令）？新样式字段是否在第二遍就已解析为确定值？
+
+## 附录 D：反模式对照
+
+| 反模式 | 症状 | 正确做法 |
+|---|---|---|
+| 拼接富文本后按字符下标推算 span 归属 | 断行/截断处整体错位，越靠后偏得越多，且随文本内容变化漂移 | owner 数组一次建账 + `BrokenLine.srcIndices` 逐行传递（第 4 节） |
+| 边断行边摆位（一遍完成） | 换行回溯时已摆 piece 的 x 全部作废，空格蒸发还得撤账 | 两遍布局：第一遍只产文本与索引，第二遍在定局上摆（第 2 节） |
+| 省略号留到绘制层补画 | 行宽越界或省略号盖住最后一个字符；归属无从记账 | `ellipsize` 进度量宽预算（width 先扣 `...`），合成字符现场定归属（5.2 节） |
+| 光标位置存浮点 x 坐标 | 每帧重排后漂移、点击往返不稳定、误差累积 | 状态只存 offset，每帧 `offsetToX` 重算渲染位置（第 7 节不变量） |
+| 对齐靠自己往行首插空格 | 空格重新参与断行，与「行尾空白蒸发」规则互相打架 | `align` 参数平移 piece.x，空白治理权归断行器（6.3 节） |
+| 命中与绘制各写一遍坐标换算 | 点击定位与光标绘制错开常数像素（附录 A 陷阱三的 12px） | 同一几何事实只留一个换算出口，用往返断言锁死 |
+| 给每个 span 单独跑一遍断行器 | 同一段文本的断点随样式变化而跳动，行为不可预测 | 全文拼一次、断一次，样式只影响摆位不影响断点（3.2 节） |
+
+## 附录 E：决策速查表
+
+| 决策点 | 选哪个 | 判据 |
+|---|---|---|
+| 超行策略 | wrap（缺省） | 文本必须完整可读：正文、列表项 |
+| 超行策略 | clip | 纯装饰性重复文本，少一行也无损（背景水印、跑马灯底稿） |
+| 超行策略 | ellipsis + maxLines | 必须单点提示「还有更多」：卡片摘要、日志预览 |
+| span 拆分粒度 | 一个 span 一个连续样式区段 | 断行会把它拆成多个 piece——拆的是摆位不是声明；别为每个词建 span |
+| span 拆分粒度 | 空串 span 没有意义 | `chunkify` 不会给它产生任何字符；写了也进不了 owner 表 |
+| 是否给 width | 永远给，除非明确要「单行自然宽」 | 不给则断行退化为只按换行符切（3.2 节），且 align 失效（附录 A 陷阱二） |
+| align 与外层容器 | 文本块内 align 用于「同宽多行的行间对齐」 | 「整块在父里居中」是 `RenderAlign` 的事，两层对齐各管一段 |
+| 光标状态存什么 | 只存 offset（整数） | x 坐标是派生量，每帧 `offsetToX` 重算；往返稳定保证站得住（第 7 节） |
+| 行高从哪读 | `layout.lineHeight`（已取整） | `metrics().lineHeight` 是度量口径的未取整值；排版一律用前者（6.1 节） |
+| 逐字符推进量 | `advanceAt`（前缀差分） | 绑定层读不到 advance 字段；高频路径靠《06-文本缓存》的前缀链兜住 |
+| 混排字号断行 | 接受按块字号断的近似 | 教学口径；要精确得按 run 度量（工业文本栈的做法，见附录 F） |
+| 空文本块 | `layoutText` 照常返回（零行零宽） | `lines` 为空数组时 `size` 宽高都是 0；调用方不必特判，绘制层 `paintText` 天然不发命令 |
+| 多段颜色高亮 | 相邻同色区段合并成一个 span | piece 数量随 span 边界增长，`offsetToX` 的前缀查找随 piece 数线性走——少一次无意义的边界就少一段开销 |
+| 行内混排换行符 | 直接写进 span 文本（码元 0x0a） | 断行器把它当硬断行块处理，字符本身被丢弃且无索引——不必自己切分数组 |
+
+## 附录 F：与真实框架对照（概念对照，非本机实测）
+
+| mini-gui 概念 | 浏览器文本栈 | Flutter | 差异要点 |
+|---|---|---|---|
+| TextSpan / TextBlockOptions | CSS 行内元素与 `font`、`color` 等行内属性 | `TextSpan`（`TextStyle` 挂每段） | 概念几乎一一对应：声明样式区段，不声明几何 |
+| owner 数组 + srcIndices 记账 | DOM 里样式归属由节点树天然携带（内联元素自己知道自己是自己） | 同左（Widget 树即归属表） | mini-gui 拼平全文后才需要显式记账——这是「扁平化」换来的代价 |
+| 两遍布局 | LayoutNG：先分段（segment）建 run，再 shaping、再断行、再摆位 | `TextPainter`：layout 里先 `layoutText`（断行）再 paint 时定位 | 「先决定行内容、再决定行内位置」的分层是通行做法，mini-gui 是其最小化 |
+| run-length 分 piece | 行内盒的 fragment（inline box fragment） | `TextSpan` 展开后的 run | 都是「span 与行的交」；浏览器还要处理 bidi 重排后片段乱序 |
+| `offsetToX` / `xToOffset` | `SelectionController` / caret position mapping（Bidi 下先做逻辑序与视觉序互转） | `TextPosition` 与 `getOffsetForCaret` / `getPositionForOffset` | mini-gui 无 RTL，直接逻辑序即视觉序；浏览器的同函数必须过双向算法 |
+| ellipsis 合并行重截 | `text-overflow: ellipsis`（单行）或 `-webkit-line-clamp`（多行） | `Text.ellipsis`（单行）与 `maxLines` | 多行省略在 CSS 里是私有扩展出身；语义都是「末行合并溢出内容重截」 |
+| 按块字号断、按 span 字号摆 | 断行按每个 run 的真实样式度量（分段就在断行之前） | 按段落统一样式度量（ParagraphStyle）+ run 内字号参与 shaping | mini-gui 的近似是等宽 Mock 下的精确解；真字体下工业栈一律按 run 精确度量 |
+
+三点观察。其一，mini-gui 的「拼全文 + owner 记账」本质上是把 DOM 树的隐式归属显式化——浏览器不需要这一步是因为它的样式归属从不离开节点树；这也解释了为什么第 4 节的 bug 只在「扁平化 + 拼接」的架构里可能出现。其二，两遍布局在工业栈里对应「断行结果（行盒）与绘制内容（run）分离」——Chrome 的 LayoutNG 把 fragmentation（断行）与 positioning（摆位）拆在两个阶段，与本册第一遍/第二遍同构，只是工业版中间多了 shaping（把字符换成字形）与 bidi 重排两层。其三，光标几何的「中点吸附 + 往返稳定」在浏览器里由 caret position mapping 承担，但多出 RTL 分支：逻辑 offset 与视觉 x 的映射不是单调的，`xToOffset` 得先按双向分段反查——本册把 RTL 如实记为不做（第 7 节末），对应到工业栈就是「缺了一整个 bidi 前置层」，而不是「改几行参数」。
+
+## 附录 G：读码收据索引与自证路径
+
+本册附录的每条论断都能在仓库里找到落点，汇总如下：数据结构与两遍数据流在 `src/core/text/text-layout.ts`（`breakWithSpans` 第 53 到 126 行、`layoutText` 第 128 到 176 行、光标几何第 199 到 230 行）；断行记账与长词硬拆在 `src/core/text/line-break.ts`（`chunkify` 的源索引随块携带、`breakLinesIndexed` 的行尾空白丢弃现场、CJK 单字超宽强收的防死循环分支）；度量与缓存在 `src/core/text/measurer.ts`（缓存键、`advanceAt` 前缀差分、MockMeasurer 的 0.6 与 1.25 两个比例常量）；文本叶子的接线在 `src/core/render/text-object.ts`（有界才给 width、`setText` 标脏、`isFixedSize` 声明）；输入框的兑换在 `src/core/widgets/text-field.ts`（`onKey` 的编辑指令集、`onPointerDown` 的命中换算、`paintSelf` 的光标绘制）。想自证附录 A 陷阱一的「行宽超预算」，把附录 B 配方的输入抄进一个临时 vitest 用例（对齐 `src/core/text/text-layout.test.ts` 里 MockMeasurer 的用法），断言 `layout.size.width` 大于 `opts.width` 即可亲眼看到「变胖」；想验证陷阱三的偏移，同法断言「点击首个字符得到的 offset 大于 1」。两条都是读码推演的实跑化路径，本册为保持口径一致未新增测试文件，数字全部给出手推过程供复核。
