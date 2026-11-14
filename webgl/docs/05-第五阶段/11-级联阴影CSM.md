@@ -1,4 +1,4 @@
-# 级联阴影 CSM
+# 11. 级联阴影 CSM
 
 > [返回：WebGL 与 3D 框架学习大纲](../WebGL与3D框架学习大纲.md)
 > 本文是第五阶段第 10 条「级联阴影 CSM」的完整展开：从单张 shadow map 的精度天花板推导出级联的必要性（texel 世界尺寸随视深变化的数学），给出 practical split scheme 的分割公式与直观解释，逐级讲光正交相机的 tight fitting 与 texel snapping 稳定化、随级缩放的 bias 与级间 blend band，最后落在 WebGL2 的深度纹理数组实现——选级与 PCF 采样的着色器逐行讲解，并给出条纹/漏光/peter-panning/seam 的成因对照表。它是 [02-阴影与PCF软阴影](02-阴影与PCF软阴影.md) 的实现续篇（该册常见坑 5 里那句「光锥应覆盖相机可见范围，或上 CSM」正是本文）；配套示例 `examples/12-csm`（λ 调整、纹素对齐开关、按级染色、光锥线框）；阶段导览见 [01-导览](01-导览.md)。

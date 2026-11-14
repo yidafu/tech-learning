@@ -1,4 +1,4 @@
-# 粒子系统与 Instancing 实战
+# 05. 粒子系统与 Instancing 实战
 
 > [返回：WebGL 与 3D 框架学习大纲](../WebGL与3D框架学习大纲.md)
 > 本文是第五阶段第 4 条「粒子系统与 instancing 实战（万级粒子不掉帧）」的完整展开：CPU/GPU 两种更新策略的成本模型、速度存 attribute 在顶点着色器里积分的万级粒子完整实现、状态化纹理 ping-pong 进阶，以及与逐粒子 drawArrays 的性能对比；阶段导览见 [01-导览](01-导览.md)。

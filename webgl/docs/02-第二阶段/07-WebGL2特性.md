@@ -1,4 +1,4 @@
-# WebGL2 特性
+# 07. WebGL2 特性
 
 > [返回：WebGL 与 3D 框架学习大纲](../WebGL与3D框架学习大纲.md)
 > 本文展开大纲第二阶段第 6 条「WebGL2 特性」：VAO、instancing、UBO、transform feedback、MRT 五件套，每样都回答"它省了什么、代价是什么"；阶段导览见 [01-导览](01-导览.md)。

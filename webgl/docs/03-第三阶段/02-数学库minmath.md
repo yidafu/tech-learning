@@ -1,4 +1,4 @@
-# 数学库 minmath
+# 02. 数学库 minmath
 
 > [返回：WebGL 与 3D 框架学习大纲](../WebGL与3D框架学习大纲.md)
 > 一句话定位：第三阶段第 1 节的完整展开——从 API 设计取舍出发，实现 Vec2/3/4、Mat3/Mat4、Quaternion，推导万向节锁与 slerp，讲透列主序与 uniformMatrix4fv 的对接，最后用 vitest 把矩阵运算全部锁进测试。阶段导览见 [01-导览](01-导览.md)。
