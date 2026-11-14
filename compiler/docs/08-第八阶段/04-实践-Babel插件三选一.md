@@ -275,3 +275,27 @@ module.exports = function importOrganizer({ types: t }) {
 4. 自动埋点选方案 b（try/finally）时，`async` 函数的 exit 在 microtask 里执行——埋点系统的时钟语义要怎么定义才不误导？
 5. import 排序插件为什么必须 Program:exit 而不是 enter？给一个"enter 版本会排错"的具体插件组合。
 6. 三个插件的 fixture 各需要一条"必须不动的边界用例"——分别是什么？
+
+## 附：插件调试三件套：改错了先摸谁
+
+三个插件写下来会沉淀三件调试工具，此后任何 Babel 插件问题先过这三件：
+
+| 工具 | 用法 | 回答的问题 |
+|---|---|---|
+| visitor 首尾 `console.log(path.node.type)` | 可疑 visitor 进出各一行 | "我的 visitor 到底被调了没有、拿到的节点是什么" |
+| `generator(path.node)` 局部反打印 | 对改写前后的子树各打一次 | "改写后的局部代码长什么样"——比全文件 diff 聚焦 |
+| AST Explorer 双栏复现 | 左输入、右侧写同样 visitor | "最小复现里行为一致吗"——把插件逻辑问题与工程配置问题切开 |
+
+排查次序也定死：先 Explorer 确认"逻辑本身对"（排除 API 误用），再回工程确认"配置到了"（plugin 顺序、include 范围），最后才查"与其他插件打架"（顺序敏感的改写互相覆盖——[02 册](02-Babel深度剖析.md)的 traverse 协议）。真实事故三类占比大致反着排：配置问题最多、逻辑次之、互搏最少——因为互搏需要两个插件同时在场，新写的插件先死于前两类。
+
+与 fixture 纪律（自测 6）连起来就是完整的插件回路：**Explorer 长逻辑 → fixture 钉行为 → 三件套守回归**。本阶段三份实践（mini-lint、Babel 插件、tsc 增量实验）共享同一条方法论——最小复现、黄金用例、随改随验。
+
+最后一条收尾纪律写给未来要维护这三个插件的你：**每个插件的 README 顶部写一行"它改变了哪类节点的哪些字段"**——三个月后回来改插件，最先忘的不是逻辑（fixture 会提醒）而是"它当时为什么选择这个节点类型"（01 册节点选型表的现场版）。一行契约描述省一次全量考古，这是插件工程最便宜的一份保险。
+
+三个插件各补一句契约示范，格式可以照抄：
+
+- 常量折叠插件：改 `BinaryExpression`（两侧均为 NumericLiteral 时替换为 `NumericLiteral`），不改任何 `Identifier`；
+- 自动埋点插件：改 `FunctionDeclaration` / `ArrowFunctionExpression` / `FunctionExpression` 的体（包 try/finally），不改函数签名；
+- import 排序插件：只重排 `Program.body` 顶层的 `ImportDeclaration`，其余声明零接触。
+
+契约行的写法刻意只包含"节点类型 + 动作 + 不动什么"三段——多一段解释都会过期，少一段描述都会误导。这条"最小契约"与 fixture 的"最小边界用例"（自测 6）共同构成插件的可维护性下限：契约管三个月后的你自己，fixture 管每一次回归。
