@@ -282,3 +282,21 @@ A：错误事件 100%（低频高价值）；Web Vitals 100%（每页一次，�
 | 3. Grafana Faro：前端数据接入 LGTM 栈 | 浏览器 SDK → Faro Collector 网关 → Loki/Tempo/Prometheus → Grafana 架构图 | flowchart TD |
 | 5. 前后端 trace 串联：把浏览器变成 trace 的起点（注入） | 浏览器生成 traceparent 后贯穿网关 → 订单服务 → 库存服务的传播图 | flowchart TD |
 | 5. 前后端 trace 串联：把浏览器变成 trace 的起点（trace 瀑布） | click → fetch → gateway → orders.process → GET inventory 的 span 嵌套树 | flowchart TD |
+
+## 附：RUM 与工程流程的衔接速查（收尾增补）
+
+本册讲了前端 RUM 的技术面，收尾补"它怎么进入工程流程"的两条衔接：
+
+- **发布门禁**：Core Web Vitals 分位数（P75）作为发布灰度的观测门槛——灰度期间 P75 劣化超阈值自动暂停放量（性能预算的 RUM 版）；
+- **告警归因**：RUM 告警按"页面模板 × 地区 × 浏览器"三维聚合归因，避免全局均值掩盖局部劣化（长尾用户的痛在均值里不可见）。
+
+两行衔接把 RUM 从"数据面板"升级为"流程关卡"——可观测性的终点不是看见，是让看见的东西改变工程决策。
+
+### 收尾自测（增补）
+
+3. 灰度门禁为什么用 P75 而不是均值？（尾部用户即劣化首批受害者）
+4. 你的发布流程里有性能关卡吗？RUM 数据接进去了吗？
+
+最后一行收尾：RUM 与后端 APM 在 trace id 上打通（前端生成 trace id 随请求携带）——这一行打通后，"用户慢"与"哪一跳慢"才真正连成一条链路，本册与 [apm-landscape](../03-tracing/apm-landscape.md) 的互链也正是这一行。
+
+补充一行灰度门禁的实现细节：RUM 的 P75 天然滞后（要等流量积累），门禁宜配"实时埋点哨兵"（灰度实例的上报抽样）做前置信号，两者一快一慢互补——只等 P75 会让劣化多跑几个小时。
