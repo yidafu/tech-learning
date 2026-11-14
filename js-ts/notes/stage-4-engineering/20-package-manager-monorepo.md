@@ -206,6 +206,95 @@ node ../02-verify-monorepo.mjs                                # workspace 链接
 
 npm 扁平化：express 的全部传递依赖被提升到根 `node_modules` 顶层，与直接依赖平铺在一起；Node 解析 `require('cookie')` 时沿 `node_modules` 向上查找，在顶层命中——**能 require 到，但你的 package.json 从未声明它**（幽灵依赖；express 换实现或调整依赖后悄然失效）。pnpm：顶层 `node_modules` 只有直接依赖的 symlink，`cookie` 位于 `node_modules/.pnpm/express@x.y.z/node_modules/` 这样的邻接目录——只有 express 自己解析得到，`app 代码向上查找`到不了那里，require 报 `MODULE_NOT_FOUND`。真正需要时：在 package.json 显式声明 `"cookie": "^x.y.z"` 再安装（pnpm 会为它在顶层创建链接）——幽灵依赖问题的正解永远是「把隐式依赖显式化」。
 
+## 深挖三节：包管理器的机制底账
+
+### lockfile 里的信息结构：它锁的到底是什么
+
+打开一份 `package-lock.json` 会看到三类关键信息，各回答一个不同的问题：
+
+| lockfile 内容 | 回答的问题 | 对应的失败模式（缺失时） |
+|---|---|---|
+| 每个包的**解析后确切版本 + resolved URL + integrity 哈希** | "这次装的是哪一字节序列？" | 两台机器装出不同产物（可复现性归零） |
+| `dependencies` 与 `devDependencies` 的**分层树** | "谁需要它、经由哪条依赖链？" | 只看 package.json 无法判断传递依赖的来源 |
+| peer 冲突记录与 optional 标记 | "安装时做了哪些裁决？" | 换环境后重装出现"当时能装现在装不上" |
+
+值得强调的一点：lockfile 锁的是**解析结果**而不是意图——`^1.2.3` 的意图永远写在 package.json，lockfile 记录的是"上次解析命中了 1.4.1"。两者各司其职：改版本范围动 package.json（语义），固化可复现组合动 lockfile（事实）。`npm ci` 的严格性正来自这对分工：声明与事实不一致时，宁可拒绝安装也不静默修正——CI 里要的防线就是这条。
+
+### pnpm 的三层结构：symlink 之上还有什么
+
+面试标准答案"store + 硬链接 + symlink"值得拆到逐层可见：
+
+```text
+~/.pnpm-store/v3/           ① 全局内容寻址存储（按文件哈希存内容，全机器一份）
+  └─ files/xx/yy/<hash>…
+node_modules/
+  ├─ express  → .pnpm/express@4.18.2/node_modules/express   ② 顶层 symlink（只有直接依赖）
+  └─ .pnpm/
+      └─ express@4.18.2/node_modules/
+          ├─ express   （硬链接 → ① store）                  ③ 硬链接（真实字节在 store）
+          └─ cookie    （硬链接 → ① store）                  ③ 传递依赖在"自己的邻接目录"
+```
+
+三层的职责边界：①解决"磁盘上的字节只存一份"（省空间）；③解决"同一个包的多版本并存"（`.pnpm` 下按 `名字@版本` 隔离）；②解决"谁能看见谁"（幽灵依赖防线）。三个问题正交，缺一层就漏一类事故——只做①③没有②，就是"省了磁盘的 npm 扁平化"，幽灵依赖照样通行。**看清每层防的是什么，比背三层名词重要**。
+
+### workspace 协议的三种写法与替换时机
+
+`"a": "workspace:*"`、`"workspace:^"`、`"workspace:~"` 的差别在**发布时刻**的替换结果：
+
+| 写法 | 发布时替换为 | 适用 |
+|---|---|---|
+| `workspace:*` | 精确版本 `1.2.3` | 锁死配套发布的包族（编译产物强耦合时） |
+| `workspace:^` | `^1.2.3` | 语义化兼容的兄弟包（多数 monorepo 的默认选择） |
+| `workspace:~` | `~1.2.3` | 只接受补丁联动的紧耦合包 |
+
+未发布（本地开发）时三者都解析成 symlink 直连源码——差别只在 `pnpm publish`（或 changesets 流程）那一瞬。坑位也在这：用 `file:` 协议的旧写法**不会被替换**，发布出去的包指向一个不存在的相对路径——`npm pack` 检查产物时 `ls` 一下 tar 包里的 package.json 是唯一可靠的验收。
+
+## Node 的解析算法：require 到底怎么找文件
+
+幽灵依赖、顶层 symlink、`.pnpm` 邻接目录——这些概念的裁判是 Node 的模块解析算法。把算法走一遍（CJS 侧，ESM 的规则见 [16 册](16-modules-esm-cjs.md)）：
+
+```text
+require('cookie') 的查找序列（从当前文件目录开始）：
+① dir/node_modules/cookie（目录：看 package.json main / index.js）
+② dir/../node_modules/cookie …逐级向上
+③ 每一级同时尝试 cookie.js / cookie/index.js 等形态
+④ 直到根目录 node_modules 也没有 → MODULE_NOT_FOUND
+```
+
+三个推论直接从算法读出：
+
+1. **"向上查找"是幽灵依赖的物理原理**——第②步让子包能"看到"祖先目录里的所有包，npm 扁平化把传递依赖抬到顶层后，这条祖先链就成了幽灵依赖的高速公路。pnpm 的邻接目录布局没有改变算法，改变的是**算法沿途能看见什么**；
+2. **同名包的最近优先**——如果 `dir/node_modules/cookie` 与 `dir/../node_modules/cookie` 都存在，命中前者。这个"就近遮蔽"规则是 monorepo 里"为什么这个包用了旧版本"事故的第一嫌疑人；
+3. **解析成本与目录深度成正比**——深层嵌套的文件每次 require 都要走很多级。 bundler 的 resolve 缓存（[17 册](17-build-tools.md)）与 pnpm 的扁平 symlink 层都在为这一条付工程解法。
+
+**声明（package.json）与解析（Node 算法）是两套独立的事实系统**——package.json 说"我需要什么"，算法说"运行时真能找到什么"。幽灵依赖的本质是两套系统的脱节：解析能成功、声明不存在。pnpm 做的事只是把解析系统拉回声明系统旁边，让脱节立刻暴露。
+
+### 版本选择与依赖仲裁：装的不是"最新"是"命中"
+
+`pnpm install` 时面对 `^1.2.3` 的真实工作序列（定性描述）：
+
+| 步 | 动作 | 关键规则 |
+|---|---|---|
+| 1 | 查 lockfile | 有记录 → 直接用记录的版本（可复现的来源） |
+| 2 | 无记录 → 查 registry 的版本列表 | 只看**正式版 + 符合 prerelease 规则**的版本 |
+| 3 | 在范围内挑最高版本 | `^1.2.3` → 1.x 里最高的；0.x 特例按题 1 的边界 |
+| 4 | 写回 lockfile | 记录确切版本 + integrity 哈希 |
+
+两个高频误读在这里现形：**"install 会自动升级"**——不会，lockfile 在就不动（升级是 `pnpm update` 的专职）；**"锁文件锁住后 registry 删版本也没事"**——对，integrity + resolved URL 让安装不再依赖 registry 的当前状态，这正是可复现性的字面意思。dist-tag（`latest`/`next`）只在无范围约束（如 `npm i foo`）时影响选择，有 `^` 范围后它是背景板。
+
+### monorepo 任务编排：为什么还需要 turbo/nx
+
+pnpm workspace 解决的是**依赖布局**，多包项目的另一半是**任务编排**——几十个包各自 `build`/`test`，按什么顺序跑、哪些能并行、哪些结果能复用：
+
+| 能力 | pnpm 本体 | turbo/nx 补的 |
+|---|---|---|
+| 依赖关系图 | 有（workspace 协议构成拓扑） | 有（同源数据） |
+| 拓扑序执行 | `pnpm -r --workspace-concurrency` 可并行 | 任务图 + 缓存感知调度 |
+| 增量跳过 | 无（全量重跑） | 输入哈希不变 → 直接命中缓存跳过 |
+| 远程缓存 | 无 | CI 与本地共享构建产物 |
+
+判据一句话：**包少到"全量跑也就几分钟"就别上编排器**（多一层概念税）；包多到"改一个包要等全仓库重构建"再上，且先把 pnpm 的 workspace 协议梳理干净——编排器的缓存键完全建立在"依赖图 + 文件哈希"上，底层布局乱则缓存必失效。工具栈的正确叠法是逐层解决当层的问题：Node 解析 → pnpm 布局 → 编排器调度，跳层上工具是把别人的复杂度搬进自己的仓库。
+
 ## 延伸阅读
 
 - pnpm 官方《动机》文档（pnpm.io/zh/motivation）与《symlinked node_modules structure》

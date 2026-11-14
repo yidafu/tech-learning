@@ -45,6 +45,19 @@ sequenceDiagram
 
 关键观察：请求由**浏览器驱动**（解析到 import 才发下一个），服务器只做单文件转译——这就是「no-bundle」的字面含义。
 
+### 深入 §1：裸导入重写——dev server 悄悄改写了你的源码
+
+浏览器原生 ESM 不认识裸导入（`import _ from 'lodash-es'` 不能作为 URL 请求），所以 dev server 返回源码前还做一件关键的事：**把裸导入改写成预打包产物的真实 URL**（`lodash-es` → `/node_modules/.vite/deps/lodash-es.js`，见上图第 5 个请求）。相对路径 import 则原样保留，浏览器自己解析。三个推论：
+
+- **源码里永远不需要写 `.js` 后缀以外的东西**——后缀补全、目录 `index` 解析、`@` 别名这些「打包器习惯」全部由 dev server 的转译层代劳，浏览器看到的已经是改写后的合法 ESM
+- **`import()` 动态导入在 dev 下同样是按需请求**：语法上它是运行时表达式，语义上被浏览器在执行到那行时才发起请求——代码分割的「按需」在 dev 是字面成立的
+- **改写是转译的一部分**：这就是为什么 dev 请求返回的文件内容与磁盘源码不完全一致（还有 HMR 注入的 `import.meta.hot` 相关代码）——调试时在 DevTools 里看到的源码是「转译后的镜像」
+
+### 深入 §1 边界：dev「按需」的两个例外时刻
+
+1. **依赖图突变触发整页刷新**：dev 中途引入了一个新依赖（代码里新写了 `import xxx`），预打包缓存里没有它 → Vite 发现新依赖后要重新预构建，**正在运行的页面会被通知整页 reload**——「按需」在「发现新依赖」这一个点上退回全量，这是官方文档明确描述的行为，不是 bug
+2. **HMR 接管不了的变更**（见 §8）：多数配置类变更（如 `vite.config` 改动、依赖重新预构建）HMR 无法表达，fallback 是整页 reload——「精准失效」是优化路径，「整页刷新」是兜底路径
+
 ### 2）esbuild 预打包依赖：为什么必须做
 
 一手依据：Vite 官方指南《Dependency Pre-Bundling》。
@@ -67,6 +80,19 @@ sequenceDiagram
 
 效果：二次访问页面时依赖零网络传输，源码没改的走 304——「快」不只靠不做打包，还靠缓存分层。
 
+### 深入 §2/§3：预构建什么时候会失效重来
+
+强缓存敢配 `immutable`，靠的是「内容变 → 文件名变 → URL 变」这条链。反过来，**哪些变化会触发重新预构建**（官方文档《Dependency Pre-Bundling》的失效条件）：
+
+| 触发条件 | 为什么会导致失效 |
+| --- | --- |
+| lockfile（`package-lock.json` / `pnpm-lock.yaml`）变化 | 解析到的依赖版本可能变了——预打包产物必须与实际安装的版本对应 |
+| Vite 版本变化 | 预打包管线本身升级，产物格式/转换行为可能不同 |
+| `vite.config` 相关字段变化 | 影响解析与优化的配置变了，旧产物不再可信 |
+| `node_modules` 被手动改动（如补丁） | 缓存与磁盘内容脱节，需要 `--force` 强制重建 |
+
+失效后的机制要点：产物文件名/路径变化让浏览器侧的强缓存自然失效；而**正在运行的 dev 页面**则走「发现变化 → 重新预构建 → 通知整页 reload」的路径（见深入 §1 边界的第 1 条）。把这张表与 lockfile 章节呼应起来：lockfile 不只是「可复现安装」的凭证，它还是 dev 预构建缓存的**失效键**——`notes/stage-4-engineering/20-package-manager-monorepo.md` 的 lockfile 一节与本节互为因果。
+
 ### 4）Vite build 用 Rollup：dev 不打包、build 反而打包
 
 看似矛盾，其实目标不同：
@@ -87,6 +113,27 @@ sequenceDiagram
 | 优化目标 | 冷启动/热更新延迟 | 产物体积/请求数/缓存友好（内容 hash 文件名） |
 | 缓存 | 依赖强缓存 + 源码 304 | 产物指纹文件名 + CDN 长缓存 |
 
+### 深入 §4：tree-shaking 的失效现场清单
+
+「从入口可达」的标记清除依赖一个假设：**没被 import 的导出删了是安全的**。下面这些现场会让这个假设不成立，摇树失效（代码被整块保留）：
+
+```js
+// utils.js
+export function pure(a, b) { return a + b; }        // ✅ 没人 import 就能删
+export const cache = new Map();                      // ⚠️ 模块级状态：删除改变全局行为面
+console.log('utils loaded');                         // ❌ 顶层副作用：导入即执行，打包器不敢删
+export const polyfill = Array.prototype.at ? null : installAt(); // ❌ 顶层有条件的执行
+import './global.css';                               // ❌ CSS 导入零导出面，纯副作用，摇树永远保留
+```
+
+- **`"sideEffects": false` 的责任归属**：它由**库作者**在 package.json 里声明「本包所有模块都没有顶层副作用，没被引用的尽管删」——是打包器无法自动证明时的**人工担保**。标错（明明有 polyfill 却标 false）会删出线上事故；不标则摇树保守。有副作用的个别文件可以在数组里白名单：`"sideEffects": ["*.css", "./polyfills.js"]`
+- **模块拼接（scope hoisting）一句话**：Rollup 打包时把多个小模块**内联进同一作用域**、消除逐模块的函数包装与导出对象间接访问——这是「打包」比「逐文件 HTTP 提供」产物更小的另一半原因（不只是删代码，还有抹平模块边界开销）
+- **`import()` 切割的粒度**：静态 import 沿模块图合并进引用方；`import()` 的每个**静态可分析的字符串目标**切成异步 chunk。动态拼路径（`` import(`./locales/${lang}.js`) ``）按模板串静态前缀把候选文件整组切开——完全动态的路径（变量拼接、运行时计算）打包器无法分析，构建期直接失败或原样保留后运行时 404
+
+### 深入 §4 补：产物指纹与部署视角
+
+build 产物把「缓存友好」做进文件名：内容 hash 进文件名（`index-B2Kj9x.js`），`Cache-Control: immutable` 配上去就是永久缓存；真正不缓存的是**引用这些文件名的 HTML/入口清单**——它每次都要回源拿最新的「文件名表」。于是缓存的分层是：HTML 短缓存/协商缓存 → 带 hash 的 JS/CSS/图片永久缓存。这个结构与 dev 的「依赖强缓存 + 源码协商缓存」是**同一个模式在不同层的复用**：谁的内容稳定，谁就可以被强缓存；URL 随内容变，缓存体系才敢下狠手。
+
 ### 5）esbuild 为什么快
 
 一手依据：esbuild 官方 FAQ《Why is esbuild fast?》，四点归纳：
@@ -97,6 +144,16 @@ sequenceDiagram
 4. **高效的内存利用与直接输出**：AST 尽量复用，代码生成直接流式写出
 
 再加一个关键取舍：**esbuild 只做转译（transpile），不做类型检查**。类型检查的复杂度远高于转译——转译是「逐文件、语法层」的工作；类型检查需要跨文件的完整类型程序（TypeScript Program）、类型推断、类型兼容性求解，是全局计算。esbuild 直接把 TS 当「带类型语法的 JS」剥掉类型就完事。
+
+### 深入 §5：esbuild 的能力边界——什么时候不能只用它
+
+esbuild 提供 transform（单文件转译）与 build（打包）两级 API，也有插件机制，但边界清晰：
+
+- **插件钩子面远小于 Rollup**：能拦截解析/加载/转译环节，但缺少 Rollup 那类精细的产物后处理钩子（逐 chunk 改写、复杂资源管线、自定义 chunk 策略）——需要深度定制产物时仍要回到打包器生态
+- **不做类型检查**（前文已论证）；也没有 babel 那种「自定义语法扩展」能力——语法必须是标准 JS/TS/JSX，新提案语法它不接
+- **定位是「转译底座」而不是「全家桶」**：所以 Vite dev 拿它做预打包与单文件转译、build 默认仍交给 Rollup（插件生态与产物质量），tsx 拿它做脚本转译——同一个底座服务三种上层工具
+
+这套边界与 §7 的分工论证同源：**快的工具只做语法层的事，全局性的事（类型检查、产物优化）交给专职工具**。
 
 ### 6）SWC / babel 的定位差异
 
@@ -146,6 +203,39 @@ sequenceDiagram
 
 对照 webpack 时代：打包器内部维护模块图，HMR 要重新打包受影响 chunk 再推送 bundle；Vite 的模块图就是**浏览器里真实的 import 关系**，失效计算天然精准。
 
+### 深入 §8：HMR 的失效传播与边界缺失
+
+「找最近的 HMR 边界」这条规则有两个值得拆开的细节：
+
+- **失效向上传播（bubbling）**：变更模块自己没写 `import.meta.hot.accept` → 沿 importer 链向上找，**谁 accept 谁负责**。组件文件通常作为边界（框架集成替你写了 accept），组件下面一个纯工具函数改了 → 传播到组件边界，组件重执行。一直找不到边界 → 没人能「接住」这次变更 → 整页 reload 兜底
+- **边界内状态丢失是语义约定**：边界模块重执行，它自己持有的模块级状态（模块顶层的 `let`、缓存 Map）随重执行重置——HMR 只保「边界外的模块图不动」，不保「边界内的运行时状态」。这就是「HMR 改完代码表单清空了」这类现象的机制来源（状态若要保留得靠框架层的状态外置）
+
+最小骨架（边界模块自己声明的样子）：
+
+```ts
+// counter.ts 被多个入口引用，自身声明接受热更新
+if (import.meta.hot) {
+  import.meta.hot.accept((newModule) => {
+    // newModule 是重执行后的新版本，由这里决定怎么把它织回运行中的页面
+  });
+}
+```
+
+框架的 HMR 集成（如 Vite 的 Vue/React 插件）做的事就是**替每个组件文件生成 accept 边界 + 卸载重挂逻辑**——开发者不用手写这段，但机制上就是它。
+
+### 深入 §8 补：dev 与 build 双管线的行为差异清单
+
+dev（esbuild 级转译 + no-bundle）与 build（Rollup 打包）是**两条管线**，同一段代码可能两边行为不同——「我这边是好的」类扯皮的高发来源：
+
+| 维度 | dev | build | 常见翻车现场 |
+| --- | --- | --- | --- |
+| 语法降级 | 面向现代浏览器，基本不降级 | 按构建目标降级 | 老浏览器/老 WebView 上 build 产物报语法错，dev 从没暴露 |
+| 摇树 | 不摇（没打包） | 摇 | 依赖顶层副作用被 `sideEffects` 担保误删，dev 从没发现 |
+| 裸导入 | 重写到预打包产物 | 正常打包解析 | 预打包产物与真实包版本脱节时，两边看到的行为不同 |
+| 错误暴露时机 | 懒：请求到的文件才转译才报错 | 全量：构建时全部模块过一遍 | dev 没打开过的页面里的语法错，build 才炸 |
+
+工程结论：**「dev 绿了」只是转译层通过，不能当作集成验证**——CI 里跑一次真实 build（+ 类型检查 + 测试）是唯一权威，这也是 §7 分工表在生产侧的延伸。
+
 ## 可运行示例
 
 本主题的「可运行」体现在工具链行为，而非单个脚本；工作区内的直接体验点：
@@ -179,6 +269,11 @@ node exercises/build-tools/02-transpile-vs-typecheck.mjs # 转译器 vs 检查�
 - **esbuild/swc/babel 都不检查类型**；`tsc --noEmit` 是唯一权威——「为什么构建工具不做类型检查」要用类型检查的全局性来答
 - **副作用与摇树**：`package.json` 的 `"sideEffects": false` 帮打包器安全删除未引用模块；模块顶层有 `console.log`/polyfill 就不能乱标
 - 面试高频：「Vite 为什么快」（原生 ESM 按需 + esbuild 预构建 + 缓存分层 + 单文件转译）；「HMR 与整页刷新的差异（模块边界失效）」
+- **`"sideEffects": false` 是人工担保不是配置开关**：标错会删出线上事故；顶层有 `console.log`/polyfill/CSS 导入的模块绝不能一刀切标 false
+- **`import()` 的目标必须静态可分析**：字符串字面量或带静态前缀的模板串可以切 chunk；完全动态的路径（变量拼接）打包器分析不了——「代码分割失败」的第一排查项
+- **dev 正常、build 出错（或反之）不是玄学**：dev 是 esbuild 级单文件转译，build 是 Rollup 插件链——两套管线的解析/降级行为有差异，排查时先定位「哪条管线出的问题」
+- **HMR「改完状态丢了」是机制不是 bug**：边界模块重执行，模块级状态随重置；要保状态靠框架层状态外置
+- **预构建强缓存失效的唯一入口是 URL 变化**：重新预构建后产物路径/文件名变了，浏览器才会丢弃旧缓存——「缓存失效 = 让 URL 变」是全篇统一的机制视角
 
 ## 输出预测题
 
@@ -195,6 +290,30 @@ node exercises/build-tools/02-transpile-vs-typecheck.mjs # 转译器 vs 检查�
 
 同事说：「`vite build` 成功了，说明我们的 TS 代码类型全对，CI 不用再跑 `tsc --noEmit` 了。」这句话错在哪两个层面？
 
+### 题 3（摇树失效归因）
+
+某个库声明了 `"sideEffects": false`，下面每个文件被项目 import 了一次之后，各文件中「未被 import 的其他导出」能否被摇掉？逐个说明理由。
+
+```js
+// a.js —— 只有纯函数
+export function used() { return 1; }
+export function unused() { return 2; }
+
+// b.js —— 顶层注册
+export function noop() {}
+document.addEventListener('click', () => console.log('side!'));
+
+// c.js —— 静态 import 某依赖 + 导出
+import { track } from './track.js';
+export const TAG = 'c';
+export function unusedToo() { return track(TAG); }
+
+// d.js —— 动态 import
+export function lazy() { return import('./heavy.js'); }
+```
+
+补充问：`heavy.js` 整个文件会不会被打进主 chunk？
+
 ## 预测题答案
 
 ### 题 1 答案
@@ -205,6 +324,13 @@ node exercises/build-tools/02-transpile-vs-typecheck.mjs # 转译器 vs 检查�
 
 层面一：`vite build` 内部用 esbuild/Rollup 转译，**transpile-only，剥掉类型语法**，任何类型错误都不会在构建期报告。层面二：即便工具想查也查不全——类型检查需要完整跨文件的 TypeScript 程序（类型推断是全局计算），正确姿势是独立跑 `tsc --noEmit` 进 CI（构建工具管转译，tsc 管类型）。本工作区的对应实践：`npx tsx` 跑通 + `npx tsc --noEmit` 门禁。
 
+### 题 3 答案
+
+- **a.js**：`unused` **能被摇掉**——纯函数、无副作用，`sideEffects: false` 的担保对它成立，这是摇树的理想标本。
+- **b.js**：顶层 `addEventListener` 是副作用——但关键在于**它发生在「模块被 import」这个动作上，而 b.js 本身被 import 了**，所以副作用代码会保留；`sideEffects: false` 的失效体现在**模块级**：一旦这个模块因任何导出被引用而整体保留（连 `noop` 一起），或更糟——如果它没有被 import，担保会让打包器把「注册监听器」的模块整个删掉，功能静默消失。正确做法是这类文件放进 `sideEffects` 白名单。
+- **c.js**：`unusedToo` **大概率保留不下来？——能被摇掉**，但要注意它**传递引用**了 `track`：`unusedToo` 被删后 `track` 的这次引用消失，若 `track` 没有其他引用点，`track.js` 的对应导出也跟着摇掉（标记清除沿依赖边递归）；`TAG` 若只被 `unusedToo` 用，同样可删。摇树的可达性分析是**沿 import 边的图遍历**，不是逐文件开关。
+- **d.js**：`lazy` 函数本身按普通导出处理（没被引用就能删）；`heavy.js` 是 `import()` 的**异步 chunk**——它不进主 chunk，但只要 `lazy` 可达就一定会被打包成独立 chunk（`import()` 是打包信号）。删掉 `lazy` 则 `heavy.js` 不可达，异步 chunk 也不会生成。
+
 ## 延伸阅读
 
 - Vite 官方指南《Why Vite》《Dependency Pre-Bundling》（vitejs.dev/guide/why.html, /guide/dep-pre-bundling）
@@ -212,6 +338,8 @@ node exercises/build-tools/02-transpile-vs-typecheck.mjs # 转译器 vs 检查�
 - Rollup 文档《Tree Shaking》 tutorial
 - SWC 官方文档（swc.rs）——Rust 编译器生态定位
 - TypeScript 性能 wiki《Performance》（github.com/microsoft/TypeScript/wiki/Performance）——类型检查为什么慢
+- Vite 官方文档《Hot Module Replacement》章节（失效传播与 accept 边界）与《Building for Production》
+- esbuild 官方文档《Plugins》《Code splitting》——插件钩子面与分割能力的边界
 
 ---
 

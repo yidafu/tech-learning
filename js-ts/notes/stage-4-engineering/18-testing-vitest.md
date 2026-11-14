@@ -30,6 +30,27 @@ mdx:
 - `it.skip` / `describe.skip`：跳过（显示为 skipped）；`it.only`：只跑它（调试用）；`it.todo`：占位
 - 危险习惯：`only` 忘删就提交——CI 里会「全绿」，因为别的用例根本没跑（Vitest 对 `only` 有提醒，但别依赖提醒）
 
+### 深入 §2：参数化测试——用数据表替代复制粘贴
+
+同一逻辑要测多组输入输出时，`test.each` / `it.each` 用一张数据表生成一组用例（每个数据一行用例、失败时定位到具体行）：
+
+```ts
+// 表驱动：语义对错一目了然，加用例 = 加一行数据
+it.each([
+  ['十秒内连发', 100, 99, []],      // [名称, a 时刻, b 时刻, 期望]
+  ['恰好到点', 100, 100, ['x']],
+  ['过点触发', 100, 101, ['x']],
+])('防抖：%s', (_name, t1, t2, expected) => {
+  expect(simulateDebounce(t1, t2)).toEqual(expected);
+});
+```
+
+三个实践要点：① 模板占位符 `%s` 把数据织进用例名，失败输出直接可读；② 边界值（恰好相等、差一毫秒）应该成对出现在表里——「小于、小于等于的边界」是定时器/区间类逻辑的主要缺陷带；③ 参数化解决「同构用例」的重复，**不同结构的用例别硬塞进同一张表**（否则测试函数里堆满 if 分支，可读性反而下降）。
+
+### 深入 §2 补：隔离模型——文件级隔离、用例级靠钩子
+
+Vitest 默认把**每个测试文件**跑在独立的 worker 与模块环境里：文件 A 里的 `vi.mock`、模块级状态、全局污染（如改过的 `Date.now`）不会泄漏进文件 B。但**同一文件内的用例之间没有这道墙**——`vi.spyOn` 的残留、fake timers 忘恢复、模块级缓存，都会跨用例传染（这就是「单跑绿、全跑红」经典 flake 的来源）。铁律由此而来：**跨文件靠隔离模型兜底，跨用例靠钩子显式清理**（`beforeEach` 里 mockClear/mockReset、`afterEach` 里 `useRealTimers`）。
+
 ### 3）断言匹配器：三个「相等」的差异表
 
 一手依据：Vitest 官方文档《Expect》。
@@ -44,11 +65,29 @@ mdx:
 
 其他高频：`toThrow(RangeError)` / `toThrow('子串')` / `toThrow(/正则/)`、`toHaveLength`、`toMatchObject`（部分匹配）、`toBeCloseTo`（浮点）。
 
+### 深入 §3：断言面的其余武器
+
+- **`not` 链**：`expect(x).not.toEqual(y)`——所有匹配器都可取反；「相等语义」的三个差异（undefined 键、原型、稀疏数组）在 `not` 下同样成立
+- **不对称匹配器（asymmetric matchers）**：`expect.objectContaining({ id: 1 })`、`expect.arrayContaining([1])`、`expect.stringMatching(/user-\d+/)`——只断言「关心的子结构」，其余放行。典型用法是嵌进完整断言里：`expect(result).toEqual({ id: 1, createdAt: expect.any(Date) })`——对时间戳这类不可预测字段用 `expect.any(Date)` 放行，其余字段照常严格比较。注意：不对称匹配器自己是「部分匹配」，别当完整断言用
+- **软断言 `expect.soft`**：普通断言失败会立即终止当前用例（后面的断言不执行）；`expect.soft` 收集失败但继续往下走，用例结束时统一报告——适合「一次跑完把所有差异列出来」的场景（如快照式契约核对）。两者返回值都支持后续链式 `.toBe()`，混用时注意 soft 失败不中断这一语义差异
+
 ### 4）异步测试
 
 - 测试函数声明为 `async`，直接 `await`；返回的 Promise 由 Vitest 接管，reject 即失败
 - `await expect(promise).resolves.toBe(x)` / `.rejects.toThrow(E)`：把 Promise 的终值/拒绝原因变成断言对象（见 calculator.test.ts）
 - `waitFor`（来自 `@vitest/utils`/testing-library 惯例）一句话：**轮询重试断言**直到通过或超时，用于「断言的副作用什么时候到达不确定」的异步场景；能确定时优先精确等待
+
+### 深入 §4：异步等待的三档精度
+
+按「副作用到达时机是否确定」选工具，别一律 `waitFor` 兜底：
+
+| 档位 | 工具 | 适用 | 风险 |
+| --- | --- | --- | --- |
+| 确定时机 | 直接 `await promise` / `await vi.advanceTimersByTimeAsync(n)` | 副作用在可计算的节点到达 | 无——最快且确定 |
+| 确定次数的间接等待 | 等一个「完成信号」（`vi.waitFor` + 条件断言、事件 promise） | 到达时机依赖内部队列但终会到达 | 忘了设超时上限会挂死 CI |
+| 不确定时机 | `waitFor` 轮询断言 | 与真实时钟/外部资源耦合（集成测试） | 轮询掩盖竞态——通过≠无竞态，只说明「这次跑过去了」 |
+
+`waitFor` 的两个配置直觉：超时要显式给（默认值对 CI 机器速度的假设不可靠）；它内部 flush 微任务，配 fake timers 时用 async 推进配合（`advanceTimersByTimeAsync`），同步推进 + 轮询会互相卡住——「waitFor 卡死」的高频根因是 timers 还在 fake 而推进是同步版。
 
 ### 5）钩子与作用域嵌套
 
@@ -56,6 +95,13 @@ mdx:
 
 - 嵌套 describe 时，`beforeEach` 按**外层 → 内层**顺序执行，`afterEach` 反向（内层 → 外层），`beforeAll` 在进入该 describe 时执行一次
 - 常见实践：外层 `beforeAll` 造昂贵资源，内层 `beforeEach` 重置状态——每条用例独立（测试间不互相污染是铁律）
+
+### 深入 §5：钩子的 async 与执行语义
+
+- **钩子可以是 async 函数**：返回的 Promise 被 Vitest 等待，reject 视为该钩子失败——`beforeEach(async () => { await seedDb(); })` 是标准写法
+- **`beforeEach` 失败的语义**：它承担的是「用例前置条件」，前置条件不满足时**该用例不应执行**——所以钩子失败要显式抛出/返回 rejected Promise，让失败落在钩子上而不是让用例跑出一堆误导性断言错误
+- **钩子注册的时序约束**：钩子必须在 `describe` 体执行期同步注册（它要挂进当前作用域）——在 `it` 回调里或异步回调里注册钩子会拿到警告或不生效。「钩子没跑」的第一排查项：注册位置是否在作用域体内同步执行
+- **嵌套作用域的账**：外层 `beforeEach` 对内层每个用例都执行一次——利用这一点可以把「重置」放外层，内层只加增量准备；反过来 `afterEach` 内层先跑，正好先清理内层新增的状态再清外层的
 
 ### 6）Mock 三件套
 
@@ -117,6 +163,22 @@ partial mock 的适用场景：模块里既有纯工具函数又有网络请求�
 | `mockReset()` | 是 | 是——**恢复到 `vi.fn(impl)` 的原始实现**（jest 语义是改成无实现，注意差异） | 彻底复位 |
 | `mockRestore()` | 是 | 是——**恢复被 spyOn 替换的原方法** | 只对 spy 有意义 |
 
+### 深入 §6：vi.mock 的作用域、doMock 变体与「为什么不能 spyOn 模块导出」
+
+- **`vi.mock` 是文件级、静态的**：注册发生在提升期（文件顶部），**整个测试文件**内该模块的所有 import 都拿到 mock 版本；不存在「这条用例 mock、下条用例用真模块」的表达方式——需要那种粒度时，拆成两个测试文件（利用文件级隔离）
+- **`vi.doMock`（及 `vi.doUnmock`）是它的非提升变体**：不提升、按书写顺序生效，配合**动态 `import()`** 可以做到「先 mock、再加载、逐用例换实现」：
+
+```ts
+vi.doMock('./config.ts', () => ({ flag: 'A' }));
+const { run } = await import('./feature.ts'); // 此刻加载的 feature 拿到 flag 'A'
+vi.doMock('./config.ts', () => ({ flag: 'B' })); // 重新注册，对下次加载生效
+const { run: runB } = await import('./feature.ts'); // runB 所在的新实例拿到 'B'
+```
+
+代价：放弃静态 import 的提升缓存语义，每个用例要手动 import——所以 `vi.mock` + `vi.hoisted` 仍是默认选择，`doMock` 留给「同一文件内多套 mock 配置」的特殊场景。
+- **为什么模块导出不能 `vi.spyOn`**：spyOn 的本质是**改写对象属性**；而 ESM 的导出绑定是只读视图、命名空间对象整体冻结（笔记 16 的机制：规范把 Module Namespace 属性定义为不可写不可配置）——根本挂不上去。这不是 Vitest 的限制而是 ESM 语义，也是 `vi.mock` 必须工作在**模块加载层**（提升到 import 之前拦截）而非运行时打桩的原因。能 spyOn 的对象是「普通对象的方法」：模块内部导出的对象、类的实例、全局对象（`document`、`location`）等
+- **自动 mock 与 `__mocks__` 目录**：`vi.mock('./api.ts')` 无 factory 时自动把导出替换为 `vi.fn()`；配合 `__mocks__/api.ts` 可以给模块提供手写 mock 工厂（`vi.mock('./api.ts')` 会自动采用）——手写 factory 内联在测试文件里可读性更好，`__mocks__` 适合多文件共享同一 mock 的场景
+
 ### 7）fake timers：测 debounce
 
 一手依据：Vitest 官方文档《API → vi.useFakeTimers / advanceTimersByTimeAsync》。
@@ -133,6 +195,19 @@ vi.useRealTimers();                    // afterEach 里恢复，避免污染其�
 
 `advanceTimersByTimeAsync` 与同步版 `advanceTimersByTime` 的差别：async 版会在推进过程中 **flush 微任务**，回调里再 `await` 也能等到 settle——测「异步回调的防抖」必须用它。完整实现见 `exercises/vitest-basics/debounce.test.ts`（防抖实现本体在同目录 `debounce.ts`）。
 
+### 深入 §7：fake timers 的配置面与确定性检查
+
+```ts
+vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] }); // 只接管指定的计时 API
+vi.setSystemTime(new Date('2024-01-01T00:00:00Z'));                  // 把虚拟时钟锚定到确定时刻
+vi.getTimerCount();  // 当前虚拟时钟上还挂着的定时器数量——用例结束前应为 0
+vi.useRealTimers();
+```
+
+- **`toFake` 的取舍**：全量接管最省心，但会把 `queueMicrotask`、`performance.now` 等一起冻结——只 fake 被测代码用到的 API，可以让无关的异步机制保持真实行为
+- **`setSystemTime` 与 `Date.now`**：被接管的 `Date` 读到的是虚拟时钟——「按时间分支」的代码（缓存过期、token 有效期）都能确定性测试；不接管 fake timers 时也可单独用 `setSystemTime` 只锚定时钟
+- **`getTimerCount()` 是清理检查器**：用例结束时虚拟时钟上还有挂起的定时器 = 泄漏（要么逻辑漏了 clearTimeout，要么忘了恢复）——把它写进 afterEach 断言是「测试本身也被验证」的廉价手段
+
 ### 8）覆盖率 provider 与 jest 差异
 
 - 覆盖率：provider `v8`（V8 原生插桩，快、默认行为略宽松）vs `istanbul`（转译期插桩，慢一点、统计更保守精确）。`--coverage` 即开箱
@@ -146,6 +221,15 @@ vi.useRealTimers();                    // afterEach 里恢复，避免污染其�
 | mockReset 语义 | 清实现（变 undefined） | **恢复 `vi.fn(impl)` 原始实现**（本工作区实证） |
 | 运行模型 | 默认多进程 worker | 默认多线程 pool（更省内存） |
 | 与 Vite 项目 | 配置两套（jest.config + vite.config） | 与 Vite 共享一套配置 |
+
+### 深入 §8：mock 最小化原则——把边界画在「外部世界」
+
+mock 的成本常被低估：每个 mock 都是**你替依赖写的一份行为假设**，依赖真实行为变了，mock 不会变——测试全绿但生产挂掉，就是 mock 与现实脱节。原则：**mock 边界画在「程序与外部世界的交界」**（网络、时钟、随机数、文件系统、第三方服务），**不要 mock 程序内部的函数**。
+
+- **内部函数 mock 掉 = 把被测单元切碎**：`vi.mock('./utils.ts')` 之后测的不再是「这个函数的正确性」，而是「这个函数在某种假想 utils 行为下的胶水逻辑」——utils 真实行为一变，胶水测试依旧全绿
+- **重构脆弱性**：内部 mock 按模块路径寻址，重命名文件/搬目录立刻炸一片测试——测试本该保护重构，反而拦住重构
+- **判据一句话**：mock 掉之后，测试失败还能不能阻止你发布坏代码？能，才值得 mock
+- **金字塔的落地映射**：本笔记的 vitest 技巧（断言/mock/timers）覆盖单测与轻集成两层；「少而慢」的 E2E 属于另一套工具链（浏览器驱动），mock 策略（网络拦截）也完全不同——不要用单测的 mock 思维套 E2E
 
 ## 可运行示例
 
@@ -166,6 +250,11 @@ vi.useRealTimers();                    // afterEach 里恢复，避免污染其�
 - **fake timers 忘 `useRealTimers`**：后面所有依赖真实时间的测试全部冻结
 - **异步用例忘 return/await**：测试「瞬间通过」但断言从未执行（Vitest 对空 Promise 用例有检测，但显式 await 是纪律）
 - 高频面试题：「怎么测防抖/节流」（fake timers）；「模块 mock 的原理」（hoist 到 import 前）；「toEqual 与 toStrictEqual 的两个差异」
+- **文件间隔离、用例间靠人**：别把「单文件跑绿」当成「清理做对了」——同文件内 mock/timers/全局污染照样跨用例传染
+- **模块导出不能 spyOn**：ESM 命名空间只读（笔记 16 机制），`vi.mock` 是唯一模块级入口——「spyOn 不生效」先确认对象是不是模块导出面
+- **`getTimerCount()` 收尾断言**：虚拟时钟上残留定时器 = 泄漏；fake timers 忘恢复的最好检测器
+- **不对称匹配器是部分匹配**：`objectContaining` 放行的字段不参与断言——把它当完整断言用会漏检
+- **内部函数 mock 掉了测试就失去保护力**：mock 边界画在外部世界（网络/时钟/随机），重命名模块路径导致的大面积 mock 失败正是过度 mock 的信号
 
 ## 输出预测题
 
@@ -191,6 +280,36 @@ vi.mock('./api.ts', () => ({ default: fake }));
 
 上面代码大概率会抛什么错？根因是什么？给出两种修复方式。
 
+### 题 3（清理时序与泄漏诊断）
+
+```ts
+beforeEach(() => {
+  vi.useFakeTimers();
+});
+
+afterEach(() => {
+  vi.clearAllMocks();
+});
+
+it('调用一次后 100ms 触发', async () => {
+  const spy = vi.fn();
+  schedule(spy, 100);            // 内部 setTimeout(spy, 100)
+  await vi.advanceTimersByTimeAsync(100);
+  expect(spy).toHaveBeenCalledTimes(1);
+});
+
+it('100ms 内取消则不触发', () => {
+  const spy = vi.fn();
+  const cancel = schedule(spy, 100);
+  cancel();
+  // ① 这里直接断言 spy 没被调用，断言可信吗？为什么？
+  expect(spy).not.toHaveBeenCalled();
+  // ② 怎么写出「确定不再触发」的断言？
+});
+```
+
+① 第二个用例的断言有什么漏洞？② 给出两种让断言变得确定的方法。③ 整个文件跑完（第三个用例开始前）存在什么泄漏风险？
+
 ## 预测题答案
 
 ### 题 1 答案
@@ -206,10 +325,19 @@ vi.mock('./api.ts', () => ({ default: fake }));
 
 抛 `ReferenceError: Cannot access 'fake' before initialization`。根因：vitest 把 `vi.mock` 提升到文件最顶部（先于 `import './userService'` 执行——否则模块早已加载真实现，mock 无从插入），此时 `const fake` 尚未初始化（TDZ）。修复一：`vi.hoisted(() => vi.fn())` 声明 `fake`（它被提升且先于 `vi.mock` 执行）。修复二：不用外部变量，直接在 factory 内部创建 mock 并通过 `vi.mocked(importedFn)` 或在被测模块行为上断言；需要共享引用时用 `import { vi } from 'vitest'` + `vi.mocked(getUserById)` 取回工厂里的那个 mock。（本工作区 `exercises/vitest-basics/userService.test.ts` 采用修复一。）
 
+### 题 3 答案
+
+① **不可信**：此刻只是「还没到 100ms」，定时器还挂在虚拟时钟上——后续任何时间推进都可能触发它。「现在没被调用」不等于「永远不会被调用」，这是时间类断言的经典漏洞（对照笔记 35 题 1 的 drain 陷阱：只看当前状态、不看未来时序）。
+② 两种方法：**推进虚拟时钟越过触发点**——`await vi.advanceTimersByTimeAsync(100)`（或同步版，回调纯同步时够用）后断言 `toHaveBeenCalledTimes(0)`；或 **`expect(vi.getTimerCount()).toBe(0)`**——cancel 之后定时器必须已从时钟上摘除，数量归零即是「不可能再触发」的结构性证据（第二种更直接验证了 cancel 的职责）。
+③ 泄漏风险有两处：**fake timers 没有 `vi.useRealTimers()`**——`afterEach` 只清了 mock 调用记录，虚拟时钟带进下一个用例，真实时间语义从此冻结（fake timers 忘恢复是全绿假象的高发来源）；第一个用例触发的定时器虽然已消化，但若用例失败在 advance 之前，挂起的定时器同样滞留。修复：`afterEach` 里补 `vi.useRealTimers()`（也可加 `expect(vi.getTimerCount()).toBe(0)` 做守门断言）。
+
 ## 延伸阅读
 
 - Vitest 官方文档《API（expect/vi）》《Mocking》《Testing Types》
 - jest 官方文档《Expect》——`toStrictEqual` 语义的原始出处（Vitest 兼容其定义）
 - 《Testing JavaScript》/ testing-library 常见问题：`waitFor` 的正确用法
 - Martin Fowler《Test Pyramid》（martinfowler.com/bliki/TestPyramid.html）
+- Vitest 官方文档《Configuration》——文件隔离、clearMocks/restoreMocks 等自动清理开关
+- Vitest 官方文档《Mocking → doMock》与《Vi Utility》（setSystemTime/getTimerCount 的完整清单）
+- 呼应：`notes/stage-4-engineering/16-modules-esm-cjs.md`（ESM 只读绑定 → spyOn 无法替换模块导出的机制根源）
 
