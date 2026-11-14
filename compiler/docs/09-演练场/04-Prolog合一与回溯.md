@@ -1,4 +1,4 @@
-# Prolog 合一与回溯：另一种计算模型
+# 04. Prolog 合一与回溯：另一种计算模型
 
 > [返回：演练场导览](01-导览.md)
 > 对应演练场 [playground/prolog](https://yidafu.github.io/tech-learning/compiler/playground/prolog)。源码：`src/playground/prolog.js`（约 320 行）。本册讲清逻辑式编程的两个核心算法——合一与回溯搜索，以及它与第四阶段类型推导的血脉联系。

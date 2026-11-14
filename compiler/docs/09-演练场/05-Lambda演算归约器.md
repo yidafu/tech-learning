@@ -1,4 +1,4 @@
-# λ 演算归约器：计算的原子论
+# 05. λ 演算归约器：计算的原子论
 
 > [返回：演练场导览](01-导览.md)
 > 对应演练场 [playground/lambda](https://yidafu.github.io/tech-learning/compiler/playground/lambda)。源码：`src/playground/lambda.js`（约 230 行）。本册讲清 α/β 两条规则、捕获避免、Church 编码，以及"求值策略即语言语义"。

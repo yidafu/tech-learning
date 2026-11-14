@@ -14,7 +14,7 @@
   },
   {
     "id": "02-编译器是什么",
-    "title": "编译器是什么：流水线全景",
+    "title": "02. 编译器是什么：流水线全景",
     "linkTo": [],
     "referencedBy": [
       "01-第一阶段"
@@ -22,7 +22,7 @@
   },
   {
     "id": "03-前端工具链对照定位",
-    "title": "前端工具链对照定位：Babel、TypeScript、esbuild、SWC、V8",
+    "title": "03. 前端工具链对照定位：Babel、TypeScript、esbuild、SWC、V8",
     "linkTo": [],
     "referencedBy": [
       "01-第一阶段"
@@ -30,7 +30,7 @@
   },
   {
     "id": "04-形式语言基础",
-    "title": "形式语言基础：文法与乔姆斯基谱系",
+    "title": "04. 形式语言基础：文法与乔姆斯基谱系",
     "linkTo": [],
     "referencedBy": [
       "01-第一阶段"
@@ -38,7 +38,7 @@
   },
   {
     "id": "05-工程约定与实践-搭建工程骨架",
-    "title": "实践：搭建工程骨架与文法定稿",
+    "title": "05. 实践：搭建工程骨架与文法定稿",
     "linkTo": [],
     "referencedBy": [
       "01-第一阶段"
@@ -59,7 +59,7 @@
   },
   {
     "id": "02-从正则到自动机",
-    "title": "从正则到自动机：词法的理论基础",
+    "title": "02. 从正则到自动机：词法的理论基础",
     "linkTo": [],
     "referencedBy": [
       "02-第二阶段"
@@ -67,7 +67,7 @@
   },
   {
     "id": "03-手写lexer",
-    "title": "手写 lexer：工程实现",
+    "title": "03. 手写 lexer：工程实现",
     "linkTo": [],
     "referencedBy": [
       "02-第二阶段"
@@ -75,7 +75,7 @@
   },
   {
     "id": "04-词法错误处理与生成器对照",
-    "title": "词法错误处理与生成器对照",
+    "title": "04. 词法错误处理与生成器对照",
     "linkTo": [],
     "referencedBy": [
       "02-第二阶段"
@@ -83,7 +83,7 @@
   },
   {
     "id": "05-实践-mini语言lexer",
-    "title": "实践：mini 语言 lexer 完整实现",
+    "title": "05. 实践：mini 语言 lexer 完整实现",
     "linkTo": [],
     "referencedBy": [
       "02-第二阶段"
@@ -105,7 +105,7 @@
   },
   {
     "id": "02-自顶向下LL族",
-    "title": "自顶向下分析：LL 族与递归下降",
+    "title": "02. 自顶向下分析：LL 族与递归下降",
     "linkTo": [],
     "referencedBy": [
       "03-第三阶段"
@@ -113,7 +113,7 @@
   },
   {
     "id": "03-Pratt解析",
-    "title": "Pratt 解析：运算符优先级的统一模型",
+    "title": "03. Pratt 解析：运算符优先级的统一模型",
     "linkTo": [],
     "referencedBy": [
       "03-第三阶段"
@@ -121,7 +121,7 @@
   },
   {
     "id": "04-自底向上LR族",
-    "title": "自底向上分析：LR 族",
+    "title": "04. 自底向上分析：LR 族",
     "linkTo": [],
     "referencedBy": [
       "03-第三阶段"
@@ -129,7 +129,7 @@
   },
   {
     "id": "05-AST设计与错误恢复",
-    "title": "AST 设计与错误恢复",
+    "title": "05. AST 设计与错误恢复",
     "linkTo": [],
     "referencedBy": [
       "03-第三阶段"
@@ -137,7 +137,7 @@
   },
   {
     "id": "06-实践-mini语言parser",
-    "title": "实践：mini 语言 parser 完整实现",
+    "title": "06. 实践：mini 语言 parser 完整实现",
     "linkTo": [],
     "referencedBy": [
       "03-第三阶段"
@@ -159,7 +159,7 @@
   },
   {
     "id": "02-符号表与作用域",
-    "title": "符号表与作用域",
+    "title": "02. 符号表与作用域",
     "linkTo": [],
     "referencedBy": [
       "04-第四阶段"
@@ -167,7 +167,7 @@
   },
   {
     "id": "03-类型系统",
-    "title": "类型系统：规则、检查与相容",
+    "title": "03. 类型系统：规则、检查与相容",
     "linkTo": [],
     "referencedBy": [
       "04-第四阶段"
@@ -175,7 +175,7 @@
   },
   {
     "id": "04-类型推导",
-    "title": "类型推导：从 HM 合一到泛型实现",
+    "title": "04. 类型推导：从 HM 合一到泛型实现",
     "linkTo": [],
     "referencedBy": [
       "04-第四阶段"
@@ -183,7 +183,7 @@
   },
   {
     "id": "05-检查器工程化与实践",
-    "title": "检查器工程化与实践：resolve + check 双遍",
+    "title": "05. 检查器工程化与实践：resolve + check 双遍",
     "linkTo": [],
     "referencedBy": [
       "04-第四阶段"
@@ -191,7 +191,7 @@
   },
   {
     "id": "06-代数数据类型与模式匹配",
-    "title": "代数数据类型（ADT）与模式匹配",
+    "title": "06. 代数数据类型（ADT）与模式匹配",
     "linkTo": [],
     "referencedBy": [
       "04-第四阶段"
@@ -212,7 +212,7 @@
   },
   {
     "id": "02-中间表示家族",
-    "title": "中间表示家族：从 AST 到可执行形态",
+    "title": "02. 中间表示家族：从 AST 到可执行形态",
     "linkTo": [],
     "referencedBy": [
       "05-第五阶段"
@@ -220,7 +220,7 @@
   },
   {
     "id": "03-字节码设计",
-    "title": "字节码设计：栈式指令集",
+    "title": "03. 字节码设计：栈式指令集",
     "linkTo": [],
     "referencedBy": [
       "05-第五阶段"
@@ -228,7 +228,7 @@
   },
   {
     "id": "04-解释器实现",
-    "title": "解释器实现：栈帧、调用与闭包",
+    "title": "04. 解释器实现：栈帧、调用与闭包",
     "linkTo": [],
     "referencedBy": [
       "05-第五阶段"
@@ -236,7 +236,7 @@
   },
   {
     "id": "05-实践-编译器VM与REPL",
-    "title": "实践：编译器、VM 与 REPL 落地",
+    "title": "05. 实践：编译器、VM 与 REPL 落地",
     "linkTo": [],
     "referencedBy": [
       "05-第五阶段"
@@ -256,7 +256,7 @@
   },
   {
     "id": "02-运行时对象模型",
-    "title": "运行时对象模型：值怎么装进一个字",
+    "title": "02. 运行时对象模型：值怎么装进一个字",
     "linkTo": [],
     "referencedBy": [
       "06-第六阶段"
@@ -264,7 +264,7 @@
   },
   {
     "id": "03-垃圾回收深入",
-    "title": "垃圾回收深入：可达性、分代与三色标记",
+    "title": "03. 垃圾回收深入：可达性、分代与三色标记",
     "linkTo": [],
     "referencedBy": [
       "06-第六阶段"
@@ -272,7 +272,7 @@
   },
   {
     "id": "04-实践-标记清除GC",
-    "title": "实践：给 VM 装上标记-清除 GC",
+    "title": "04. 实践：给 VM 装上标记-清除 GC",
     "linkTo": [],
     "referencedBy": [
       "06-第六阶段"
@@ -288,37 +288,37 @@
   },
   {
     "id": "02-数据流分析",
-    "title": "数据流分析：格、不动点与 worklist",
+    "title": "02. 数据流分析：格、不动点与 worklist",
     "linkTo": [],
     "referencedBy": []
   },
   {
     "id": "03-SSA构建",
-    "title": "SSA 构建：支配树、支配边界与 φ",
+    "title": "03. SSA 构建：支配树、支配边界与 φ",
     "linkTo": [],
     "referencedBy": []
   },
   {
     "id": "04-经典优化pass",
-    "title": "经典优化 pass 与管线组织",
+    "title": "04. 经典优化 pass 与管线组织",
     "linkTo": [],
     "referencedBy": []
   },
   {
     "id": "05-JIT视角",
-    "title": "JIT 视角：反馈、推测与反悔的权利",
+    "title": "05. JIT 视角：反馈、推测与反悔的权利",
     "linkTo": [],
     "referencedBy": []
   },
   {
     "id": "06-前端工程优化对照",
-    "title": "前端工程优化对照：tree-shaking、minify 与 sourcemap",
+    "title": "06. 前端工程优化对照：tree-shaking、minify 与 sourcemap",
     "linkTo": [],
     "referencedBy": []
   },
   {
     "id": "07-实践-优化pass与收益分析",
-    "title": "实践：给 mini 字节码写优化 pass 与收益分析",
+    "title": "07. 实践：给 mini 字节码写优化 pass 与收益分析",
     "linkTo": [],
     "referencedBy": []
   },
@@ -332,31 +332,31 @@
   },
   {
     "id": "02-Babel深度剖析",
-    "title": "Babel 深度剖析：把前七阶段的流水线搬进真实工具链",
+    "title": "02. Babel 深度剖析：把前七阶段的流水线搬进真实工具链",
     "linkTo": [],
     "referencedBy": []
   },
   {
     "id": "03-实践-mini-lint",
-    "title": "实践：从零实现 mini-lint",
+    "title": "03. 实践：从零实现 mini-lint",
     "linkTo": [],
     "referencedBy": []
   },
   {
     "id": "04-实践-Babel插件三选一",
-    "title": "实践：Babel 插件三选一",
+    "title": "04. 实践：Babel 插件三选一",
     "linkTo": [],
     "referencedBy": []
   },
   {
     "id": "05-TypeScript编译器架构",
-    "title": "TypeScript 编译器架构：Program / Checker / Transformer / Emitter",
+    "title": "05. TypeScript 编译器架构：Program / Checker / Transformer / Emitter",
     "linkTo": [],
     "referencedBy": []
   },
   {
     "id": "06-esbuild-SWC与工具链选型",
-    "title": "esbuild / SWC 为什么快：手段、代价与选型决策树",
+    "title": "06. esbuild / SWC 为什么快：手段、代价与选型决策树",
     "linkTo": [],
     "referencedBy": []
   },
@@ -375,7 +375,7 @@
   },
   {
     "id": "02-Lisp元循环解释器",
-    "title": "Lisp 元循环解释器：S-表达式与 eval/apply",
+    "title": "02. Lisp 元循环解释器：S-表达式与 eval/apply",
     "linkTo": [],
     "referencedBy": [
       "09-演练场"
@@ -383,7 +383,7 @@
   },
   {
     "id": "03-Forth栈机与字典",
-    "title": "Forth 栈机与字典：逆波兰序的极简世界",
+    "title": "03. Forth 栈机与字典：逆波兰序的极简世界",
     "linkTo": [],
     "referencedBy": [
       "09-演练场"
@@ -391,7 +391,7 @@
   },
   {
     "id": "04-Prolog合一与回溯",
-    "title": "Prolog 合一与回溯：另一种计算模型",
+    "title": "04. Prolog 合一与回溯：另一种计算模型",
     "linkTo": [],
     "referencedBy": [
       "09-演练场"
@@ -399,7 +399,7 @@
   },
   {
     "id": "05-Lambda演算归约器",
-    "title": "λ 演算归约器：计算的原子论",
+    "title": "05. λ 演算归约器：计算的原子论",
     "linkTo": [],
     "referencedBy": [
       "09-演练场"
@@ -421,7 +421,7 @@
   },
   {
     "id": "02-引用计数的进化",
-    "title": "引用计数的进化：从朴素 RC 到对偶定理",
+    "title": "02. 引用计数的进化：从朴素 RC 到对偶定理",
     "linkTo": [],
     "referencedBy": [
       "10-GC算法专题"
@@ -429,7 +429,7 @@
   },
   {
     "id": "03-屏障与并发标记",
-    "title": "屏障与并发标记：三色不变式的攻防",
+    "title": "03. 屏障与并发标记：三色不变式的攻防",
     "linkTo": [],
     "referencedBy": [
       "10-GC算法专题"
@@ -437,7 +437,7 @@
   },
   {
     "id": "04-工业回收器解剖",
-    "title": "工业回收器解剖：V8、JVM 与 Go",
+    "title": "04. 工业回收器解剖：V8、JVM 与 Go",
     "linkTo": [],
     "referencedBy": [
       "10-GC算法专题"
@@ -445,7 +445,7 @@
   },
   {
     "id": "05-免GC的内存管理",
-    "title": "免 GC 的内存管理：arena、所有权与并发回收",
+    "title": "05. 免 GC 的内存管理：arena、所有权与并发回收",
     "linkTo": [],
     "referencedBy": [
       "10-GC算法专题"
@@ -453,7 +453,7 @@
   },
   {
     "id": "06-实践-增量三色标记",
-    "title": "实践：给 mini VM 装增量三色标记",
+    "title": "06. 实践：给 mini VM 装增量三色标记",
     "linkTo": [],
     "referencedBy": [
       "10-GC算法专题"
@@ -475,7 +475,7 @@
   },
   {
     "id": "02-二进制格式与WAT",
-    "title": "二进制格式与 WAT：一个模块的逐字节解剖",
+    "title": "02. 二进制格式与 WAT：一个模块的逐字节解剖",
     "linkTo": [],
     "referencedBy": [
       "11-Wasm专题"
@@ -483,7 +483,7 @@
   },
   {
     "id": "03-表达式与结构化控制流",
-    "title": "后端一：表达式与结构化控制流",
+    "title": "03. 后端一：表达式与结构化控制流",
     "linkTo": [],
     "referencedBy": [
       "11-Wasm专题"
@@ -491,7 +491,7 @@
   },
   {
     "id": "04-线性内存与JS互操作",
-    "title": "后端二：线性内存与 JS 互操作",
+    "title": "04. 后端二：线性内存与 JS 互操作",
     "linkTo": [],
     "referencedBy": [
       "11-Wasm专题"
@@ -499,7 +499,7 @@
   },
   {
     "id": "05-工具链与性能真相",
-    "title": "工具链与性能真相",
+    "title": "05. 工具链与性能真相",
     "linkTo": [],
     "referencedBy": [
       "11-Wasm专题"
@@ -507,7 +507,7 @@
   },
   {
     "id": "06-实践-mini到Wasm",
-    "title": "实践：mini → Wasm 编译器",
+    "title": "06. 实践：mini → Wasm 编译器",
     "linkTo": [],
     "referencedBy": [
       "11-Wasm专题"

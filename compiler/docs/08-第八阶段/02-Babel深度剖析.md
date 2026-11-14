@@ -1,4 +1,4 @@
-# Babel 深度剖析：把前七阶段的流水线搬进真实工具链
+# 02. Babel 深度剖析：把前七阶段的流水线搬进真实工具链
 
 > [返回：第八阶段导览](01-导览.md)
 > 对应大纲第 1 条。Babel 是前端工程里离你最近的"真实编译器"：parser → traverse → generate 三段，与你第二、三阶段手写的流水线逐段同构。本册把它的四个核心抽象拆开——**三段架构、path、scope/binding、插件协议**——最后落到 babel-plugin-macro 的编译期展开。所有代码与输出在本机 Node 24 实跑（@babel/core 7.29.13，复用 react 站的 node_modules），输出为真实运行结果。

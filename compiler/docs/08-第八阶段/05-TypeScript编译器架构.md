@@ -1,4 +1,4 @@
-# TypeScript 编译器架构：Program / Checker / Transformer / Emitter
+# 05. TypeScript 编译器架构：Program / Checker / Transformer / Emitter
 
 > [返回：第八阶段导览](01-导览.md)
 > 对应大纲第 4 条。tsc 是你日常在用、却最少打开看的编译器——它把前四阶段的结构全部长在了一个进程里：**Program≈resolve（建文件图与符号）、Checker≈check（类型检查与推导）、Transformer+Emitter≈lowering+生成（语法降级与逐文件输出）**。本册三件事：四阶段职责与数据流、`.tsbuildinfo` 增量编译实验（实测改哪个文件重编哪些）、isolatedModules 禁 const enum 的约束根源；再用 ts.createProgram + TypeChecker 写一个"导出类型报告"小工具收尾。全部实验在本机实跑（TypeScript 5.9.3，复用 js-ts 站 node_modules），输出为真实运行结果。

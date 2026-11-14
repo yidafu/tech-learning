@@ -1,4 +1,4 @@
-# Lisp 元循环解释器：S-表达式与 eval/apply
+# 02. Lisp 元循环解释器：S-表达式与 eval/apply
 
 > [返回：演练场导览](01-导览.md)
 > 对应演练场 [playground/lisp](https://yidafu.github.io/tech-learning/compiler/playground/lisp)。源码：`src/playground/lisp.js`（约 250 行）。本册讲清它为什么是"最小的完整语言"，以及 eval/apply 这对核心循环。

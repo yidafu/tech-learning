@@ -1,4 +1,4 @@
-# 实践：从零实现 mini-lint
+# 03. 实践：从零实现 mini-lint
 
 > [返回：第八阶段导览](01-导览.md)
 > 对应大纲第 2 条。[上一册](02-Babel深度剖析.md)读懂了 Babel 的 traverse；本册反着来——**不用 @babel/traverse，自己写 25 行遍历器**，配上规则引擎、诊断与 autofix，得到一个三规则 mini-lint，全部单测实跑全绿（39 项断言，Node 24 + @babel/parser 7.29.13）。读完你应该能对照说清 ESLint 的 Linter / RuleTester 到底在干什么，以及它们各自为什么长那样。

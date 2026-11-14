@@ -1,4 +1,4 @@
-# Forth 栈机与字典：逆波兰序的极简世界
+# 03. Forth 栈机与字典：逆波兰序的极简世界
 
 > [返回：演练场导览](01-导览.md)
 > 对应演练场 [playground/forth](https://yidafu.github.io/tech-learning/compiler/playground/forth)。源码：`src/playground/forth.js`（约 230 行）。本册讲清数据栈与字典这两个原语，以及它与第五阶段字节码 VM 的同构关系。
