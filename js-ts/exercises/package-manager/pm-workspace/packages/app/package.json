@@ -1,10 +1,10 @@
 {
-  "name": "@mini/app",
+  "name": "app",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "main": "index.mjs",
   "dependencies": {
-    "@mini/math-lib": "workspace:*"
+    "math-lib": "workspace:*"
   }
 }

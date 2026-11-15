@@ -162,11 +162,11 @@ npx semver -r "~1.2.3" 1.3.0           # 无输出（~ 只允许 PATCH 位）
 
 ```bash
 npx tsx exercises/package-manager/01-semver-range-engine.ts  # 手写 semver 范围引擎 + 13 例判定表（§1）
-cd exercises/package-manager/mini-workspace && pnpm install   # 迷你 pnpm monorepo（纯本地链接、离线；仅首次需要）
+cd exercises/package-manager/pm-workspace && pnpm install   # 迷你 pnpm monorepo（纯本地链接、离线；仅首次需要）
 node ../02-verify-monorepo.mjs                                # workspace 链接 / 幽灵依赖拦截 / lockfile 证据（§3/§4）
 ```
 
-> `mini-workspace/` 是刻意隔离的教学沙盒：只含本地 workspace 链接，不引入任何外部依赖，可随时整目录删除重建。
+> `pm-workspace/` 是刻意隔离的教学沙盒：只含本地 workspace 链接，不引入任何外部依赖，可随时整目录删除重建。
 
 ## 易错点与面试高频
 

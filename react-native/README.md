@@ -34,7 +34,7 @@ npm run serve  # 本地预览构建产物
 | 7 | 新架构 | JSI / Fabric / TurboModules / Codegen | [/docs/rn-新架构](/docs/rn-新架构) |
 | 8 | Metro 打包与热更新 | 打包管线、Bundle 结构、差分更新、OTA 工程实践 | [/docs/rn-Metro打包与热更新](/docs/rn-Metro打包与热更新) |
 | 9 | 性能优化原理 | 定位方法论、剖析操作手册、列表虚拟化、掉帧归因 | [/docs/rn-性能优化原理](/docs/rn-性能优化原理) |
-| 10 | 原理实战 | mini-react-native、TurboModule 开发 | [/docs/rn-原理实战](/docs/rn-原理实战) |
+| 10 | 原理实战 | rn-lab、TurboModule 开发 | [/docs/rn-原理实战](/docs/rn-原理实战) |
 | 11 | 测试体系 | Jest / 组件测试渲染器、E2E 框架选型 | [/docs/rn-测试体系](/docs/rn-测试体系) |
 | 12 | 混合开发 | RN 嵌入原生 App、多实例、混合导航与通信边界 | [/docs/rn-混合开发](/docs/rn-混合开发) |
 

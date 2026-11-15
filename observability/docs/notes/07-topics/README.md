@@ -10,7 +10,7 @@
 | --- | --- | --- | --- |
 | [chaos-engineering.md](./chaos-engineering.md) | 混沌工程与故障演练 | 稳态假设与实验设计方法、爆炸半径控制、常见故障注入类型在各层的实现原理、主流工具定位与取舍、演练日组织，以及混沌实验如何反向检验可观测性本身（告警是否触发、面板能否定位、追踪是否断链）。 | — |
 | [incident-response.md](./incident-response.md) | 事件响应与值班 | 事件的生命周期与角色分工、严重度分级、值班轮转与升级策略设计、告警疲劳的成因与治理、无责复盘的方法与文档结构、从复盘到改进项的闭环，与 SLO/错误预算的衔接。 | — |
-| [llm-observability.md](./llm-observability.md) | 大模型应用可观测性 | LLM 应用与传统服务在可观测性上的差别、OpenTelemetry 生成式 AI 语义约定的现状、一次调用链该记录什么、token 用量与成本的度量、质量评估信号纳入观测体系、提示词与回复的隐私脱敏。 | [lab06](../../labs/lab06-mini-platform/README.md)（demo 用 §3.3 手写埋点） |
+| [llm-observability.md](./llm-observability.md) | 大模型应用可观测性 | LLM 应用与传统服务在可观测性上的差别、OpenTelemetry 生成式 AI 语义约定的现状、一次调用链该记录什么、token 用量与成本的度量、质量评估信号纳入观测体系、提示词与回复的隐私脱敏。 | [lab06](../../labs/lab06-platform/README.md)（demo 用 §3.3 手写埋点） |
 
 ## 与前面阶段的关系
 
@@ -63,7 +63,7 @@ OTel 规范与语义约定入口见 `https://opentelemetry.io/docs/specs` （官
 
 - **混沌工程**：读笔记的稳态假设、实验设计方法与爆炸半径控制；动手直接用 [lab04-three-pillars](../../labs/lab04-three-pillars/README.md) 的混沌开关完成三个实验——错误注入、击杀依赖、击杀观测系统本身，观察告警是否触发、面板能否定位、trace 是否断链（笔记的动手节给出完整步骤）。三个实验必须按顺序做，第三个"打观测系统"最能暴露盲区；
 - **事件响应**：读笔记的生命周期与角色模型；动手在 lab04 上做一次约 30 分钟的桌面推演——触发 burn-rate 告警后按严重度分级走一遍"认领角色 → 排障 → 沟通同步 → 复盘"，并产出你的第一份无责复盘文档，改进项直接回填到自己的告警规则；
-- **大模型可观测性**：读笔记的 GenAI 语义约定现状与字段清单（注意笔记内的时效声明）；动手把 [lab06-mini-platform](../../labs/lab06-mini-platform/README.md) demo 应用里手写的 gen_ai span 扩展到你自己的 LLM 调用上，在 lab06 的接收端与瀑布图里直接观察这些 span 的形态。
+- **大模型可观测性**：读笔记的 GenAI 语义约定现状与字段清单（注意笔记内的时效声明）；动手把 [lab06-platform](../../labs/lab06-platform/README.md) demo 应用里手写的 gen_ai span 扩展到你自己的 LLM 调用上，在 lab06 的接收端与瀑布图里直接观察这些 span 的形态。
 
 一个共同纪律：三篇的动手都**必须在隔离环境**（本地 compose、演练环境）进行，严禁对生产系统做未评审的注入实验——爆炸半径控制，从你的实验环境开始。
 

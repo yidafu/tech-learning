@@ -1,7 +1,7 @@
 # 02. 从裸调用到 Painter：给绘制装一个可替换的底座
 
 > [返回：第二阶段导览](01-导览.md)
-> 对应大纲条目：第二阶段 1。本册回答：为什么框架内核不能直接调 raylib？Painter 抽象怎么设计？「记录时烘焙」与「保留变换」两种显示列表策略怎么选？文末附一组 ScriptC 0.0.35 类型系统的一手发现（抽象类 vs 接口、复合赋值、数组清空）。文中代码逐字摘自 `gui/labs/mini-gui/src/core/painter.ts`（274 行）与 `src/apps/02-painter.ts`（86 行）；测试输出来自本机实跑 `npx vitest run`（撰写时快照：全库 116 tests / 13 files 全绿）。
+> 对应大纲条目：第二阶段 1。本册回答：为什么框架内核不能直接调 raylib？Painter 抽象怎么设计？「记录时烘焙」与「保留变换」两种显示列表策略怎么选？文末附一组 ScriptC 0.0.35 类型系统的一手发现（抽象类 vs 接口、复合赋值、数组清空）。文中代码逐字摘自 `gui/labs/gui-lab/src/core/painter.ts`（274 行）与 `src/apps/02-painter.ts`（86 行）；测试输出来自本机实跑 `npx vitest run`（撰写时快照：全库 116 tests / 13 files 全绿）。
 
 ## 1. 直接调 raylib 的三个后果
 
@@ -306,7 +306,7 @@ fillRect(r) ──► abs: 平移烘焙 ──► cullRect: 与裁剪求交 ─�
 
 我们的 DrawCmd 自带绝对坐标与裁剪。另一条路是 Flutter 的：显示列表保留变换矩阵与裁剪栈指令（save/translate/clip 也是命令），执行时后端重放状态机。
 
-| 维度 | 烘焙（mini-gui） | 保留变换（Flutter） |
+| 维度 | 烘焙（gui-lab） | 保留变换（Flutter） |
 |---|---|---|
 | 命令自包含性 | 强：单条命令即可断言/重排 | 弱：依赖前序状态 |
 | 无头测试 | 直接 `expect(commands)` 黄金断言 | 需要状态机解释器才能断言 |
@@ -316,7 +316,7 @@ fillRect(r) ──► abs: 平移烘焙 ──► cullRect: 与裁剪求交 ─�
 
 教学取舍说清楚：**烘焙让「显示列表可测、可重放」这两个学习目标最短路径达成**；旋转/缩放的烘焙（每个点过矩阵）留作练习。真实框架选保留式是为了命令体积与 GPU 亲和，两版都合理。
 
-mini-gui 的控件层（圆角、边框、文本基线）在纯平移下已经完备，所以 v1 够用；等第八阶段做缩放主题时再回来补。
+gui-lab 的控件层（圆角、边框、文本基线）在纯平移下已经完备，所以 v1 够用；等第八阶段做缩放主题时再回来补。
 
 ## 9. 一手发现：ScriptC 的「类是名义的，接口是结构的」
 
@@ -335,7 +335,7 @@ expected '{ save: () => void; ... }', got 'm8.StatefulPainter'
 | `abstract class B` + `class A extends B` 传给 `B` 形参 | ✅ | 名义继承链才有多态 |
 | 对象字面量 `{ now: () => 42 }` 传给 `interface Clock` | ✅ | 字面量就是记录，结构匹配 |
 
-所以 mini-gui 里**所有多态点（Painter、CommandSink，以及后面的 TextMeasurer、动画驱动）都是抽象类**；对象字面量回调（如时钟注入）才用 interface。这也是「框架内核零 raylib 依赖」能落到类型系统层面的原因。
+所以 gui-lab 里**所有多态点（Painter、CommandSink，以及后面的 TextMeasurer、动画驱动）都是抽象类**；对象字面量回调（如时钟注入）才用 interface。这也是「框架内核零 raylib 依赖」能落到类型系统层面的原因。
 
 同一个编译器还有两条在本文件里留下痕迹的边界：
 
@@ -379,14 +379,14 @@ expected '{ save: () => void; ... }', got 'm8.StatefulPainter'
 
 ## 12. 与其他框架的对照（概念性对照，非本机实测）
 
-| 概念 | mini-gui | Flutter | Skia | GTK4 |
+| 概念 | gui-lab | Flutter | Skia | GTK4 |
 |---|---|---|---|---|
 | 即时模式 API | `Painter`（抽象类） | `Canvas` | `SkCanvas` | `Gdk.Snapshot` |
 | 命令记录 | `DisplayList`（烘焙式） | `Picture`（`PictureRecorder` 录制） | `SkPicture` | snapshot 本身即记录节点树 |
 | 状态栈 | `{dx,dy,clip}` 三元组 | `save/restore`（完整矩阵+裁剪栈） | `save/restore`（矩阵+裁剪+画笔） | `save/restore`（变换节点） |
 | 策略 | 记录时烘焙 | 保留变换（执行时重放） | 保留变换 | 节点树（惰性求值） |
 
-有趣的分野：Skia/Flutter 的 `SkPicture`/`Picture` 保留完整状态机指令，所以能整体平移/缩放地重放（一帧录好贴到任意位置）；mini-gui 的烘焙命令已经把坐标焊死，重放只能原位——**能力换可测性**，这是教学项目可以明说的取舍。
+有趣的分野：Skia/Flutter 的 `SkPicture`/`Picture` 保留完整状态机指令，所以能整体平移/缩放地重放（一帧录好贴到任意位置）；gui-lab 的烘焙命令已经把坐标焊死，重放只能原位——**能力换可测性**，这是教学项目可以明说的取舍。
 
 ## 13. 本册小结
 

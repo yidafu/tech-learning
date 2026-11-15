@@ -11,7 +11,7 @@
 | [安全学习笔记](https://yidafu.github.io/tech-learning/security/) | `security/` | 3002 | 防御导向：从基础到 CTF 实战 |
 | [可观测性学习站](https://yidafu.github.io/tech-learning/observability/) | `observability/` | 3003 | Metrics · Logging · Tracing 学习笔记与动手实验 |
 | [JS/TS 深度学习笔记](https://yidafu.github.io/tech-learning/js-ts/) | `js-ts/` | 3004 | 笔记 + 可运行练习（`js-ts/exercises/`），含浏览器内 TS Playground |
-| [RN 原理学习站](https://yidafu.github.io/tech-learning/react-native/) | `react-native/` | 3005 | 十个模块拆解 RN 底层：启动、Bridge、渲染、JSI/Fabric 新架构到 mini-react-native 实战 |
+| [RN 原理学习站](https://yidafu.github.io/tech-learning/react-native/) | `react-native/` | 3005 | 十个模块拆解 RN 底层：启动、Bridge、渲染、JSI/Fabric 新架构到 rn-lab 实战 |
 | [WebGL 与 3D 框架学习站](https://yidafu.github.io/tech-learning/webgl/) | `webgl/` | 3006 | 六阶段：渲染管线 → 核心渲染技术 → 自研数学库与迷你引擎 → Three.js 对标与毕业项目 |
 | [编译原理学习站](https://yidafu.github.io/tech-learning/compiler/) | `compiler/` | 3007 | 八阶段：词法 → 语法 → 语义 → IR 与字节码 VM → GC → 优化 → Babel/tsc/esbuild 对标与毕业项目 |
 | [GUI 框架原理学习站](https://yidafu.github.io/tech-learning/gui/) | `gui/` | 3008 | 八阶段：绘制层 → 文本排版 → 控件树与布局 → 事件 → 渲染调度 → signals 声明式层；TypeScript + raylib（ScriptC 编译为原生窗口程序），目前为大纲与阶段导览 |

@@ -1,10 +1,10 @@
 /**
- * 大纲章节：阶段 5 专题深入 —— 响应式源码阅读（mini-reactivity 的 Vitest 用例）
+ * 大纲章节：阶段 5 专题深入 —— 响应式源码阅读（reactivity 的 Vitest 用例）
  * 主题：依赖收集 / 嵌套惰性代理 / 分支切换 cleanup / computed 缓存与置脏 / deleteProperty
  * 测试：npx vitest run exercises/reactivity/
  * 预期输出（vitest 摘要；时间与耗时数值随机器变化，其余行稳定）：
  *  RUN  v5.1.0 /Users/.../024877ef-2eb0-4b37-8b37-63ecf25410f0（工作区绝对路径）
- *  ✓ exercises/reactivity/mini-reactivity.test.ts (8 tests) 3ms
+ *  ✓ exercises/reactivity/reactivity.test.ts (8 tests) 3ms
  *  Test Files  1 passed (1)
  *       Tests  8 passed (8)
  *    Start at  23:34:08
@@ -12,9 +12,9 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { computed, effect, reactive } from './mini-reactivity';
+import { computed, effect, reactive } from './reactivity';
 
-describe('mini-reactivity', () => {
+describe('reactivity', () => {
   it('属性读取被收集：改值触发 effect 重跑', () => {
     const state = reactive({ count: 0 });
     let dummy = -1;

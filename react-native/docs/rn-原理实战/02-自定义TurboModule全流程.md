@@ -229,7 +229,7 @@ const interval = NativeAnalytics.constants?.flushIntervalMs ?? 5000;
 
 全链路复盘（对照模块七 03 时序图）：首次 import → `__turboModuleProxy('Analytics')` → 原生实例化 → JSI HostObject 注入 → 此后每次调用是 C++ 直调，`logEvent` 的 Promise 由原生 executor 回调兑现——**全程无 JSON、无队列**。
 
-这条"全程无 JSON"值得再强调一次：旧架构里同样的调用要经历 JS 对象 → JSON 序列化 → 队列 → 反序列化 → 原生（模块四 01）；新架构里 JS 参数直接以 JSI 值形态被 C++ 逐字段读取。**你在 mini-rn 里手写的 `JSON.stringify(props)`（[06 篇](06-宿主工程与视图原语.md)的刻意偷懒点）在真 RN 的 TurboModule 里已经不存在**——两相对照，就是新旧架构在"模块调用"这一层的全部差异。
+这条"全程无 JSON"值得再强调一次：旧架构里同样的调用要经历 JS 对象 → JSON 序列化 → 队列 → 反序列化 → 原生（模块四 01）；新架构里 JS 参数直接以 JSI 值形态被 C++ 逐字段读取。**你在 rn-lab 里手写的 `JSON.stringify(props)`（[06 篇](06-宿主工程与视图原语.md)的刻意偷懒点）在真 RN 的 TurboModule 里已经不存在**——两相对照，就是新旧架构在"模块调用"这一层的全部差异。
 
 ## 5. 类型系统的边界（写 spec 前先读）
 
@@ -295,19 +295,19 @@ Codegen 的类型集不是任意裁剪，而是**"能静态生成双平台签名
 
 混合断点（JS 与原生同时挂断点）是排查"参数过了界就变味"类问题的终极手段。
 
-## 7. 与 mini-rn 系列的对照
+## 7. 与 rn-lab 系列的对照
 
-本篇的 TurboModule 与 mini-rn 手写的 `MiniNative` 是同一事物的"工程化版 vs 裸机版"：
+本篇的 TurboModule 与 rn-lab 手写的 `NativeBridge` 是同一事物的"工程化版 vs 裸机版"：
 
-| mini-rn（06/09 篇） | 真 RN TurboModule（本篇） | 差异本质 |
+| rn-lab（06/09 篇） | 真 RN TurboModule（本篇） | 差异本质 |
 |--------------------|--------------------------|---------|
 | `Init` 里逐行 `exports.Set("log", fn)` | Codegen 从 spec 生成注册 | 规模：几百个模块手写必错 |
-| `MiniNative.log('hi')` 同步直调 | `getPlatform()` 同步直调 | 同构：JSI/N-API 都是函数直调 |
-| 无异步方法 | `logEvent` Promise | mini-rn 的 09 篇会手写一个最小回调通道补上这块 |
+| `NativeBridge.log('hi')` 同步直调 | `getPlatform()` 同步直调 | 同构：JSI/N-API 都是函数直调 |
+| 无异步方法 | `logEvent` Promise | rn-lab 的 09 篇会手写一个最小回调通道补上这块 |
 | `Napi::Persistent` 持 JS 回调（09 篇） | Promise 的 resolve block | 同一个问题："宿主持有 JS 函数怎么防 GC" |
 | props 走 JSON 字符串 | 全程引用、无序列化 | 新旧架构分界线（模块四 01 vs 七 01） |
 
-做完 mini-rn 再回看本篇，`__turboModuleProxy` 不再是咒语：**它就是 `Init` 那张对象表的"懒加载 + 类型安全"版本**。
+做完 rn-lab 再回看本篇，`__turboModuleProxy` 不再是咒语：**它就是 `Init` 那张对象表的"懒加载 + 类型安全"版本**。
 
 ## 7.5 什么时候不该用 TurboModule
 
@@ -327,7 +327,7 @@ TurboModule 不是万能通道，三个"不该用"的判断：
 2. `getEnforcing` 与 `get` 的选择标准是什么？埋点模块为什么选前者？
 3. 常量键名拼错会在哪个阶段暴露？方法签名写错呢？为什么不一样？（→ 第 2.1 节：常量静默 vs 编译失败）
 4. "调用无反应但也没报错"的三个候选原因？（→ 第 6 节路线 3 + 6.1 表）
-5. mini-rn 的 `MiniNative.log` 对应本篇哪个方法？它缺了 TurboModule 的哪三样工程能力？（→ 第 7 节）
+5. rn-lab 的 `NativeBridge.log` 对应本篇哪个方法？它缺了 TurboModule 的哪三样工程能力？（→ 第 7 节）
 6. 为什么 `logEvent` 在 Android 后台线程里调 `promise.resolve` 是安全的？这个安全性由谁保证？（→ 第 2.1 节）
 
 ## 小结

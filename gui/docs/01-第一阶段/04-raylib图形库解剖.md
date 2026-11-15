@@ -1,7 +1,7 @@
 # 04. raylib 图形库解剖：给什么、不给什么
 
 > [返回：第一阶段导览](01-导览.md)
-> 对应大纲条目：第一阶段 3。本册解剖我们的「原料」raylib：它的主循环范式、批处理与帧提交、事件模型、绘制原语清单、资源生命周期，以及最重要的——它**刻意不给**的东西。这一份「不给清单」就是 mini-gui 后续七个阶段的施工清单。本册引用的代码逐字摘自 `gui/labs/mini-gui/src/apps/01-window.ts` 与 `src/core/config.ts`，日志与数字为 2026-11-14 本机（Apple M4 Pro / macOS）真实捕获。
+> 对应大纲条目：第一阶段 3。本册解剖我们的「原料」raylib：它的主循环范式、批处理与帧提交、事件模型、绘制原语清单、资源生命周期，以及最重要的——它**刻意不给**的东西。这一份「不给清单」就是 gui-lab 后续七个阶段的施工清单。本册引用的代码逐字摘自 `gui/labs/gui-lab/src/apps/01-window.ts` 与 `src/core/config.ts`，日志与数字为 2026-11-14 本机（Apple M4 Pro / macOS）真实捕获。
 
 ## 1. raylib 是什么：库，不是框架
 
@@ -34,7 +34,7 @@ raylib 的所有程序都长这一个样子（这是本站所有 `src/apps/*.ts`
 ```ts
 import { /* … */ } from "scriptc-raylib";
 
-initWindow(800, 450, "mini-gui 01 window");  // ① 开窗（初始化 OpenGL 上下文）
+initWindow(800, 450, "gui-lab 01 window");  // ① 开窗（初始化 OpenGL 上下文）
 setTargetFPS(60);                            // ② 软件帧率限制（vsync 之外的第二道闸）
 
 while (!windowShouldClose()) {               // ③ 主循环：每圈一帧
@@ -67,9 +67,9 @@ closeWindow();                               // ⑧ 收尾
 | ⑦ | `endDrawing` | D | 提交批 + 交换缓冲（§3） |
 | ⑧ | `closeWindow` | E | 资源卸载与上下文销毁 |
 
-注意 ③~⑦ 每圈都要重走：**没有「界面没变就跳过一帧」的捷径**——那是第六阶段脏标记要给 mini-gui 补上的能力。目前的 01-window.ts 哪怕画面完全静止，也每帧从头画全部内容，这是「没有失效调度」的直接代价（§7 第四行）。
+注意 ③~⑦ 每圈都要重走：**没有「界面没变就跳过一帧」的捷径**——那是第六阶段脏标记要给 gui-lab 补上的能力。目前的 01-window.ts 哪怕画面完全静止，也每帧从头画全部内容，这是「没有失效调度」的直接代价（§7 第四行）。
 
-**实跑：一帧背后发生了什么**（`MINI_GUI_SECONDS=1` 跑构建产物 `./main`，日志原文节选）：
+**实跑：一帧背后发生了什么**（`GUI_LAB_SECONDS=1` 跑构建产物 `./main`，日志原文节选）：
 
 ```text
 INFO: Initializing raylib 6.0
@@ -85,7 +85,7 @@ INFO: SHADER: [ID 1..3] … Default shader loaded successfully
 INFO: RLGL: Render batch vertex buffers loaded successfully in VRAM (GPU)
 INFO: TEXTURE: [ID 2] Texture loaded successfully (128x128 | GRAY_ALPHA | 1 mipmaps)
 INFO: FONT: Default font loaded successfully (224 glyphs)       ← 默认字体：内嵌图集
-INFO: SYSTEM: Working Directory: …/mini-gui/build/macos-universal
+INFO: SYSTEM: Working Directory: …/gui-lab/build/macos-universal
 INFO: TIMER: Target time per frame: 16.667 milliseconds         ← setTargetFPS(60)
 INFO: TEXTURE: [ID 2] Unloaded texture data from VRAM (GPU)     ← 退出时的资源卸载
 INFO: Window closed successfully
@@ -273,7 +273,7 @@ raylib 的输入 API 是**轮询式**：没有 `onClick` 回调，每帧自己�
 
 - **加载/卸载是配对操作**。泄漏 VRAM 不会立刻崩，而是慢慢吃光显存——第 5 册注册表拒绝重复释放、悬空句柄，就是在配对纪律上加的保险。
 - **默认资源（默认字体、默认纹理）由 raylib 自己管理**（启动加载、退出卸载都在日志里），应用代码不需要也不应该去动它们。
-- mini-gui 第二阶段的 Painter 会把「句柄的创建/销毁」收拢到后端一处，内核只见抽象的资源 ID——与 scriptc-raylib 的注册表思路同构（第 5 册 §4）。
+- gui-lab 第二阶段的 Painter 会把「句柄的创建/销毁」收拢到后端一处，内核只见抽象的资源 ID——与 scriptc-raylib 的注册表思路同构（第 5 册 §4）。
 
 把默认字体的一生画出来（每一步都有日志作证）：
 
@@ -287,9 +287,9 @@ unload：退出时  TEXTURE: [ID 2] Unloaded texture data from VRAM (GPU)
 
 注意「字体」在资源上其实是**两层**：字形度量数据（224 个字形的尺寸与位置）+ 图集纹理（[ID 2]）。第三阶段加载中文 TTF 字体时会重新走一遍这条流水线，只是度量数据换成几千个字形、图集换成按需打包的大纹理——届时「字体加载很慢」「图集会长大」这些工程问题都会在这条时间线上出现。
 
-## 7. 刻意不给的清单：mini-gui 的施工图
+## 7. 刻意不给的清单：gui-lab 的施工图
 
-| raylib 不给 | 你的应用会怎么痛 | mini-gui 的补法 | 阶段 |
+| raylib 不给 | 你的应用会怎么痛 | gui-lab 的补法 | 阶段 |
 |---|---|---|---|
 | 控件树 | 100 个界面元素 = 100 段手写绘制代码，层级靠脑记 | Widget/RenderObject 双树 | 四 |
 | 布局 | 窗口一 resize，所有 x/y 手算重排 | BoxConstraints 单遍协议 | 四 |
@@ -302,7 +302,7 @@ unload：退出时  TEXTURE: [ID 2] Unloaded texture data from VRAM (GPU)
 
 > **读法建议**：这张表每一行都别背。每完成一个阶段，回来划掉一行，感受「痛 → 机制」的对应关系。
 
-这张表还有第 2 册没明说的第二层读法：**每一行的「不给」都是刻意的**。raylib 的设计目标是让人用最少的概念画出东西，控件/布局/焦点每一样都会把「概念数」翻倍；而 GUI 框架的全部价值就在这八行上。所以「raylib 不给」与「mini-gui 要造」是同一张纸的正反面——本课程的选题理由就在这里。
+这张表还有第 2 册没明说的第二层读法：**每一行的「不给」都是刻意的**。raylib 的设计目标是让人用最少的概念画出东西，控件/布局/焦点每一样都会把「概念数」翻倍；而 GUI 框架的全部价值就在这八行上。所以「raylib 不给」与「gui-lab 要造」是同一张纸的正反面——本课程的选题理由就在这里。
 
 第三层读法是排期依据：八行的顺序不是随便排的，它大致等于「手写痛感的增长曲线」——控件树与布局最先痛（元素一多就乱），事件与焦点其次（一交互就乱），失效调度在界面变大后才痛，状态同步则贯穿始终。第四~八阶段的推进顺序与这张表逐行对齐，每阶段的导览都会回指这里。
 
@@ -335,7 +335,7 @@ unload：退出时  TEXTURE: [ID 2] Unloaded texture data from VRAM (GPU)
 - begin/endDrawing 是批处理事务边界：调用只攒顶点，end 才提交；截图必须在 end 之后（实测踩过）。
 - 输入是轮询式：状态常在、边沿一帧即逝、键码流取走即消费——事件总线是第五阶段的加工厂。
 - 绘制「顺序即层级」、默认字体开箱即用（仅拉丁字形）、资源是 C 侧句柄要配对管理。
-- 「不给清单」八行 = mini-gui 后续七个阶段的施工清单，且每一行都是刻意不给。
+- 「不给清单」八行 = gui-lab 后续七个阶段的施工清单，且每一行都是刻意不给。
 
 ## 自测
 
@@ -348,4 +348,4 @@ unload：退出时  TEXTURE: [ID 2] Unloaded texture data from VRAM (GPU)
 7. vsync 与 `setTargetFPS` 分别在哪一层起作用？两道闸同时开时帧率由什么决定？
 8. `takeScreenshot` 放在 `beginDrawing` 之后、`endDrawing` 之前会拍到什么？用批处理模型解释原因。
 9. 纹理资源的一生于日志中可见哪几行？「加载/卸载配对」做错的两种典型后果分别是什么？
-10. 实操题：跑 `MINI_GUI_SECONDS=1 npx scriptc-raylib run src/apps/01-window.ts --dev`，在你的机器上找到本册 §2 日志的对应行（提示：重点看 TIMER 一行的毫秒数）；如果 `MINI_GUI_FPS=30`，TIMER 行的数值应是多少？（用 1000/30 算，再跑一遍验证。）
+10. 实操题：跑 `GUI_LAB_SECONDS=1 npx scriptc-raylib run src/apps/01-window.ts --dev`，在你的机器上找到本册 §2 日志的对应行（提示：重点看 TIMER 一行的毫秒数）；如果 `GUI_LAB_FPS=30`，TIMER 行的数值应是多少？（用 1000/30 算，再跑一遍验证。）

@@ -47,4 +47,4 @@ npm run serve  # 本地预览构建产物
 | 8 | 工程化与毕业项目 | 控件库、虚拟列表、测试、对标 | `/docs/第八阶段/导览` |
 | 专题 | 布局算法专题（阶段四的算法纵深） | Flow 贪心装行 / Grid 轨道解算 / Constraint 方程求解 / Absolute 锚边算术 / Stack/Z 两序镜像，每册含手算用例与实跑断言 | `/docs/09-布局算法专题/01-导览` |
 
-贯穿项目是一个自绘 GUI 框架（工作名 mini-gui），随阶段逐层生长：窗口与帧循环 → Painter → 文本排版 → 控件树 + 布局协议 → 事件系统 → 脏区重绘与动画 → signals 声明式层 → 控件库与毕业项目。布局算法专题对应 `gui/labs/mini-gui/src/core/render/` 下的 `flow.ts` / `grid.ts` / `constraint.ts`（Stack/Absolute 复用既有 `stack.ts`），vitest 全仓 201 断言全绿。
+贯穿项目是一个自绘 GUI 框架（工作名 gui-lab），随阶段逐层生长：窗口与帧循环 → Painter → 文本排版 → 控件树 + 布局协议 → 事件系统 → 脏区重绘与动画 → signals 声明式层 → 控件库与毕业项目。布局算法专题对应 `gui/labs/gui-lab/src/core/render/` 下的 `flow.ts` / `grid.ts` / `constraint.ts`（Stack/Absolute 复用既有 `stack.ts`），vitest 全仓 204 断言全绿。

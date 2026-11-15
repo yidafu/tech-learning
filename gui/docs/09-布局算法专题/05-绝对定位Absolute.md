@@ -1,7 +1,7 @@
 # 05. 绝对定位 Absolute：锚边四元组的算术
 
 > [返回：布局算法专题导览](01-导览.md)
-> 本册走读 `gui/labs/mini-gui/src/core/render/stack.ts`（87 行，`RenderPositioned` + `RenderStack` 定位分支）与 `layout.test.ts` 的 Stack 组断言。读完你应当能在纸上算出：任意 (left, top, right, bottom) 组合下，浮层拿什么约束、摆在哪里、尺寸从哪来——角标、浮层、遮罩、快捷键提示条全靠这四条边。实跑口径：断言出自 vitest 实跑（全仓 25 文件 201 断言全绿，2026-11-14）。
+> 本册走读 `gui/labs/gui-lab/src/core/render/stack.ts`（87 行，`RenderPositioned` + `RenderStack` 定位分支）与 `layout.test.ts` 的 Stack 组断言。读完你应当能在纸上算出：任意 (left, top, right, bottom) 组合下，浮层拿什么约束、摆在哪里、尺寸从哪来——角标、浮层、遮罩、快捷键提示条全靠这四条边。实跑口径：断言出自 vitest 实跑（全仓 25 文件 201 断言全绿，2026-11-14）。
 
 ## 1. 概念坐标：第四种合同——「坐标声明制」
 
@@ -16,7 +16,7 @@ Absolute（Positioned）：      x/y 是声明值，布局器只做两个动作�
 
 代价与收益同源：**快**（零求解）、**但脱离流**——声明值与父的尺寸没有联动，父一变宽，贴右的浮层不会跟着挪（除非用 right 而不是 left）。这册讲清楚「什么时候用它划算」。
 
-在 mini-gui 里，Absolute 不是独立布局器：`RenderPositioned` 是**标记 + 锚边存储**，定位算术由父级 `RenderStack` 的 positioned 分支执行。这是一个刻意的设计选择，第 4 节解释为什么。
+在 gui-lab 里，Absolute 不是独立布局器：`RenderPositioned` 是**标记 + 锚边存储**，定位算术由父级 `RenderStack` 的 positioned 分支执行。这是一个刻意的设计选择，第 4 节解释为什么。
 
 ## 2. 参数与几何语义
 
@@ -188,7 +188,7 @@ layout.test.ts 的 Stack 组（2 条断言）+ 纸上专练（4 组组合推导�
 
 ## 7. 与 CSS absolute 的对照
 
-| 语义点 | CSS | mini-gui | 差异原因 |
+| 语义点 | CSS | gui-lab | 差异原因 |
 |---|---|---|---|
 | 定位参照物 | 最近的 positioned 祖先（containing block） | **直接父 Stack**（不递归） | 教学版把「谁是我的浮层锚」做成显式结构（套一层 Stack），避免 CSS 那个著名的「到底相对谁」的排查难题 |
 | 百分比 | `left: 50%; width: 50%` | 无（需 Constraint 的 percentWidth） | 百分比是方程，归约束布局 |
@@ -263,7 +263,7 @@ new RenderPositioned({ right: 5 }, 长文本(自然宽 260));
 
 ## 11. 从 CSS 迁移速查
 
-| CSS 惯用法 | mini-gui 写法 | 备注 |
+| CSS 惯用法 | gui-lab 写法 | 备注 |
 |---|---|---|
 | `position:absolute; left:0; top:0` | `RenderPositioned({ left: 0, top: 0 }, child)` | 同构 |
 | `right:0; bottom:0` | `{ right: 0, bottom: 0 }` | 同构，锚的是 Stack 基准盒 |
@@ -375,11 +375,11 @@ $ npx vitest run src/core/render/layout.test.ts
 
 **Chromium/Blink 的绝对定位与合成。** CSS 的 absolute 在 Blink 里是布局阶段的定位计算（containing block 解析、静态位置回退），合成层是另一套机制——重叠内容提升为合成层后，z 序由合成器裁决，类似第六阶段的图层 blit 但做到了 GPU 引用级。三个可对点：其一，「浮层不撑大容器」在 CSS 里由「绝对定位元素脱离正常流」保证，与本册 positioned 跳过基准统计是同一条语义；其二，「谁裁剪谁」在 Blink 有 overflow clip 的完整机制，教学版只在滚动视口覆写 `clipsContent`，是同一问题的最小子集；其三，工程三陷阱之二（约束与基准无联动）在 CSS 世界对应 containing block 尺寸与百分比基准的经典谜题——工业框架同样没有免费午餐，只是把谜题做成了文档、规范附录与 devtools 警告。
 
-**Qt Widgets 的 layout 与兄弟 z 序。** Qt 没有声明式锚边的一等公民：重叠界面要么手工 `setGeometry`（纯绝对坐标，magic number 味最重），要么用 `QStackedWidget`——但那是「层切换」（同时只见一层），不是同屏叠放。同屏叠放的真实做法是 `raise_()` 与 `stackUnder()` 显式调整兄弟次序：z 序是被管理的结构事实，不是数值——这与 mini-gui「子序即 z 序、要插队就物理挪子」在精神上同款（堆叠册 §8）。另可对照 Qt 的 sizeHint/sizePolicy 协商：工业框架给「自然尺寸」留了一条控件与布局器之间的谈判通道，教学版把它压成了「量尺寸那一遍的松约束」——先量后摆的合同相同，谈判中介薄得多。
+**Qt Widgets 的 layout 与兄弟 z 序。** Qt 没有声明式锚边的一等公民：重叠界面要么手工 `setGeometry`（纯绝对坐标，magic number 味最重），要么用 `QStackedWidget`——但那是「层切换」（同时只见一层），不是同屏叠放。同屏叠放的真实做法是 `raise_()` 与 `stackUnder()` 显式调整兄弟次序：z 序是被管理的结构事实，不是数值——这与 gui-lab「子序即 z 序、要插队就物理挪子」在精神上同款（堆叠册 §8）。另可对照 Qt 的 sizeHint/sizePolicy 协商：工业框架给「自然尺寸」留了一条控件与布局器之间的谈判通道，教学版把它压成了「量尺寸那一遍的松约束」——先量后摆的合同相同，谈判中介薄得多。
 
 **Web/CSS 的浮层新方案。** 现代平台正在把浮层做成显式机制：Popover API 的顶层渲染（top layer，浮层脱离一切祖先的裁剪与 z 序）、CSS `anchor()` 函数（让一个元素声明「我锚那个元素的那条边」）、以及 `position: fixed` 遇 transform 祖先被劫持的例外规则。与第 9 节分工线并读会心一笑：CSS 花了十年从「隐式参照物」走向「锚点显式声明」，方向恰好是教学版第一天就选的结构——这不是巧合，教学版是「浮层语义最小正确集」的一次提炼；工业框架的复杂度大头在兼容历史与极端场景，不在核心语义本身。
 
-四个样本并读的一个收获：**锚边四元组、基准尺寸、子序 z 这三元组在所有框架里都以某种形态存在**，差异只在谁显式、谁隐式。以后读任何框架的浮层文档，拿本册的三份合同当索引，陌生 API 都能落回熟悉的格子——这也是「纸上可算」的最终目的：不是会算 mini-gui，而是会算一切。
+四个样本并读的一个收获：**锚边四元组、基准尺寸、子序 z 这三元组在所有框架里都以某种形态存在**，差异只在谁显式、谁隐式。以后读任何框架的浮层文档，拿本册的三份合同当索引，陌生 API 都能落回熟悉的格子——这也是「纸上可算」的最终目的：不是会算 gui-lab，而是会算一切。
 
 ## 18. 手算/走查配方：锚定五步推演（含一次 resize 走查）
 

@@ -1,11 +1,11 @@
-# Lab 06 · Mini 可观测平台（从 OTLP 接收到瀑布图页面）
+# Lab 06 · 可观测平台（从 OTLP 接收到瀑布图页面）
 
 > 阶段 6 配套实验，对应笔记：
 > - [服务端 SDK 设计](../../notes/06-system-design/sdk-design-server.md) 第 9 节「最小骨架」——本 lab 是那 200 行骨架的"平台侧完整可跑版"
 > - [大模型应用可观测性](../../notes/07-topics/llm-observability.md) §3.3——`app/demo.mjs` 用的就是该节的手写埋点（OTLP/JSON，含 gen_ai span）
 >
 > 前五个 lab 学"用现成组件搭平台"（Prometheus / Loki / Jaeger / Tempo / Grafana），
-> 本 lab 把视角倒转：**平台本身成为被造的对象**——亲手实现一个 mini 可观测平台后端，
+> 本 lab 把视角倒转：**平台本身成为被造的对象**——亲手实现一个 可观测平台后端，
 > 打通"埋点 → OTLP → 存储 → 查询 → 页面"全链路。
 > 零第三方依赖（只用 `node:` 内置模块）、零容器（不需要 podman/docker）、零安装（不 `npm install`）：
 > `node server/server.mjs` 即可跑。
@@ -34,7 +34,7 @@ flowchart LR
     subgraph demo["demo 应用 · app/demo.mjs（手写埋点，零 SDK）"]
         S["RAG 网关模拟<br/>POST /api/ask → rag.retrieve<br/>→ embeddings → chat gpt-4o-mini<br/>产出：成功 trace + 限流失败 trace<br/>+ token 计数器/时长直方图 + 关联日志"]
     end
-    subgraph platform["mini 平台后端 · server/server.mjs（零依赖 Node.js）"]
+    subgraph platform["平台后端 · server/server.mjs（零依赖 Node.js）"]
         direction TB
         ING["OTLP/JSON 接收<br/>POST /v1/traces · /v1/metrics · /v1/logs<br/>（gzip 可选）"]
         MEM["内存存储（查询唯一数据源）<br/>spans / traces 聚合 / metrics / logs"]
@@ -51,7 +51,7 @@ flowchart LR
 ## 3. 目录结构
 
 ```
-lab06-mini-platform/
+lab06-platform/
 ├── README.md            # 本文件
 ├── _category_.json      # 侧边栏排序（position: 6）
 ├── server/
@@ -71,7 +71,7 @@ lab06-mini-platform/
 ## 5. 快速开始
 
 ```bash
-cd docs/labs/lab06-mini-platform
+cd docs/labs/lab06-platform
 
 node server/server.mjs                  # 终端 1：默认 127.0.0.1:4318（OTLP 标准 HTTP 端口）
 node app/demo.mjs                       # 终端 2：发 2 条 trace + 4 个指标 + 3 条日志
@@ -161,11 +161,11 @@ open http://127.0.0.1:43180/   # 期望：能选服务、看 trace 列表、点�
 
 ### Step 7（可选） · SQLite 持久化（第 2 节）
 
-`--sqlite`（默认文件 `mini-platform.db`）：写路径**双写**（内存 + SQLite），读路径只走内存，启动时**回放**。
+`--sqlite`（默认文件 `platform.db`）：写路径**双写**（内存 + SQLite），读路径只走内存，启动时**回放**。
 这是"带 WAL 的简易版"：崩溃不丢已确认数据，同时查询零改动。建议库文件放 `/tmp` 以免弄脏仓库。
 
 ```bash
-node server/server.mjs --port 43180 --sqlite /tmp/mini-platform.db
+node server/server.mjs --port 43180 --sqlite /tmp/platform.db
 node app/demo.mjs --url http://127.0.0.1:43180
 # Ctrl-C 后重启同样的命令 → 启动日志 [sqlite] 已回放历史数据: 8 spans / 3 logs
 ```
@@ -224,7 +224,7 @@ $ node --version
 v24.10.0
 
 $ node server/server.mjs --host 127.0.0.1 --port 43180     # 后台启动
-mini 可观测平台已启动: http://127.0.0.1:43180/
+可观测平台已启动: http://127.0.0.1:43180/
   接收: POST /v1/traces | /v1/metrics | /v1/logs（OTLP/JSON）
   查询: GET /api/services | /api/traces | /api/traces/:id | /api/metrics | /api/logs
   存储: 纯内存（重启即清空；加 --sqlite 开启持久化）
@@ -250,7 +250,7 @@ $ curl -s http://127.0.0.1:43180/api/services
 - `/api/logs?trace=<错误 traceId>`：只返回该 trace 的 1 条 ERROR 日志；全量 3 条中含 1 条 DEBUG `gen_ai.client.inference.operation.details` 事件（带 `messages_ref` 外置引用）；
 - `GET /`：HTTP 200（单文件页面 5691 字节）；
 - gzip：`Content-Encoding: gzip` 的 POST 返回 200 且入库（`gzip-sender` 服务出现在 `/api/logs`）；
-- SQLite：`--sqlite /tmp/mini-platform.db` 发同样数据 → kill → 重启，启动日志 `[sqlite] 已回放历史数据: 8 spans / 3 logs`，`/api/services` 与重启前一致（Node 24 打印 `ExperimentalWarning: SQLite is an experimental feature`，功能正常）；
+- SQLite：`--sqlite /tmp/platform.db` 发同样数据 → kill → 重启，启动日志 `[sqlite] 已回放历史数据: 8 spans / 3 logs`，`/api/services` 与重启前一致（Node 24 打印 `ExperimentalWarning: SQLite is an experimental feature`，功能正常）；
 - 收尾：全部进程已 kill，`pgrep -f server/server.mjs` 无残留。
 
 ## 12. 参考

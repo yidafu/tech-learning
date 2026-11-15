@@ -28,7 +28,7 @@
 
 ## 动手实验
 
-专属 lab：[lab06-mini-platform](../../labs/lab06-mini-platform/README.md)——零依赖 Node.js 实现"OTLP/JSON 接收 + 内存/SQLite 存储 + 查询 API + 瀑布图页面"的 mini 可观测平台后端，对应 [sdk-design-server](sdk-design-server.md) 第 9 节的骨架；demo 应用使用 [llm-observability](../07-topics/llm-observability.md) §3.3 的手写埋点（含 gen_ai span）。
+专属 lab：[lab06-platform](../../labs/lab06-platform/README.md)——零依赖 Node.js 实现"OTLP/JSON 接收 + 内存/SQLite 存储 + 查询 API + 瀑布图页面"的 mini 可观测平台后端，对应 [sdk-design-server](sdk-design-server.md) 第 9 节的骨架；demo 应用使用 [llm-observability](../07-topics/llm-observability.md) §3.3 的手写埋点（含 gen_ai span）。
 另一个好练习：把阶段 4 的 [lab04-three-pillars](../../labs/lab04-three-pillars/README.md) 当作"迷你平台"逐层拆解对照本系列笔记。
 
 ## 与其他阶段的关系
@@ -71,7 +71,7 @@
 
 ## 与本阶段 lab 的对照
 
-专属实验 [labs/lab06-mini-platform/](../../labs/lab06-mini-platform/README.md) 是"把设计骨架跑起来"的最小闭环，分工如下——
+专属实验 [labs/lab06-platform/](../../labs/lab06-platform/README.md) 是"把设计骨架跑起来"的最小闭环，分工如下——
 
 **读笔记**（设计与决策部分，lab 不覆盖）：需求反推与容量算例（architecture-overview）、SDK 状态机与采样一致性（sdk-design-server）、RUM 采集与隐私合规（sdk-design-rum）、背压与拒绝语义（ingestion-pipeline）、存储引擎对比（storage-backends）、查询拆分与告警状态机（query-and-alerting）。
 

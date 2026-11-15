@@ -1,7 +1,7 @@
 // 自带数学库：scriptc-raylib 锁定的 scriptc 0.0.35 静态编译不含
 // Math.sqrt / Math.pow / Math.PI / 三角函数（它们属于内嵌动态引擎，本项目构建禁用，
 // 实测报 SC2012）。可用的只有：max / min / round / floor / ceil / trunc / abs、**、random。
-// 于是 mini-gui 自带一份确定性实现——顺带的好处：跨宿主（原生 / Node）逐位一致。
+// 于是 gui-lab 自带一份确定性实现——顺带的好处：跨宿主（原生 / Node）逐位一致。
 import { clamp } from "./geometry";
 
 /** 圆周率（动画与缓动精度足够）。 */

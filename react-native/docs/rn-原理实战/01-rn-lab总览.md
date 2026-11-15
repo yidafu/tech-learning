@@ -1,18 +1,18 @@
-# 01. mini-react-native 总览
+# 01. rn-lab 总览
 
-> 检验原理的最好方式是复刻。目标：写一个 **mini-react-native**——几十行 JS 组件代码 + react-reconciler 自定义渲染器 + 一层 JSI 原生绑定，让 `<view><text>hello</text></view>` 真的渲染成原生控件。本篇做总设计与里程碑拆解，细节在后续篇目逐步落地。
+> 检验原理的最好方式是复刻。目标：写一个 **rn-lab**——几十行 JS 组件代码 + react-reconciler 自定义渲染器 + 一层 JSI 原生绑定，让 `<view><text>hello</text></view>` 真的渲染成原生控件。本篇做总设计与里程碑拆解，细节在后续篇目逐步落地。
 
 ## 0. 本篇怎么读：子系列地图
 
-本模块（模块十）共 9 篇，分三条线：**总览与实战入门（01–04）、mini-rn 走读（05）、mini-rn 全量工程（06–09）**。本篇是整张地图的入口：
+本模块（模块十）共 9 篇，分三条线：**总览与实战入门（01–04）、rn-lab 走读（05）、rn-lab 全量工程（06–09）**。本篇是整张地图的入口：
 
 | 篇目 | 角色 | 什么时候读 |
 |------|------|-----------|
-| [01 · 总览](01-mini-react-native总览.md)（本篇） | 目标、架构、里程碑、思考题 | 动手前通读一遍 |
+| [01 · 总览](01-rn-lab总览.md)（本篇） | 目标、架构、里程碑、思考题 | 动手前通读一遍 |
 | [02 · 自定义 TurboModule 全流程](02-自定义TurboModule全流程.md) | 非 UI 原生能力的工程化通道 | 想对照"真 RN 怎么暴露原生方法"时 |
 | [03 · Fabric 原生组件开发](03-Fabric原生组件开发.md) | Props/Event/State 三通道组件 | 想对照"真 RN 怎么暴露原生视图"时 |
-| [04 · 调试工具链原理](04-调试工具链原理.md) | Metro/DevTools/CDP/原生联调 | 全站收官；mini-rn 也用得上（lldb/node --inspect） |
-| [05 · 落地实现](05-mini-react-native落地实现.md) | M0–M5 逐里程碑走读（节选代码） | 跟着本篇的里程碑表逐个做 |
+| [04 · 调试工具链原理](04-调试工具链原理.md) | Metro/DevTools/CDP/原生联调 | 全站收官；rn-lab 也用得上（lldb/node --inspect） |
+| [05 · 落地实现](05-rn-lab落地实现.md) | M0–M5 逐里程碑走读（节选代码） | 跟着本篇的里程碑表逐个做 |
 | [06 · 宿主工程与视图原语](06-宿主工程与视图原语.md) | M0–M1 全量 C++ 工程 | 做完 M0/M1 想要"可抄的全文"时 |
 | [07 · 渲染器与更新管线](07-渲染器与更新管线.md) | M2–M3 全量 hostConfig + 批处理实验 | 做 M2/M3 时 |
 | [08 · 布局器与上屏后端](08-布局器与上屏后端.md) | M4–M5 两遍布局 + AppKit 上屏 | 做 M4/M5 时 |
@@ -27,7 +27,7 @@
 
 ### 0.1 前置知识自查：系列依赖的正文模块
 
-mini-rn 不是从零开始——它反复调用模块一~九的结论。开工前用这张表自查，"想不起"的行请先回对应模块补课：
+rn-lab 不是从零开始——它反复调用模块一~九的结论。开工前用这张表自查，"想不起"的行请先回对应模块补课：
 
 | 依赖模块 | 系列里用到的知识点 | 用在哪 |
 |---------|-------------------|--------|
@@ -40,7 +40,7 @@ mini-rn 不是从零开始——它反复调用模块一~九的结论。开工�
 | 模块八（Metro） | 模块封装 `__d` 与 HMR | 04 篇 Fast Refresh |
 | 模块九（性能） | Profiler 数据源、why did render | 04 篇 DevTools、07 篇更新风暴 |
 
-如果这张表里有一半是陌生的话，推荐顺序是先做 M0/M1（几乎不依赖正文），做到 M2 再回模块五 01，做到 M4 再回模块五 02——**mini-rn 的里程碑顺序本身就是正文模块的"按需复习"序列**。
+如果这张表里有一半是陌生的话，推荐顺序是先做 M0/M1（几乎不依赖正文），做到 M2 再回模块五 01，做到 M4 再回模块五 02——**rn-lab 的里程碑顺序本身就是正文模块的"按需复习"序列**。
 
 ## 1. 目标与非目标
 
@@ -60,9 +60,9 @@ mini-rn 不是从零开始——它反复调用模块一~九的结论。开工�
 
 每条非目标都是刻意砍掉的，砍的理由值得写明：
 
-- **不做 Bridge**：Bridge 的全部价值在"异步批量",而我们恰好要体验"同步直调"是什么感觉（模块四 01 的对照才有了实感）。mini-rn 里唯一带"旧架构味道"的是 props 走 JSON 序列化——这是刻意的教学残留（05 篇 M1、06 篇都标注了这个偷懒点）；
+- **不做 Bridge**：Bridge 的全部价值在"异步批量",而我们恰好要体验"同步直调"是什么感觉（模块四 01 的对照才有了实感）。rn-lab 里唯一带"旧架构味道"的是 props 走 JSON 序列化——这是刻意的教学残留（05 篇 M1、06 篇都标注了这个偷懒点）；
 - **CSS 只做七个子集**：布局器的复杂度随属性数超线性增长，`flex:1` 一来就要引入约束求解（09 篇扩展挑战 1 就是让你亲手撞上这堵墙）；七个属性已覆盖"排一排、嵌一嵌、留白"的全部典型场景；
-- **不做手势/动画**：事件回路只做"上行一次点击"的最小闭环（09 篇），动画在 03 篇的 Fabric 组件里以"原生侧闭环"的形态出现，不进 mini-rn 主线。
+- **不做手势/动画**：事件回路只做"上行一次点击"的最小闭环（09 篇），动画在 03 篇的 Fabric 组件里以"原生侧闭环"的形态出现，不进 rn-lab 主线。
 
 ## 2. 三层架构
 
@@ -73,7 +73,7 @@ flowchart TB
         R["mini renderer<br/>（react-reconciler hostConfig）"]
     end
     subgraph Host["宿主层（C++ / 平台原生）"]
-        J["JSI 绑定：MiniNative（HostObject）"]
+        J["JSI 绑定：NativeBridge（HostObject）"]
         T["视图树：MiniView（含布局字段）"]
         L["极简 flex 布局器"]
     end
@@ -92,7 +92,7 @@ flowchart TB
 | 层 | 职责 | 对下层的调用形态 | 过界后的数据形态 |
 |----|------|----------------|----------------|
 | 业务组件 | 只描述"想要什么"（声明式） | 不直接调宿主，只 return 元素 | React 元素树（纯 JS 对象） |
-| mini renderer | 把元素树的变化翻译成指令 | `MiniNative.createView(type, props)` 等 | 指令 + 序列化 props（JSON 字符串） |
+| mini renderer | 把元素树的变化翻译成指令 | `NativeBridge.createView(type, props)` 等 | 指令 + 序列化 props（JSON 字符串） |
 | JSI 绑定 | 参数解包、类型转换、注册表维护 | 直接读写宿主数据结构 | C++ `std::string` / `int tag` / `nlohmann::json` |
 | 视图树 | 唯一事实源：结构 + 样式 + 几何 | 不调外部，被布局器遍历 | `MiniView{tag,type,props,children,x,y,w,h}` |
 | 布局器 | 从样式算几何 | 只读树、只写 x/y/w/h | 布局结果直接写回节点字段 |
@@ -119,7 +119,7 @@ flowchart TB
 flowchart TB
     A["render(&lt;App /&gt;)"] --> B["reconciler 开始协调<br/>（React 大脑，黑盒）"]
     B --> C["hostConfig.createInstance('view')<br/>（JS，我们的合同实现）"]
-    C --> D["MiniNative.createView<br/>（过界：JS 值 → C++ 值）"]
+    C --> D["NativeBridge.createView<br/>（过界：JS 值 → C++ 值）"]
     D --> E["g_tree 写入 MiniView<br/>（宿主，返回 tag）"]
     B --> F["createInstance('text') → 同上"]
     B --> G["appendInitialChild / appendChildToContainer<br/>（组装树）"]
@@ -141,12 +141,12 @@ flowchart TB
 ```js
 // ① hostConfig 的 createInstance：不复用 props 对象，直接下发自定义视图操作
 createInstance(type, props) {
-  const tag = MiniNative.createView(type, JSON.stringify(props)); // JSI 直调宿主
+  const tag = NativeBridge.createView(type, JSON.stringify(props)); // JSI 直调宿主
   return { tag, type };
 },
 
 // ② 宿主侧 HostObject：JSI 的门轴（C++ 伪码）
-class MiniNativeHostObject : public jsi::HostObject {
+class NativeBridgeHostObject : public jsi::HostObject {
   jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &name) override {
     if (name.utf8(rt) == "createView") return makeFunction(&createViewImpl);
     // appendChild / setProps / requestLayout ...
@@ -165,14 +165,14 @@ render(<App />);
 三段代码各藏一个"系列级考点"，值得先点名：
 
 - **① 为什么 `JSON.stringify` 而不是直接传对象**：真 JSI 的做法是把 `jsi::Object` 引用传过去、宿主侧遍历字段（模块七 01），全程零序列化；我们传字符串是刻意的退化——它让"新旧架构分界"变成一段可以指认的代码（05 篇 M1 的"偷懒点要自觉"）。N-API 里也完全可以做到传对象后逐字段读取，这个"改回引用通道"的作业留在 06 篇的欠账表里；
-- **② HostObject 的 `get` 是"按需返回函数"**：JS 第一次访问 `MiniNative.createView` 时才拿到函数对象——这就是"懒加载"在绑定层的最小形态（对照 TurboModule 首次访问才实例化，02 篇第 2 节）；
+- **② HostObject 的 `get` 是"按需返回函数"**：JS 第一次访问 `NativeBridge.createView` 时才拿到函数对象——这就是"懒加载"在绑定层的最小形态（对照 TurboModule 首次访问才实例化，02 篇第 2 节）；
 - **③ 业务代码完全不知道宿主存在**：没有 `NativeModules`、没有平台分支——这行代码换成真 RN 工程原样能跑（把 view/text 换成 View/Text 即可）。**"业务层无感"是自定义渲染器成功的判据**，也是 M3 验收时要用的心态：如果你发现业务代码里混进了 tag 或宿主细节，说明 hostConfig 的封装漏了。
 
 ## 4. 里程碑（M0–M5）
 
 | 里程碑 | 交付 | 验证 | 对应正文模块 |
 |--------|------|------|-------------|
-| **M0 跑起来** | Hermes/JSC 宿主进程 + global 注入 MiniNative | JS 调 `MiniNative.log('hi')` 打到原生控制台 | 模块三、七 |
+| **M0 跑起来** | Hermes/JSC 宿主进程 + global 注入 NativeBridge | JS 调 `NativeBridge.log('hi')` 打到原生控制台 | 模块三、七 |
 | **M1 视图原语** | createView/appendChild/setProps/removeChild 走 JSI | 宿主侧能打印出树结构 | 模块七 |
 | **M2 渲染器** | react-reconciler hostConfig 打通 createInstance/appendChild/commitUpdate | `render(<view>…)` 首帧上屏 | 模块五 |
 | **M3 状态与更新** | setState → diff → updateView 通路 | 计数器每秒刷新 | 模块五 |
@@ -207,9 +207,9 @@ flowchart LR
 
 | 部件 | 所在文件 | 规模（约） | 出处 |
 |------|---------|-----------|------|
-| 宿主视图树 + 全部原语 + 树导出 | mini_native.cc | < 130 行 C++ | 06 篇小结 |
+| 宿主视图树 + 全部原语 + 树导出 | native_bridge.cc | < 130 行 C++ | 06 篇小结 |
 | hostConfig + React 入口 | renderer.js | ~80 行 JS | 07 篇小结 |
-| 两遍布局器 | mini_native.cc 追加 | ~40 行 C++ | 08 篇小结 |
+| 两遍布局器 | native_bridge.cc 追加 | ~40 行 C++ | 08 篇小结 |
 | 业务组件 + 帧循环/事件队列 | app.js | 几十行 JS | 09 篇 |
 
 规模预算的意义在于**防止"顺手做完整"的冲动**：加一个属性"就几行"，加着加着 mini 就变成一个大而全的烂尾楼。预算超了，先问"这个能力能不能用现有七属性组合出来"，不能就写进欠账表留给对照篇目。
@@ -259,21 +259,21 @@ flowchart LR
 | 我写的 | RN 里的对应物 | 差距主要在哪 |
 |--------|--------------|-------------|
 | hostConfig | ReactFabric hostConfig（`ReactFabric-prod.js`） | props 预算化 diff（`ReactNativeAttributePayload`） |
-| MiniNative HostObject | TurboModule /BindingsInstaller | Codegen 类型绑定、懒加载 |
+| NativeBridge HostObject | TurboModule /BindingsInstaller | Codegen 类型绑定、懒加载 |
 | MiniView 树 | C++ ShadowNode + COW | clone-on-write、并发优先级 |
 | 极简 flex | Yoga | 完整规范 + 缓存失效 + 文本测量 |
 | （未做）Bridge | MessageQueue | 全部（这是新旧架构的分界线） |
 
-逐行解读"差距主要在哪"（这些差距就是从 mini-rn 通向真 RN 源码的台阶）：
+逐行解读"差距主要在哪"（这些差距就是从 rn-lab 通向真 RN 源码的台阶）：
 
 - **props diff**：我们的 `diffProps` 是引用比较 + 键并集（07 篇），每次渲染 style 新对象就恒变；真 RN 把 props 编译成定长的属性结构体，按位比较，diff 成本与属性个数成正比且无嵌套对象问题——工程上这叫"用编译期结构换运行期速度"；
-- **Codegen**：我们的 MiniNative 全靠手写注册（06 篇 `Init` 里一行一个 `exports.Set`）；真 RN 用 TS spec 生成双平台绑定（02/03 篇全程实战）——手写版让你看清"注册表本来就是个对象表"，生成版解决"几百个模块手写必错"的规模问题；
-- **COW**：我们的 `removeChild` 连子树一起删（06 篇欠账表）；真 RN 的 ShadowNode 不可变、改树靠克隆路径——这是并发渲染（一边渲染一边响应事件）的前提，mini-rn 单线程用不上，但 09 篇扩展挑战 3 让你补一个最简版；
+- **Codegen**：我们的 NativeBridge 全靠手写注册（06 篇 `Init` 里一行一个 `exports.Set`）；真 RN 用 TS spec 生成双平台绑定（02/03 篇全程实战）——手写版让你看清"注册表本来就是个对象表"，生成版解决"几百个模块手写必错"的规模问题；
+- **COW**：我们的 `removeChild` 连子树一起删（06 篇欠账表）；真 RN 的 ShadowNode 不可变、改树靠克隆路径——这是并发渲染（一边渲染一边响应事件）的前提，rn-lab 单线程用不上，但 09 篇扩展挑战 3 让你补一个最简版；
 - **Yoga**：两遍布局法（08 篇）覆盖无弹性场景；flex 比例需要约束求解，这正是 Yoga 作为一个"库"而不是"百行代码"的理由（09 篇扩展挑战 1）。
 
 ## 7. 环境准备（动手前 10 分钟）
 
-mini-rn 主线（05–09 篇）的工具链清单，全部就绪后再开工，能避免 90% 的"环境型卡点"：
+rn-lab 主线（05–09 篇）的工具链清单，全部就绪后再开工，能避免 90% 的"环境型卡点"：
 
 | 依赖 | 用途 | 检查方式 |
 |------|------|---------|
@@ -304,11 +304,11 @@ mini-rn 主线（05–09 篇）的工具链清单，全部就绪后再开工，�
 | mount / 上屏 | 树 → 平台控件的落地阶段（08 篇） | 我们的 dump 树也是"后端"之一 |
 | 上行事件 | 宿主 → JS 的回调通路（09 篇） | 与"指令下行"相对，合起来才是回路 |
 
-## 8.5 对照组说明：02/03/04 与 mini-rn 的关系
+## 8.5 对照组说明：02/03/04 与 rn-lab 的关系
 
-02/03/04 三篇不含在 M0–M5 里，但它们是 mini-rn 的"真身对照"——mini 里的每个手写部件，在真 RN 里都有工程化版本：
+02/03/04 三篇不含在 M0–M5 里，但它们是 rn-lab 的"真身对照"——mini 里的每个手写部件，在真 RN 里都有工程化版本：
 
-| mini-rn 里的手写物 | 真 RN 的工程化对应 | 对照篇目 |
+| rn-lab 里的手写物 | 真 RN 的工程化对应 | 对照篇目 |
 |-------------------|------------------|---------|
 | `Init` 里逐行 `exports.Set` 注册 | Codegen 从 TS spec 生成注册 | [02 篇](02-自定义TurboModule全流程.md) |
 | `log/createView` 等函数直调 | TurboModule 的 JSI HostObject | [02 篇](02-自定义TurboModule全流程.md) |
@@ -326,8 +326,8 @@ mini-rn 主线（05–09 篇）的工具链清单，全部就绪后再开工，�
 **Q2：学 N-API 对写真 RN 有用吗？**
 有，且直接。真 RN 的 JSI 绑定、TurboModule 的 C++ 层、以及大量混合工程里的自研原生库，思维方式与 N-API 同构：值过界、生命周期归属、错误传播、线程规则。06/09 篇把这套规则在迷你环境里全部踩过一遍。
 
-**Q3：mini-rn 写完能用于生产吗？**
-不能，也无意于此。它缺动画、手势、无障碍、列表虚拟化、错误边界……每一个都是真 RN 的一个子系统的存在理由。mini-rn 的产出是**判断力**：以后看到 RN 的任何一行设计，你能说出"它在解决我遇到过的问题"。
+**Q3：rn-lab 写完能用于生产吗？**
+不能，也无意于此。它缺动画、手势、无障碍、列表虚拟化、错误边界……每一个都是真 RN 的一个子系统的存在理由。rn-lab 的产出是**判断力**：以后看到 RN 的任何一行设计，你能说出"它在解决我遇到过的问题"。
 
 **Q4：宿主为什么最后选了 macOS/AppKit，而不是 iOS 或 Android？**
 三者都可行（05 篇 M5 列了替换点）。选 AppKit 的理由：开发机就是 macOS，免模拟器/真机的部署环节，改一行 C++ 重编即见；且 AppKit 的坐标系翻转（08 篇第 5 节）是个极好的"平台适配层"教材。想换成 iOS/Android，只需替换 08 篇的"后端 B"胶水文件，C++ 核心不动——可插拔后端就是为这个自由度设计的。
@@ -345,7 +345,7 @@ mini-rn 主线（05–09 篇）的工具链清单，全部就绪后再开工，�
 
 ## 小结
 
-- mini-react-native = 自定义渲染器 + JSI 通道 + 极简布局，三百行覆盖 RN 三根支柱。
+- rn-lab = 自定义渲染器 + JSI 通道 + 极简布局，三百行覆盖 RN 三根支柱。
 - 里程碑 M0–M5 每步可运行，问题预埋引导回正文模块。
 - 复刻的价值不在"能用"，而在让模块三/四/五/七的每个设计决策变成"我也遇到过"。
 - 本篇是地图：01 定方向、05 讲决策、06–09 给全量代码；做不动时回这里看"完成判据"，卡住时按篇目找"常见卡点"。

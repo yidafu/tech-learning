@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * lab06 · mini 可观测平台后端 —— 教学骨架（零第三方依赖，只用 node: 内置模块）
+ * lab06 · 可观测平台后端 —— 教学骨架（零第三方依赖，只用 node: 内置模块）
  *
  * 把 Tempo/Mimir/Loki 各自的"最小内核"压进一个文件：OTLP 接收 → 存储 → 查询 API → 页面。
  * 用法：node server/server.mjs [--host 127.0.0.1] [--port 4318] [--sqlite [文件路径]]
@@ -26,7 +26,7 @@ function parseArgs(argv) {
     else if (argv[i] === '--port') out.port = Number(argv[++i]);
     else if (argv[i] === '--sqlite') {
       // --sqlite 不带值时用默认文件名；--help/--port 等被显式排除
-      out.sqlite = argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[++i] : 'mini-platform.db';
+      out.sqlite = argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[++i] : 'platform.db';
     } else if (argv[i] === '-h' || argv[i] === '--help') {
       console.log('用法: node server.mjs [--host 127.0.0.1] [--port 4318] [--sqlite [文件路径]]');
       process.exit(0);
@@ -245,7 +245,7 @@ function queryLogs(q) {
 
 // ---------- 5. 单文件页面（内联 HTML+CSS+JS，fetch /api/* 渲染，无外部 CDN） ----------
 const page = `<!doctype html>
-<html lang="zh"><head><meta charset="utf-8"/><title>mini 可观测平台</title>
+<html lang="zh"><head><meta charset="utf-8"/><title>可观测平台</title>
 <style>
  body{font:13px/1.5 -apple-system,"PingFang SC",sans-serif;margin:0;padding:16px;background:#0f1116;color:#e6e6e6}
  h1{font-size:18px;margin:0 0 4px}.sub{color:#8b93a7;margin-bottom:12px}
@@ -259,7 +259,7 @@ const page = `<!doctype html>
  .wf-bar{position:absolute;top:2px;height:10px;border-radius:2px;min-width:2px}
  details{margin-left:8px}pre{white-space:pre-wrap;color:#9fb3c8;max-width:520px}
 </style></head><body>
-<h1>mini 可观测平台</h1>
+<h1>可观测平台</h1>
 <div class="sub">OTLP/JSON 接收 → 内存存储 → 查询 API → 本页（单文件，无外部依赖）</div>
 <section><h2>服务 / Traces</h2>
  <select id="service" onchange="loadTraces();loadLogs()"></select> <button onclick="refresh()">刷新</button>
@@ -347,7 +347,7 @@ const server = http.createServer(async (req, res) => {
 const cfg = parseArgs(process.argv.slice(2));
 if (cfg.sqlite) await initSqlite(cfg.sqlite); // top-level await（ESM）
 server.listen(cfg.port, cfg.host, () => {
-  console.log(`mini 可观测平台已启动: http://${cfg.host}:${cfg.port}/`);
+  console.log(`可观测平台已启动: http://${cfg.host}:${cfg.port}/`);
   console.log(`  接收: POST /v1/traces | /v1/metrics | /v1/logs（OTLP/JSON）`);
   console.log(`  查询: GET /api/services | /api/traces | /api/traces/:id | /api/metrics | /api/logs`);
   console.log(`  存储: ${db ? `内存 + SQLite(${cfg.sqlite})` : '纯内存（重启即清空；加 --sqlite 开启持久化）'}`);

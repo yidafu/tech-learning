@@ -494,17 +494,17 @@ const spans = [
 
 ## 附录 F：与真实框架对照（概念对照，非本机实测）
 
-| mini-gui 概念 | 浏览器文本栈 | Flutter | 差异要点 |
+| gui-lab 概念 | 浏览器文本栈 | Flutter | 差异要点 |
 |---|---|---|---|
 | TextSpan / TextBlockOptions | CSS 行内元素与 `font`、`color` 等行内属性 | `TextSpan`（`TextStyle` 挂每段） | 概念几乎一一对应：声明样式区段，不声明几何 |
-| owner 数组 + srcIndices 记账 | DOM 里样式归属由节点树天然携带（内联元素自己知道自己是自己） | 同左（Widget 树即归属表） | mini-gui 拼平全文后才需要显式记账——这是「扁平化」换来的代价 |
-| 两遍布局 | LayoutNG：先分段（segment）建 run，再 shaping、再断行、再摆位 | `TextPainter`：layout 里先 `layoutText`（断行）再 paint 时定位 | 「先决定行内容、再决定行内位置」的分层是通行做法，mini-gui 是其最小化 |
+| owner 数组 + srcIndices 记账 | DOM 里样式归属由节点树天然携带（内联元素自己知道自己是自己） | 同左（Widget 树即归属表） | gui-lab 拼平全文后才需要显式记账——这是「扁平化」换来的代价 |
+| 两遍布局 | LayoutNG：先分段（segment）建 run，再 shaping、再断行、再摆位 | `TextPainter`：layout 里先 `layoutText`（断行）再 paint 时定位 | 「先决定行内容、再决定行内位置」的分层是通行做法，gui-lab 是其最小化 |
 | run-length 分 piece | 行内盒的 fragment（inline box fragment） | `TextSpan` 展开后的 run | 都是「span 与行的交」；浏览器还要处理 bidi 重排后片段乱序 |
-| `offsetToX` / `xToOffset` | `SelectionController` / caret position mapping（Bidi 下先做逻辑序与视觉序互转） | `TextPosition` 与 `getOffsetForCaret` / `getPositionForOffset` | mini-gui 无 RTL，直接逻辑序即视觉序；浏览器的同函数必须过双向算法 |
+| `offsetToX` / `xToOffset` | `SelectionController` / caret position mapping（Bidi 下先做逻辑序与视觉序互转） | `TextPosition` 与 `getOffsetForCaret` / `getPositionForOffset` | gui-lab 无 RTL，直接逻辑序即视觉序；浏览器的同函数必须过双向算法 |
 | ellipsis 合并行重截 | `text-overflow: ellipsis`（单行）或 `-webkit-line-clamp`（多行） | `Text.ellipsis`（单行）与 `maxLines` | 多行省略在 CSS 里是私有扩展出身；语义都是「末行合并溢出内容重截」 |
-| 按块字号断、按 span 字号摆 | 断行按每个 run 的真实样式度量（分段就在断行之前） | 按段落统一样式度量（ParagraphStyle）+ run 内字号参与 shaping | mini-gui 的近似是等宽 Mock 下的精确解；真字体下工业栈一律按 run 精确度量 |
+| 按块字号断、按 span 字号摆 | 断行按每个 run 的真实样式度量（分段就在断行之前） | 按段落统一样式度量（ParagraphStyle）+ run 内字号参与 shaping | gui-lab 的近似是等宽 Mock 下的精确解；真字体下工业栈一律按 run 精确度量 |
 
-三点观察。其一，mini-gui 的「拼全文 + owner 记账」本质上是把 DOM 树的隐式归属显式化——浏览器不需要这一步是因为它的样式归属从不离开节点树；这也解释了为什么第 4 节的 bug 只在「扁平化 + 拼接」的架构里可能出现。其二，两遍布局在工业栈里对应「断行结果（行盒）与绘制内容（run）分离」——Chrome 的 LayoutNG 把 fragmentation（断行）与 positioning（摆位）拆在两个阶段，与本册第一遍/第二遍同构，只是工业版中间多了 shaping（把字符换成字形）与 bidi 重排两层。其三，光标几何的「中点吸附 + 往返稳定」在浏览器里由 caret position mapping 承担，但多出 RTL 分支：逻辑 offset 与视觉 x 的映射不是单调的，`xToOffset` 得先按双向分段反查——本册把 RTL 如实记为不做（第 7 节末），对应到工业栈就是「缺了一整个 bidi 前置层」，而不是「改几行参数」。
+三点观察。其一，gui-lab 的「拼全文 + owner 记账」本质上是把 DOM 树的隐式归属显式化——浏览器不需要这一步是因为它的样式归属从不离开节点树；这也解释了为什么第 4 节的 bug 只在「扁平化 + 拼接」的架构里可能出现。其二，两遍布局在工业栈里对应「断行结果（行盒）与绘制内容（run）分离」——Chrome 的 LayoutNG 把 fragmentation（断行）与 positioning（摆位）拆在两个阶段，与本册第一遍/第二遍同构，只是工业版中间多了 shaping（把字符换成字形）与 bidi 重排两层。其三，光标几何的「中点吸附 + 往返稳定」在浏览器里由 caret position mapping 承担，但多出 RTL 分支：逻辑 offset 与视觉 x 的映射不是单调的，`xToOffset` 得先按双向分段反查——本册把 RTL 如实记为不做（第 7 节末），对应到工业栈就是「缺了一整个 bidi 前置层」，而不是「改几行参数」。
 
 ## 附录 G：读码收据索引与自证路径
 

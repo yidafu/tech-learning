@@ -1,7 +1,7 @@
 # 02. 流式布局 Flow：贪心装行的完整算法
 
 > [返回：布局算法专题导览](01-导览.md)
-> 本册走读 `gui/labs/mini-gui/src/core/render/flow.ts`（181 行）与 `flow.test.ts`（98 行，7 条手算断言）。读完你应当能在纸上算出：任意一组子（含间距、对齐、拉伸配置）在给定宽度里如何换行、每行怎么摆、容器自身多大——这正是标签云、聊天气泡流、设置页表单项流的底层算法。实跑口径：本册全部断言出自 vitest 实跑（全仓 25 文件 201 断言全绿，2026-11-14）。
+> 本册走读 `gui/labs/gui-lab/src/core/render/flow.ts`（181 行）与 `flow.test.ts`（98 行，7 条手算断言）。读完你应当能在纸上算出：任意一组子（含间距、对齐、拉伸配置）在给定宽度里如何换行、每行怎么摆、容器自身多大——这正是标签云、聊天气泡流、设置页表单项流的底层算法。实跑口径：本册全部断言出自 vitest 实跑（全仓 25 文件 201 断言全绿，2026-11-14）。
 
 ## 1. 概念坐标：Flow = Flex + 一个分叉
 
@@ -276,7 +276,7 @@ if (this.crossAlign === FlowCrossAlign.stretch && e.cross !== line.crossExtent) 
 
 ## 8. 对标工业框架
 
-| mini-gui | CSS | Flutter | 备注 |
+| gui-lab | CSS | Flutter | 备注 |
 |---|---|---|---|
 | `RenderFlow` + `lineAlign` | `flex-wrap: wrap` + `justify-content` | `Wrap(alignment:)` | 行内主轴对齐 |
 | `crossAlign` | `align-items`（行内） | `Wrap(crossAxisAlignment:)` | stretch 语义同为「拉到行高」 |
@@ -285,7 +285,7 @@ if (this.crossAlign === FlowCrossAlign.stretch && e.cross !== line.crossExtent) 
 | `mainOverflow` | （无对应，内容溢出裁剪） | （无对应） | 自绘框架独有的显式记账 |
 | 贪心装行 | 浏览器同为贪心 | 同 | 全局最优装箱无人做 |
 
-差异点：CSS 的行盒还有基线对齐（`align-items: baseline`）与 `align-content`（多行在交叉轴的整体分布）；mini-gui 教学版砍掉这两档——前者需要文本基线（第三阶段有 `baseline` 数据，接起来不难，留作练习），后者与 `lineAlign` 是同一公式的交叉轴翻版。
+差异点：CSS 的行盒还有基线对齐（`align-items: baseline`）与 `align-content`（多行在交叉轴的整体分布）；gui-lab 教学版砍掉这两档——前者需要文本基线（第三阶段有 `baseline` 数据，接起来不难，留作练习），后者与 `lineAlign` 是同一公式的交叉轴翻版。
 
 ## 9. 常见误用与对接声明式层
 

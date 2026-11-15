@@ -1,7 +1,7 @@
 /**
  * 大纲章节：阶段 5 专题深入 —— 响应式源码阅读（以 @vue/reactivity 为路线图）
  * 主题：手写迷你响应式：reactive（Proxy 惰性代理）+ effect（activeEffect 栈 + cleanup）+ computed（dirty 缓存）
- * 运行：npx tsx exercises/reactivity/mini-reactivity.ts
+ * 运行：npx tsx exercises/reactivity/reactivity.ts
  * 测试：npx vitest run exercises/reactivity/
  * 预期输出：
  * --- 1) 基本收集：读取建立依赖，改值触发重跑 ---

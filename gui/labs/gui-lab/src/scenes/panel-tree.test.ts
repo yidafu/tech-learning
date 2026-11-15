@@ -70,11 +70,11 @@ describe("panel-tree 黄金断言", () => {
     const title = header.children[0]! as InstanceType<typeof import("../core/render/text-object").RenderText>;
     const headerBefore = header.layoutCount;
     const colBefore = col.layoutCount;
-    title.setText([{ text: "mini-gui layout!" }]);
+    title.setText([{ text: "gui-lab layout!" }]);
     owner.flushLayout();
     expect(title.layoutCount).toBe(2);
     expect(header.layoutCount).toBe(headerBefore); // 文本是 fixedSize 叶子，冒泡止于自身
     expect(col.layoutCount).toBe(colBefore);
-    expect(title.size.width).toBe(16 * 6);
+    expect(title.size.width).toBe(15 * 6); // "gui-lab layout!" 共 15 字符 × 6px/字符
   });
 });

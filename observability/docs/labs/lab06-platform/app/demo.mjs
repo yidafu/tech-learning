@@ -2,7 +2,7 @@
 /**
  * lab06 demo · 手写埋点（零 SDK、零依赖）—— llm-observability.md §3.3 样例的 Node 版
  *
- * 模拟一个 RAG 网关（不真调模型 API），产出三类信号并手工拼 OTLP/JSON 发给 mini 平台：
+ * 模拟一个 RAG 网关（不真调模型 API），产出三类信号并手工拼 OTLP/JSON 发给平台：
  *   traces：两条 trace——
  *     #1 成功：POST /api/ask → rag.retrieve → embeddings → chat gpt-4o-mini（完整 gen_ai.* 属性集）
  *     #2 失败：POST /api/ask → chat gpt-4o-mini 命中限流（STATUS_CODE_ERROR + error.type + exception 事件）

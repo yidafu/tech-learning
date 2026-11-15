@@ -1,7 +1,7 @@
 # 05. Flex 布局：主轴、交叉轴与弹性分配
 
 > [返回：第四阶段导览](01-导览.md)
-> 对应大纲条目：第四阶段 4。Row / Column 是日常界面 80% 的布局答案。本册逐段走读 `gui/labs/mini-gui/src/core/render/flex.ts`（215 行）与 `stack.ts`（87 行）：RenderFlex 的四步算法（非弹性子先排、剩余空间按 flex 分配、定尺寸、按对齐摆位）、轴向映射的五个换算函数、两个防呆（无界主轴、溢出记账），以及 Stack/Positioned 的锚点算术。所有黄金断言来自 `layout.test.ts` 实跑；panel 场景数字另用探针实跑验证。
+> 对应大纲条目：第四阶段 4。Row / Column 是日常界面 80% 的布局答案。本册逐段走读 `gui/labs/gui-lab/src/core/render/flex.ts`（215 行）与 `stack.ts`（87 行）：RenderFlex 的四步算法（非弹性子先排、剩余空间按 flex 分配、定尺寸、按对齐摆位）、轴向映射的五个换算函数、两个防呆（无界主轴、溢出记账），以及 Stack/Positioned 的锚点算术。所有黄金断言来自 `layout.test.ts` 实跑；panel 场景数字另用探针实跑验证。
 
 ## 1. 概念坐标
 
@@ -363,13 +363,13 @@ panel-tree 里的三处 Flex（组装代码见第二册 §6），数字来自 `p
 **头部行（Row, gap12, crossAlign center）**：
 
 ```text
-可用宽 752（tight 根 deflate 24）：标题 90（15 字符×6）+ gap12 + 弹性占位 + gap12 + 徽标 90
-弹性占位 = 752 − 90 − 90 − 24 = 548；徽标 x = 90+12+548+12 = 662（断言值）
+可用宽 752（tight 根 deflate 24）：标题 84（14 字符×6）+ gap12 + 弹性占位 + gap12 + 徽标 90
+弹性占位 = 752 − 84 − 90 − 24 = 554；徽标 x = 84+12+554+12 = 662（断言值）
 行高 = max(13, 24) = 24（交叉轴取最大子）
 标题 y = (24−13)/2 = 5.5、占位 y = (24−1)/2 = 11.5（center 交叉对齐）
 ```
 
-测试文件里徽标位置写作 `84 + 12 + 554 + 12`——同样等于 662。两种拆法同和不是巧合：**弹性子吸收一切剩余**，标题量错 6px，弹性就少 6px，右缘纹丝不动。这正是「右侧徽标用 Expanded 占位」结构稳健的原因（也是为什么标题宽度的手推错误能藏在断言里不被发现——探针实测当前拆分是 90/548）。
+测试文件里徽标位置写作 `84 + 12 + 554 + 12`——与标题实测宽（14 字符×6 = 84）严格对账。**弹性子吸收一切剩余**：就算标题量错 6px、按 15 字符×6 算成 90，弹性也只会相应缩到 548，两种拆法同和仍是 662，右缘纹丝不动——这正是「右侧徽标用 Expanded 占位」结构稳健的原因，也是为什么标题宽度的手推错误能藏在断言里不被发现。
 
 **主体行（Row, gap12）**：740 按 2:1 → 493/246（第 5 节）。窗口 resize 到 400×300 后重算：352−12=340 → **226/113**（探针实测）。
 
@@ -429,17 +429,17 @@ panel 页脚：Stack 基条 752×20（非 positioned，定基准），徽标 `Po
 
 ## 10. CSS flex 对照（概念对照，非本机实测）
 
-| CSS flexbox | mini-gui RenderFlex | 备注 |
+| CSS flexbox | gui-lab RenderFlex | 备注 |
 |---|---|---|
-| `flex-direction: row / column` | direction | CSS 还有 row-reverse/column-reverse，mini-gui 没有 |
+| `flex-direction: row / column` | direction | CSS 还有 row-reverse/column-reverse，gui-lab 没有 |
 | `justify-content: flex-start/center/flex-end/space-between` | mainAxisAlign: start/center/end/spaceBetween | 语义一一对应 |
-| `align-items: flex-start/center/flex-end/stretch` | crossAxisAlign: start/center/end/stretch | CSS 的 stretch 是**默认值**，mini-gui 默认 start |
-| `flex-grow: n` | RenderExpanded(flex: n) | CSS 是子元素属性；mini-gui 是包装节点 |
+| `align-items: flex-start/center/flex-end/stretch` | crossAxisAlign: start/center/end/stretch | CSS 的 stretch 是**默认值**，gui-lab 默认 start |
+| `flex-grow: n` | RenderExpanded(flex: n) | CSS 是子元素属性；gui-lab 是包装节点 |
 | `gap` | gap | 同名同义 |
-| 溢出（`min-width` 钳制、`overflow` 属性） | mainOverflow 记账 | CSS 默认可见溢出但不报数；mini-gui 显式记差额 |
-| `flex-shrink` / `flex-basis` | 无 | mini-gui 只做 grow——收缩不做，溢出记账代替 |
+| 溢出（`min-width` 钳制、`overflow` 属性） | mainOverflow 记账 | CSS 默认可见溢出但不报数；gui-lab 显式记差额 |
+| `flex-shrink` / `flex-basis` | 无 | gui-lab 只做 grow——收缩不做，溢出记账代替 |
 
-两处结构性差异（公开规范对照，非本机实验）：CSS 把 flex 挂在子元素上，导致「哪些子弹性」散落在各子；mini-gui 用包装节点集中了身份。CSS 的 shrink 让子按权重压缩，mini-gui 选择「不压缩 + 记账」——简化换来了第 4 节那种完全可手推的分配算法。
+两处结构性差异（公开规范对照，非本机实验）：CSS 把 flex 挂在子元素上，导致「哪些子弹性」散落在各子；gui-lab 用包装节点集中了身份。CSS 的 shrink 让子按权重压缩，gui-lab 选择「不压缩 + 记账」——简化换来了第 4 节那种完全可手推的分配算法。
 
 ## 11. 常见误区
 

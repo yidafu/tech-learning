@@ -242,7 +242,7 @@ export function batch(fn: () => void): void {
 
 ## 9. 与其他实现的对照
 
-| 机制 | mini-gui（教学版） | preact-signals | Solid |
+| 机制 | gui-lab（教学版） | preact-signals | Solid |
 |---|---|---|---|
 | 订阅去重 | 数组 indexOf | 位图/链表 | 编译期静态依赖 + 运行时兜底 |
 | 传播模型 | 标脏 + 惰性拉取 | level 拓扑推送 | 推送 + 编排 |

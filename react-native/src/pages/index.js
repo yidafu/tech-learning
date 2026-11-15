@@ -63,7 +63,7 @@ const modules = [
   {
     title: '原理实战',
     dir: 'rn-原理实战',
-    desc: '手写 mini-react-native、自定义 TurboModule、Fabric 组件、调试工具链',
+    desc: '手写 rn-lab、自定义 TurboModule、Fabric 组件、调试工具链',
     tag: '做实战',
   },
   {
@@ -84,7 +84,7 @@ const readingOrder = [
   { step: '1', label: '建全局', text: '《全景与演进》先看清 RN 的技术本质与新旧架构版图，建立整体地图。' },
   { step: '2', label: '走主线', text: '启动 → 线程与引擎 → Bridge 通信 → 渲染 → 事件，吃透旧架构的一条龙链路。' },
   { step: '3', label: '上新架构', text: '《新架构》模块对照 JSI / Fabric / TurboModules，理解每一次演进要解决什么。' },
-  { step: '4', label: '会实战', text: 'Metro 打包、性能归因、mini-react-native 复刻，把原理落回工程与动手。' },
+  { step: '4', label: '会实战', text: 'Metro 打包、性能归因、rn-lab 复刻，把原理落回工程与动手。' },
 ];
 
 const tagAccent = {

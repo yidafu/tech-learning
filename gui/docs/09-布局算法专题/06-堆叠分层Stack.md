@@ -1,11 +1,11 @@
 # 06. 堆叠与分层 Stack / Z：第三根轴的完整算法
 
 > [返回：布局算法专题导览](01-导览.md)
-> 本册走读 `gui/labs/mini-gui/src/core/render/stack.ts`（87 行）、`events/hit-test.ts`（43 行）、`render-object.ts` 的绘制遍历（317 行中 paint/paintInto 段）、`owner.ts` 的 flushPaint（144 行）。读完你应当能：判断任意叠放界面「谁在最上、点击落到谁」、算出 Stack 的基准尺寸，并理解图层合成（blit）为什么必须处理偏移——本册末尾完整复盘一个**实测抓到的双重平移 bug**（右面板漂到 2× 偏移处），它是「绘制序/合成序」两套坐标合同的活教材。实跑口径：25 文件 201 断言全绿（2026-11-14）。
+> 本册走读 `gui/labs/gui-lab/src/core/render/stack.ts`（87 行）、`events/hit-test.ts`（43 行）、`render-object.ts` 的绘制遍历（317 行中 paint/paintInto 段）、`owner.ts` 的 flushPaint（144 行）。读完你应当能：判断任意叠放界面「谁在最上、点击落到谁」、算出 Stack 的基准尺寸，并理解图层合成（blit）为什么必须处理偏移——本册末尾完整复盘一个**实测抓到的双重平移 bug**（右面板漂到 2× 偏移处），它是「绘制序/合成序」两套坐标合同的活教材。实跑口径：25 文件 201 断言全绿（2026-11-14）。
 
 ## 1. 概念坐标：z 轴是布局的第三根轴
 
-前几册的算法都在解 (x, y)；界面一旦重叠（遮罩、下拉菜单、徽标、拖拽层），必须有第三根轴的裁决规则。mini-gui 的答案是**零新概念**：
+前几册的算法都在解 (x, y)；界面一旦重叠（遮罩、下拉菜单、徽标、拖拽层），必须有第三根轴的裁决规则。gui-lab 的答案是**零新概念**：
 
 ```text
 z 序 = 子序 = 绘制序（先画的在底）
@@ -276,7 +276,7 @@ repaintedNodes = 2（right + root）；左子树 paintCount 不变（blit 没跑
 
 ## 8. 为什么不做 z-index
 
-CSS 的 `z-index` 背后是**层叠上下文**：每个定位元素、每个 opacity/transform/filter 生效的元素都开启新上下文，z-index 只在上下文内比较——于是有「z-index: 9999 无效」「负 z-index 消失在父背景后」这类经典谜题，其规则复杂到需要一整章 MDN。mini-gui 的子序即 z 序：
+CSS 的 `z-index` 背后是**层叠上下文**：每个定位元素、每个 opacity/transform/filter 生效的元素都开启新上下文，z-index 只在上下文内比较——于是有「z-index: 9999 无效」「负 z-index 消失在父背景后」这类经典谜题，其规则复杂到需要一整章 MDN。gui-lab 的子序即 z 序：
 
 | | 子序即 z 序 | z-index 方案 |
 |---|---|---|
@@ -302,7 +302,7 @@ CSS 的 `z-index` 背后是**层叠上下文**：每个定位元素、每个 opa
 
 ## 9. 对标
 
-| mini-gui | CSS | Flutter | iOS |
+| gui-lab | CSS | Flutter | iOS |
 |---|---|---|---|
 | 子序即绘制序 | 文档流 + 层叠上下文 | `Stack(children:)` 子序即 z 序 | `addSubview` 序 |
 | 子序倒序即命中序 | hit-testing 同（后画的先收） | `Stack` 的 hitTest 逆序 | 同 |

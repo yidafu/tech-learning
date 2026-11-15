@@ -10,13 +10,13 @@ importers:
 
   packages/app:
     dependencies:
-      '@mini/math-lib':
+      'math-lib':
         specifier: workspace:*
         version: link:../math-lib
 
   packages/math-lib:
     dependencies:
-      '@mini/shared-utils':
+      'shared-utils':
         specifier: workspace:*
         version: link:../shared-utils
 

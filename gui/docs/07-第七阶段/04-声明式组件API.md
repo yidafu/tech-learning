@@ -207,7 +207,7 @@ vdom.test.ts 的上半部断言（实跑 2026-11-14，9/9 绿）：
 ✓ 嵌套结构增量更新（padding→box 尺寸变化只 markNeedsLayout）
 ```
 
-| 机制 | mini-gui | React（react 站复刻） | Flutter |
+| 机制 | gui-lab | React（react 站复刻） | Flutter |
 |---|---|---|---|
 | 描述对象 | VNode 判别联合 | ReactElement | Widget（immutable） |
 | 协调节点 | VElement（手写类型槽） | Fiber 节点 | Element（泛型 + 工厂） |

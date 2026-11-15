@@ -16,7 +16,7 @@ mdx:
 6. 对比 Vue 的「拉」与 signal（Solid/Preact）的「推」：依赖图粒度差异与取舍
 7. 按「推荐阅读顺序」能直接打开 vuejs/core 仓库对应文件读下去
 
-配套练习：`exercises/reactivity/mini-reactivity.ts`（约 300 行手写迷你实现，文件头有**与源码的概念对照表**）+ `mini-reactivity.test.ts`（8 个用例锁定语义）。
+配套练习：`exercises/reactivity/reactivity.ts`（约 300 行手写迷你实现，文件头有**与源码的概念对照表**）+ `reactivity.test.ts`（8 个用例锁定语义）。
 
 ## 关键概念
 
@@ -49,7 +49,7 @@ flowchart TD
 
 「ownKeys 影响 iterate」举一反三：`for (const k in state)` 依赖的是 key 集合，所以「新增一个从未读过的属性」也会让它重跑——这不是 bug，是 ITERATE_KEY 的语义。
 
-**Reflect + receiver：保住子代理 this 的经典细节**。场景（练习 `mini-reactivity.ts` 演示 5）：
+**Reflect + receiver：保住子代理 this 的经典细节**。场景（练习 `reactivity.ts` 演示 5）：
 
 ```text
 const base = { nested: { v: 1 }, get current() { return this.nested } }
@@ -170,8 +170,8 @@ state.count 变
 
 | 练习 | 覆盖点 | 运行 |
 | --- | --- | --- |
-| `exercises/reactivity/mini-reactivity.ts` | reactive（惰性嵌套/Reflect+receiver/deleteProperty）、effect（栈/cleanup/scheduler）、computed（dirty）——文件头有源码对照表 | `npx tsx exercises/reactivity/mini-reactivity.ts` |
-| `exercises/reactivity/mini-reactivity.test.ts` | 8 个语义锁定用例（含分支切换 cleanup、computed 计数器证明缓存） | `npx vitest run exercises/reactivity/` |
+| `exercises/reactivity/reactivity.ts` | reactive（惰性嵌套/Reflect+receiver/deleteProperty）、effect（栈/cleanup/scheduler）、computed（dirty）——文件头有源码对照表 | `npx tsx exercises/reactivity/reactivity.ts` |
+| `exercises/reactivity/reactivity.test.ts` | 8 个语义锁定用例（含分支切换 cleanup、computed 计数器证明缓存） | `npx vitest run exercises/reactivity/` |
 
 ## 易错点与面试高频
 
@@ -188,7 +188,7 @@ state.count 变
 
 ### 题 1（分支切换与 cleanup）
 
-用 mini-reactivity 的语义（与 @vue/reactivity 一致）：
+用 reactivity 的语义（与 @vue/reactivity 一致）：
 
 ```ts
 const state = reactive({ ok: true, msg: 'A', alt: 'B' });
@@ -552,7 +552,7 @@ class RefImpl<T = any> {
 
 ## 精读补遗八：输出预测题（题 3、题 4，附解析）
 
-**题 3（判变语义）**：用 mini-reactivity 语义（对齐 `hasChanged` 实现），以下输出什么？
+**题 3（判变语义）**：用 reactivity 语义（对齐 `hasChanged` 实现），以下输出什么？
 
 ```ts
 const state = reactive({ n: 1 });
@@ -564,7 +564,7 @@ state.n = 2;
 console.log(runs);
 ```
 
-**答案**：`2`（本仓库 mini-reactivity 实跑收据，`npx tsx` 直跑）。逐步：初次执行 runs=1；`n = 1` 与旧值 `Object.is` 相等不触发；`n = 2` 触发重跑 runs=2；再赋 `2` 又不触发。机制出处：mini 版 set 的 `!Object.is(oldValue, value)`（第 185 行附近）对应 Vue `@vue/shared` 的 `hasChanged`——判变是 `Object.is` 不是 `===`，NaN 与正负零两处行为因此不同（正文易错点 3）。延伸：任何「写后必然读」的调试日志放在 effect 里时要记得同值写不进循环。
+**答案**：`2`（本仓库 reactivity 实跑收据，`npx tsx` 直跑）。逐步：初次执行 runs=1；`n = 1` 与旧值 `Object.is` 相等不触发；`n = 2` 触发重跑 runs=2；再赋 `2` 又不触发。机制出处：mini 版 set 的 `!Object.is(oldValue, value)`（第 185 行附近）对应 Vue `@vue/shared` 的 `hasChanged`——判变是 `Object.is` 不是 `===`，NaN 与正负零两处行为因此不同（正文易错点 3）。延伸：任何「写后必然读」的调试日志放在 effect 里时要记得同值写不进循环。
 
 **题 4（自写自读）**：
 
@@ -691,14 +691,14 @@ stop(fromParent?: boolean): void {
 
 ## 精读补遗十三：输出预测题（题 5、题 6，附解析）
 
-**题 5（嵌套代理的引用稳定性）**：用 mini-reactivity 语义，以下输出什么？
+**题 5（嵌套代理的引用稳定性）**：用 reactivity 语义，以下输出什么？
 
 ```ts
 const state = reactive({ nested: { v: 1 } });
 console.log(state.nested === state.nested);
 ```
 
-**答案**：`true`（本仓库 mini-reactivity 实跑收据）。逐步：第一次读 `state.nested`，get 陷阱拿到原始内层对象、惰性调 `reactive()` 包装——proxyMap 以**原始内层对象**为键缓存代理；第二次读取查同一张表命中缓存，返回同一个代理。注意缓存键是内层**原始对象**而非「读取路径」——从另一个代理对象读到同一个内层对象，拿到的仍是同一代理（这也是 `proxyMap` 必须是 WeakMap 的第二个理由：内层对象随外层一起可被 GC）。反例陷阱：若手写实现把缓存键写成属性路径字符串，两条路径读到同一对象会产出两个代理，`===` 与依赖记录全部失配。
+**答案**：`true`（本仓库 reactivity 实跑收据）。逐步：第一次读 `state.nested`，get 陷阱拿到原始内层对象、惰性调 `reactive()` 包装——proxyMap 以**原始内层对象**为键缓存代理；第二次读取查同一张表命中缓存，返回同一个代理。注意缓存键是内层**原始对象**而非「读取路径」——从另一个代理对象读到同一个内层对象，拿到的仍是同一代理（这也是 `proxyMap` 必须是 WeakMap 的第二个理由：内层对象随外层一起可被 GC）。反例陷阱：若手写实现把缓存键写成属性路径字符串，两条路径读到同一对象会产出两个代理，`===` 与依赖记录全部失配。
 
 **题 6（重复包裹与 RAW 门）**：Vue 3.5 源码语义下，`reactive(reactive(obj))` 与 `readonly(reactive(obj))` 各返回什么？依据哪道闸门？
 

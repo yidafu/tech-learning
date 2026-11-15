@@ -1,4 +1,4 @@
-# 05. mini-react-native 落地实现（M0–M5）
+# 05. rn-lab 落地实现（M0–M5）
 
 > 01 篇给了总设计与 M0–M5 里程碑，本篇把里程碑落到**可运行的最小代码**。宿主选择上做了一个务实替换：用 **Node.js + N-API 当作 JSI 的替身**（两者同为"引擎嵌入边界"，`napi_value ↔ jsi::Value` 语义同构），M0–M4 全部可跑，M5 给出接真平台的替换点。每个里程碑独立可验收。
 >
@@ -40,25 +40,25 @@
 
 ## M0：宿主进程 + 全局注入
 
-`binding.gyp` + 一个 C++ 文件，把 `MiniNative.log` 注入 global：
+`binding.gyp` + 一个 C++ 文件，把 `NativeBridge.log` 注入 global：
 
 ```cpp
-// mini_native.cc（N-API）
+// native_bridge.cc（N-API）
 #include <napi.h>
 Napi::Value Log(const Napi::CallbackInfo& info) {
-  printf("[MiniNative] %s\n", info[0].ToString().Utf8Value().c_str());
+  printf("[NativeBridge] %s\n", info[0].ToString().Utf8Value().c_str());
   return info.Env().Undefined();
 }
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("log", Napi::Function::New(env, Log));
   return exports;
 }
-NODE_API_MODULE(MiniNative, Init)
+NODE_API_MODULE(NativeBridge, Init)
 ```
 
 ```js
-// 验收：node -e "require('./build/Release/mini_native').log('hi')"
-// 期望输出：[MiniNative] hi
+// 验收：node -e "require('./build/Release/native_bridge').log('hi')"
+// 期望输出：[NativeBridge] hi
 ```
 
 对应真 RN：`ReactCommon` 里把 `TurboModuleBinding` 装进 global（模块七 03 的 `__turboModuleProxy`）。**M0 验证的是通道本身存在**。
@@ -68,23 +68,23 @@ NODE_API_MODULE(MiniNative, Init)
 - **`Napi::Value Log(const Napi::CallbackInfo& info)`**：每个暴露给 JS 的函数都是这个签名——`CallbackInfo` 装着参数包与环境。对照 JSI 版：`jsi::Value Log(jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count)`——**同样是"上下文 + 参数包"，只是打包方式不同**；
 - **`info[0].ToString().Utf8Value()`**：三步走——取第 0 参（`napi_value`）、强制转字符串（等价 JS 的 `String(x)` 强制转换）、拷出 UTF-8 的 `std::string`。**从这一步起，值就完全是 C++ 的了**，后续怎么用引擎都看不见；
 - **`return info.Env().Undefined()`**：JS 的 `undefined` 也是要显式构造的——**跨边界没有"默认返回值"这回事**，忘写返回值是未定义行为而非返回 null；
-- **`Init` 与 `NODE_API_MODULE`**：`.node` 文件被 `require` 时，dlopen 之后引擎调用这里的 `Init`——**注册发生在加载时刻、恰好一次**。`exports.Set("log", fn)` 就是"对象表 + 函数指针"的注入形态：JS 侧看到的 `MiniNative.log` 本质是一个指向 C++ 函数的句柄；
+- **`Init` 与 `NODE_API_MODULE`**：`.node` 文件被 `require` 时，dlopen 之后引擎调用这里的 `Init`——**注册发生在加载时刻、恰好一次**。`exports.Set("log", fn)` 就是"对象表 + 函数指针"的注入形态：JS 侧看到的 `NativeBridge.log` 本质是一个指向 C++ 函数的句柄；
 - **`printf` 而非 `std::cout`**：宿主是进程级程序，直接走 stdout 最短路径；这也解释了验收为什么能在终端直接看到输出。
 
 ### M0.2 验收命令逐词读
 
-`node -e "require('./build/Release/mini_native').log('hi')"` 拆开是四步：node 启动 → `require` 触发 dlopen + `Init`（注入完成）→ 属性访问 `log` 拿到函数句柄 → 调用 `'hi'` 过界进 C++ 打印。**这条命令是后续所有里程碑的验收模板：一行命令、确定性输出**。
+`node -e "require('./build/Release/native_bridge').log('hi')"` 拆开是四步：node 启动 → `require` 触发 dlopen + `Init`（注入完成）→ 属性访问 `log` 拿到函数句柄 → 调用 `'hi'` 过界进 C++ 打印。**这条命令是后续所有里程碑的验收模板：一行命令、确定性输出**。
 
 ### M0.3 与真 RN 装配时序的对照
 
 我们的注入发生在"require 时"；真 RN 的注入发生在"启动链路里"（模块二 01/02）——两者在"什么时候 global 上有原生对象"这个问题上可以逐段对齐：
 
-| 阶段 | mini-rn（Node） | 真 RN |
+| 阶段 | rn-lab（Node） | 真 RN |
 |------|----------------|-------|
 | 进程启动 | node 起，global 干净 | App 起，引擎（Hermes）初始化，global 干净 |
 | 原生侧就绪 | dlopen `.node` | 装载 ReactCommon 的 C++ 绑定层 |
 | 注入 | `Init` 填 exports → 模块对象 | BindingsInstaller 把 `__turboModuleProxy` 等装进 global |
-| JS 开始跑 | 后续 require 拿到 MiniNative | bundle 执行，runApplication 上场 |
+| JS 开始跑 | 后续 require 拿到 NativeBridge | bundle 执行，runApplication 上场 |
 
 对齐之后再看 02 篇的 `__turboModuleProxy` 就毫无神秘感：**它就是我们的 `Init` 注册表的"懒加载 + 类型安全"版本**——同一个装配阶段，不同的工程化程度。
 
@@ -134,36 +134,36 @@ JS 侧 ~50 行接通 React（对照模块五 01）：
 
 ```js
 const Reconciler = require('react-reconciler');
-const MiniNative = require('./build/Release/mini_native.node');
+const NativeBridge = require('./build/Release/native_bridge.node');
 
 const hostConfig = {
   createInstance(type, props) {
-    const tag = MiniNative.createView(type, JSON.stringify(props));
+    const tag = NativeBridge.createView(type, JSON.stringify(props));
     return { tag, type, props };
   },
-  appendInitialChild(p, c) { MiniNative.appendChild(p.tag, c.tag); },
+  appendInitialChild(p, c) { NativeBridge.appendChild(p.tag, c.tag); },
   finalizeInitialChildren() { return false; },
   createTextInstance() { throw new Error('text via <text> node'); },
-  appendChildToContainer(c, child) { MiniNative.appendChild(c.tag, child.tag); },
+  appendChildToContainer(c, child) { NativeBridge.appendChild(c.tag, child.tag); },
   prepareUpdate() { return true; },
   commitUpdate(inst, _payload, type, oldP, newP) {
-    MiniNative.setProps(inst.tag, JSON.stringify(diffProps(oldP, newP)));
-    MiniNative.requestLayout();           // 思考题①见第 5 节
+    NativeBridge.setProps(inst.tag, JSON.stringify(diffProps(oldP, newP)));
+    NativeBridge.requestLayout();           // 思考题①见第 5 节
   },
-  removeChild(p, c) { MiniNative.removeChild(p.tag, c.tag); },
+  removeChild(p, c) { NativeBridge.removeChild(p.tag, c.tag); },
   getRootHostContext() { return null; }, getChildHostContext() { return null; },
   shouldSetTextContent() { return false; },
   clearContainer() {}, insertBefore() {}, prepareForCommit() {},
   resetAfterCommit() {}, supportsMutation: true, now: Date.now,
 };
 const render = (el) => {          // container = tag 0 的根视图
-  MiniNative.createView('root', '{}');  // 约定 tag 0 为根
+  NativeBridge.createView('root', '{}');  // 约定 tag 0 为根
   Reconciler(hostConfig).createContainer(/*root*/{tag:0}, 1, null, false, null, '', ()=>{}, ()=>{});
   // updateContainer(el)…（boilerplate 略）
 };
 ```
 
-验收：`render(<view><text>hello</text></view>)` 后 `MiniNative.dumpTree()` 打印出两节点树。
+验收：`render(<view><text>hello</text></view>)` 后 `NativeBridge.dumpTree()` 打印出两节点树。
 
 ### M2.1 首帧时序：hostConfig 回调被谁、按什么顺序调
 
@@ -272,9 +272,9 @@ M4 的验收心态：先用走读版打出"x 等差"的直觉，再进 08 篇用
 |--------|--------|-------------|
 | 文本度量 | Measure 的 text 分支改调平台 API | 度量的调用时机（必须留在后序遍历里） |
 | 上屏 | DumpTree 的出口改 PresentTree | 树结构与布局字段的语义 |
-| 平台开关 | 编译单元/后端文件级切换 | mini_native.cc 的核心逻辑 |
+| 平台开关 | 编译单元/后端文件级切换 | native_bridge.cc 的核心逻辑 |
 
-第三个坑最多人踩：**别在核心文件里写 `#ifdef __APPLE__` 分支**——平台差异应该被隔离在后端文件里，核心一旦长出平台分支，"共享 C++"就名存实亡。08 篇的 AppKit 胶水（`MiniNativeMac.mm`）就是"平台层薄壳"的示范：树查询、坐标翻转、控件创建全部圈在一个文件里。
+第三个坑最多人踩：**别在核心文件里写 `#ifdef __APPLE__` 分支**——平台差异应该被隔离在后端文件里，核心一旦长出平台分支，"共享 C++"就名存实亡。08 篇的 AppKit 胶水（`NativeBridgeMac.mm`）就是"平台层薄壳"的示范：树查询、坐标翻转、控件创建全部圈在一个文件里。
 
 ## 6. 复盘：三百行换来的对应关系
 
@@ -326,7 +326,7 @@ M4 的验收心态：先用走读版打出"x 等差"的直觉，再进 08 篇用
 
 ## 8.5 本篇在系列里的坐标（衔接总说明）
 
-- **与 01 篇**：里程碑表与思考题的"题面"在 [01 篇](01-mini-react-native总览.md)，本篇是"求解过程"；
+- **与 01 篇**：里程碑表与思考题的"题面"在 [01 篇](01-rn-lab总览.md)，本篇是"求解过程"；
 - **与 06 篇**：本篇 M0/M1 的代码是讲稿形态，可编译的全文与验收输出在 [06 篇](06-宿主工程与视图原语.md)；
 - **与 07 篇**：本篇 M2 的 hostConfig 有两处占位（createTextInstance throw、prepareUpdate 恒真），[07 篇](07-渲染器与更新管线.md)逐处修正并给批处理实验；
 - **与 08 篇**：本篇 M4 的"一遍递归"升级为两遍布局法 + 数值验收，M5 的替换点在 [08 篇](08-布局器与上屏后端.md)落到 AppKit 全量胶水；

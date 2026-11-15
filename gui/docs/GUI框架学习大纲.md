@@ -28,9 +28,9 @@ references:
 - 已实测版本组合：ScriptC 0.4.12 + scriptc-raylib 1.0.4（`@raylib/api` 6.0.1 元数据生成）+ raylib 6.0，macOS arm64（Apple clang 17）编译运行通过；Linux 由工具链提供 x64 / arm64 目标。
 - 工程注意：消费项目的 `package.json` 必须声明 `"type": "module"`；构建入口用 `scriptc-raylib run/build src/main.ts`，不要裸调 `scriptc build`（它无法发现绑定包的原生清单）。
 
-**贯穿项目：mini-gui 框架生长路线**
+**贯穿项目：gui-lab 框架生长路线**
 
-| 阶段完成后 | mini-gui 获得的能力 | 产出物 |
+| 阶段完成后 | gui-lab 获得的能力 | 产出物 |
 |---|---|---|
 | 一 | 开窗与帧循环 | 最小窗口 + 输入轮询 + delta 驱动动画 |
 | 二 | 平台无关绘制 | Painter API + raylib 后端 + 显示列表 |
@@ -219,6 +219,6 @@ references:
   - 无头像素断言：给定状态断言某点颜色 / 区域快照
   - 事件回放测试；布局黄金用例；把「跑起来才算」固化成脚本
 - [ ] 5. 对标与展望
-  - mini-gui vs Flutter / Qt / Slint / GPUI / egui 取舍表
+  - gui-lab vs Flutter / Qt / Slint / GPUI / egui 取舍表
   - 下一步：GPU 自绘后端（衔接 webgl 站）、无障碍树、UI DSL 编译（衔接 compiler 站）
 - [ ] 实践任务（毕业项目三选一）：文件浏览器（树 + 列表 + 滚动 + 主题）；todo 应用（声明式 + signals + 动画）；简易文本编辑器（TextField 深水区 + 虚拟滚动）

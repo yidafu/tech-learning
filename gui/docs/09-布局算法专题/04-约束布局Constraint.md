@@ -1,7 +1,7 @@
 # 04. 约束布局 Constraint：锚点线性方程与 Kahn 工作清单
 
 > [返回：布局算法专题导览](01-导览.md)
-> 本册走读 `gui/labs/mini-gui/src/core/render/constraint.ts`（255 行）与 `constraint.test.ts`（85 行，7 条手算断言）。读完你应当能：把任何「A 左缘贴 B 右缘再偏 8、宽 100、底贴父底」的布局要求翻译成线性方程组，用纸解出每个子的位置尺寸，并判断哪类要求无解、哪类会成环。这是 Android ConstraintLayout、Apple Auto Layout 的算法内核（教学子集）。实跑口径：断言全部出自 vitest 实跑（全仓 25 文件 201 断言全绿，2026-11-14）。
+> 本册走读 `gui/labs/gui-lab/src/core/render/constraint.ts`（255 行）与 `constraint.test.ts`（85 行，7 条手算断言）。读完你应当能：把任何「A 左缘贴 B 右缘再偏 8、宽 100、底贴父底」的布局要求翻译成线性方程组，用纸解出每个子的位置尺寸，并判断哪类要求无解、哪类会成环。这是 Android ConstraintLayout、Apple Auto Layout 的算法内核（教学子集）。实跑口径：断言全部出自 vitest 实跑（全仓 25 文件 201 断言全绿，2026-11-14）。
 
 ## 1. 概念坐标：从「排」到「贴」
 
@@ -395,7 +395,7 @@ title:   left=logo.right+12, right=close.left−8, centerY=logo.centerY, height=
 
 ## 附录 F：与真实框架对照（概念对照，非本机实测）
 
-| mini-gui 概念 | Android ConstraintLayout | Apple Auto Layout | Cassowary 求解器 | 差异要点 |
+| gui-lab 概念 | Android ConstraintLayout | Apple Auto Layout | Cassowary 求解器 | 差异要点 |
 |---|---|---|---|---|
 | `anchor(id, side, offset)` | `app:layout_constraintStart_toEndOf` 系 XML 属性 | `NSLayoutConstraint`（item:attribute:relatedTo:multiplier:constant:） | 约束对象（变量、表达式、关系、强度） | 三家 API 形状同源：参照边 + 偏移；Auto Layout 多出 multiplier（比例内建在方程系数里）与关系符（等号或大于等于） |
 | 六式解算表（A1 到 B3） | 约束先化简再交给求解器（内部有一轮优化传递） | 活跃约束集 + Cassowary 增量求解 | 单纯形法解整张表 | 教学版按情况分类直接解；工业版把方程全部丢进同一张表，靠算法统一处理，换来不等式与优先级能力 |
@@ -404,7 +404,7 @@ title:   left=logo.right+12, right=close.left−8, centerY=logo.centerY, height=
 | 循环或悬空引用报错 | 构建期 linter 与运行期诊断并报 | 控制台输出「Unable to simultaneously satisfy constraints」并列出冲突约束 | unsatisfiable 状态 + 诊断信息 | 教学版点名参与节点已够用；工业版会把整条冲突链打印出来供人读 |
 | 无约束子静默出局（附录 A 陷阱二） | 不存在——每个子必须有约束或走默认约束 | 同样要求每子有约束（否则按 frame 语义另算） | 无此概念 | 教学版的选择是「不进方程组就不动」，工业框架要么报错要么有明确的默认行为 |
 
-三点观察。其一，教学版的「等式 + 依赖序」恰好是 Cassowary 的严格子集：去掉不等式（大于等于）、优先级（required 与可选之分）、stay 变量（改动时倾向保持旧值）之后，剩下的等式系统用分类解法表就能全解——这正是本册能压进 255 行的原因，也是「六式归一」一节代数视角的由来（第 6.3 节）。其二，Auto Layout 与 Android 的内核都做了「约束集维护」这一层：约束有激活与停用生命周期，求解器在活跃集上增量运算；mini-gui 每次布局全量重建 pending 数组，代价是动态增删控件时全表重解——若做毕业项目的表单类应用，分块（第 7 节）与「只重解受影响块」是两级都值得做的优化。其三，报错的信息设计值得抄：工业求解器的报错把「哪几条约束互相冲突、各自的方程是什么」整段列出，人能直接读；教学版点名节点 id 是同一思想的最小实现——错误信息的读者是人不是机器，把参与解的名字给全，调试时间差一个量级。
+三点观察。其一，教学版的「等式 + 依赖序」恰好是 Cassowary 的严格子集：去掉不等式（大于等于）、优先级（required 与可选之分）、stay 变量（改动时倾向保持旧值）之后，剩下的等式系统用分类解法表就能全解——这正是本册能压进 255 行的原因，也是「六式归一」一节代数视角的由来（第 6.3 节）。其二，Auto Layout 与 Android 的内核都做了「约束集维护」这一层：约束有激活与停用生命周期，求解器在活跃集上增量运算；gui-lab 每次布局全量重建 pending 数组，代价是动态增删控件时全表重解——若做毕业项目的表单类应用，分块（第 7 节）与「只重解受影响块」是两级都值得做的优化。其三，报错的信息设计值得抄：工业求解器的报错把「哪几条约束互相冲突、各自的方程是什么」整段列出，人能直接读；教学版点名节点 id 是同一思想的最小实现——错误信息的读者是人不是机器，把参与解的名字给全，调试时间差一个量级。
 
 ## 附录 G：读码收据索引与自证路径
 

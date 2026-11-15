@@ -3,7 +3,7 @@
 //
 // 运行（交互）：npx scriptc-raylib run src/apps/06-pipeline.ts --dev
 // 回归 + 截图：
-//   MINI_GUI_SECONDS=3 MINI_GUI_SHOT=shot06.png npx scriptc-raylib run src/apps/06-pipeline.ts --dev
+//   GUI_LAB_SECONDS=3 GUI_LAB_SHOT=shot06.png npx scriptc-raylib run src/apps/06-pipeline.ts --dev
 import {
   RAYWHITE,
   beginDrawing,
@@ -26,11 +26,11 @@ import { buildAnimScene } from "../scenes/anim-scene";
 const WIDTH = 800;
 const HEIGHT = 450;
 
-const targetFps = envNumber(process.env.MINI_GUI_FPS, 60);
-const exitAfterSeconds = envNumber(process.env.MINI_GUI_SECONDS, 0);
-const shotPath = process.env.MINI_GUI_SHOT;
+const targetFps = envNumber(process.env.GUI_LAB_FPS, 60);
+const exitAfterSeconds = envNumber(process.env.GUI_LAB_SECONDS, 0);
+const shotPath = process.env.GUI_LAB_SHOT;
 
-initWindow(WIDTH, HEIGHT, "mini-gui 06 pipeline");
+initWindow(WIDTH, HEIGHT, "gui-lab 06 pipeline");
 setTargetFPS(targetFps);
 
 const backend = new RaylibBackend();

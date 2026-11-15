@@ -2,10 +2,10 @@
 // 对应分册：《01-第一阶段/06-第一个窗口与帧循环.md》
 //
 // 运行（交互）：npx scriptc-raylib run src/apps/01-window.ts --dev
-// 运行（回归）：MINI_GUI_SECONDS=2 npx scriptc-raylib run src/apps/01-window.ts --dev
-//   MINI_GUI_SECONDS  累计时间到达后自动退出并打印统计（不设 = 一直跑到关窗）
-//   MINI_GUI_FPS      目标帧率（默认 60），用来做「帧率无关」对照实验
-//   MINI_GUI_SHOT     退出前把最后一帧存成 PNG（文件名，如 shot.png）
+// 运行（回归）：GUI_LAB_SECONDS=2 npx scriptc-raylib run src/apps/01-window.ts --dev
+//   GUI_LAB_SECONDS  累计时间到达后自动退出并打印统计（不设 = 一直跑到关窗）
+//   GUI_LAB_FPS      目标帧率（默认 60），用来做「帧率无关」对照实验
+//   GUI_LAB_SHOT     退出前把最后一帧存成 PNG（文件名，如 shot.png）
 //
 // 注意：raylib 默认字体只有拉丁字形，屏幕文字一律用 ASCII；中文要等第三阶段加载字体。
 import {
@@ -47,9 +47,9 @@ import { envNumber, pingPong } from "../core/config";
 const WIDTH = 800;
 const HEIGHT = 450;
 
-const targetFps = envNumber(process.env.MINI_GUI_FPS, 60);
-const exitAfterSeconds = envNumber(process.env.MINI_GUI_SECONDS, 0);
-const shotPath = process.env.MINI_GUI_SHOT;
+const targetFps = envNumber(process.env.GUI_LAB_FPS, 60);
+const exitAfterSeconds = envNumber(process.env.GUI_LAB_SECONDS, 0);
+const shotPath = process.env.GUI_LAB_SHOT;
 
 // 两种驱动方式的对照：
 //   delta 驱动：速度以「像素/秒」定义，位移 = 速度 × 本帧耗时
@@ -60,7 +60,7 @@ const STEP_PX_PER_FRAME = 2; // 只有恰好 60fps 时才等价于 120 px/s
 const TRACK_LEFT = 60;
 const TRACK_LEN = WIDTH - 120;
 
-initWindow(WIDTH, HEIGHT, "mini-gui 01 window");
+initWindow(WIDTH, HEIGHT, "gui-lab 01 window");
 setTargetFPS(targetFps);
 
 let frames = 0;

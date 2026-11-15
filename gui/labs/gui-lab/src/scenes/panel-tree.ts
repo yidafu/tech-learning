@@ -8,7 +8,7 @@ import { RenderPositioned, RenderStack } from "../core/render/stack";
 import { RenderText } from "../core/render/text-object";
 import type { RenderObject } from "../core/render/render-object";
 
-export const PANEL_TITLE = "mini-gui layout";
+export const PANEL_TITLE = "gui-lab layout";
 export const PANEL_STATUS_W = 90;
 
 export function buildPanelTree(measurer: TextMeasurer, fontSize: number): RenderObject {

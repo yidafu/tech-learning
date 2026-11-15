@@ -168,7 +168,7 @@ def call_llm(client, model: str, messages: list[dict]) -> str:
         return resp.choices[0].message.content or ""
 ```
 
-要点：**token 数从响应的 usage 字段来**（不同供应商都提供，字段名略有差异）；错误路径必须写 `error.type` 并置 span status——LLM 供应商的错误（限流 429、内容策略拒绝、capacity 短缺）是稳定信号源，值得单独做错误率面板。此样例在本地以 OTLP/JSON 导出验证过 span 与属性完整落库（见 [lab06](../../labs/lab06-mini-platform/README.md) 的 demo app，它用的就是这套手写埋点）。
+要点：**token 数从响应的 usage 字段来**（不同供应商都提供，字段名略有差异）；错误路径必须写 `error.type` 并置 span status——LLM 供应商的错误（限流 429、内容策略拒绝、capacity 短缺）是稳定信号源，值得单独做错误率面板。此样例在本地以 OTLP/JSON 导出验证过 span 与属性完整落库（见 [lab06](../../labs/lab06-platform/README.md) 的 demo app，它用的就是这套手写埋点）。
 
 ---
 
@@ -361,7 +361,7 @@ A：先建统一封装层（所有模型调用过自家代码）→ 手写 gen_a
 - Python GenAI instrumentation（专用仓库与包）：<https://github.com/open-telemetry/opentelemetry-python-genai>、<https://pypi.org/project/opentelemetry-instrumentation-genai-openai/>
 - OTel 官方博客 · Generative AI 公告（2024，历史脉络）：<https://opentelemetry.io/blog/2024/otel-generative-ai/>
 - 本工作区相关笔记：[语义约定](../00-concepts/semantic-conventions.md)、[OTel SDK 实战](../03-tracing/otel-sdk.md)、[三大支柱关联](../04-integration/correlation.md)、[SLO 与错误预算](../04-integration/slo.md)、[采样策略](../05-production/sampling.md)、[高基数问题](../05-production/cardinality.md)、[事件响应与值班](incident-response.md)；
-  配套实验：[lab06 mini 可观测平台](../../labs/lab06-mini-platform/README.md)（demo 应用用本文 §3.3 的手写埋点，OTLP/JSON 可直接观察 gen_ai span）
+  配套实验：[lab06 mini 可观测平台](../../labs/lab06-platform/README.md)（demo 应用用本文 §3.3 的手写埋点，OTLP/JSON 可直接观察 gen_ai span）
 
 ## 附：ASCII 图替换清单
 

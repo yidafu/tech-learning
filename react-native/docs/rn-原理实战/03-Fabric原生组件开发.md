@@ -144,7 +144,7 @@ flowchart TB
     R3 --> OK
 ```
 
-对照 mini-rn：我们只有**一张表**（`g_tree` + `Init` 的函数表），因为 JS、影子树、平台视图三层全在同一个 C++ 文件里；真 RN 把三层拆开（JS 运行时 / C++ 渲染核心 / 平台 UI），注册也就成了三条链。**理解"断链不报错"的关键是：每条链只在被用到时才查找**——JS import 成功只证明第三张表在，渲染不出说明前两张有一张断了。
+对照 rn-lab：我们只有**一张表**（`g_tree` + `Init` 的函数表），因为 JS、影子树、平台视图三层全在同一个 C++ 文件里；真 RN 把三层拆开（JS 运行时 / C++ 渲染核心 / 平台 UI），注册也就成了三条链。**理解"断链不报错"的关键是：每条链只在被用到时才查找**——JS import 成功只证明第三张表在，渲染不出说明前两张有一张断了。
 
 ### 3.1 ViewManager 讲解：注解驱动的 props 表
 
@@ -163,7 +163,7 @@ flowchart TB
 2. **`defaultDouble = 0.0` 的语义**：JS 没传该 prop 时，setter 也会被调用一次（用默认值）——所以 setter 要能正确处理默认值路径，别把"没设置"当"设置为 0"误处理（对进度环无妨，对"角度=0 表示正北"这类语义就是坑）；
 3. **`c: String?` 可空**：属性从 JSX 上移除时，RN 会用 null 调一次 setter 让你恢复默认——忘了处理 null 就是"移除属性不生效"。
 
-`createViewInstance` 在组件首次挂载时调用——对照 mini-rn 的 `createView`（[06 篇](06-宿主工程与视图原语.md)）：**同一个"创建即入表"的模型，真 RN 的表由 ComponentDescriptor 与 ViewManager 共同维护**。
+`createViewInstance` 在组件首次挂载时调用——对照 rn-lab 的 `createView`（[06 篇](06-宿主工程与视图原语.md)）：**同一个"创建即入表"的模型，真 RN 的表由 ComponentDescriptor 与 ViewManager 共同维护**。
 
 ### 3.2 View 层讲解：动画为什么必须在原生
 
@@ -252,7 +252,7 @@ flowchart LR
 
 三个工程细节：
 
-1. **事件不排队**（新架构）：原生发出即同步到达 JS 调用点（模块七 02）——这与 mini-rn 09 篇手写的"队列 + 定拍"形成对照，也解释了为什么事件处理函数要轻（重逻辑用 setState 触发后续）；
+1. **事件不排队**（新架构）：原生发出即同步到达 JS 调用点（模块七 02）——这与 rn-lab 09 篇手写的"队列 + 定拍"形成对照，也解释了为什么事件处理函数要轻（重逻辑用 setState 触发后续）；
 2. **事件体的字段是查找键**：`e.finished` 若在原生拼成 `isFinished`，JS 拿到 undefined 且无报错——**事件字段名的编译期保护只到 EventEmitter 方法签名一层，payload 字段靠约定**。防御法：JS 侧对事件体做一次解构 + 默认值；
 3. **高频事件要节流**：`onProgress`（每帧报进度）这类需求，要么只在关键节点发（开始/结束），要么原生侧聚合——事件通道快，但 JS 处理不是免费的。
 
@@ -311,19 +311,19 @@ import CircleProgress from '../specs/CircleProgress';
 
 最后一行是事件通道特有的坑：**事件是异步语义**（哪怕 JSI 直调，"动画结束时"也晚于"卸载"），卸载后到达的事件若持有已回收的资源引用，就是崩溃或幽灵 toast。原生侧在发事件前检查有效性，是组件库的标配防御。
 
-## 8. 与 mini-rn 的对照
+## 8. 与 rn-lab 的对照
 
-本篇组件的三条通道，在 mini-rn 里都能找到手写的雏形：
+本篇组件的三条通道，在 rn-lab 里都能找到手写的雏形：
 
-| 本篇（真 RN） | mini-rn 对照 | 篇目 |
+| 本篇（真 RN） | rn-lab 对照 | 篇目 |
 |--------------|-------------|------|
 | Props 结构体 diff 下发 | `diffProps` + `setProps` 增量合并 | [07 篇](07-渲染器与更新管线.md) |
 | ComponentDescriptor 创建影子节点 | `createView` 建 `MiniView` | [06 篇](06-宿主工程与视图原语.md) |
 | mount 到平台 view | `PresentTree` 的 tag → NSView 表 | [08 篇](08-布局器与上屏后端.md) |
 | EventEmitter 推送 | `EmitEvent` + 持久引用回调 | [09 篇](09-事件回路与收官自测.md) |
-| （未做）State 通道 | 无——mini-rn 无原生输入场景 | — |
+| （未做）State 通道 | 无——rn-lab 无原生输入场景 | — |
 
-对照价值最大的一条：**mini-rn 的 `setProps` 增量合并（merge_patch）就是"props diff 后只下发变化字段"的手写版**——做完 07 篇再回本篇，`ReactNativeAttributePayload` 的"预算化 diff"不再是黑话。
+对照价值最大的一条：**rn-lab 的 `setProps` 增量合并（merge_patch）就是"props diff 后只下发变化字段"的手写版**——做完 07 篇再回本篇，`ReactNativeAttributePayload` 的"预算化 diff"不再是黑话。
 
 ## 9. 自测
 

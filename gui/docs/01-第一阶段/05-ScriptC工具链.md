@@ -7,7 +7,7 @@
 
 ```mermaid
 graph LR
-  A[mini-gui 源码<br/>TypeScript] -->|import| B[scriptc-raylib<br/>TS 绑定层]
+  A[gui-lab 源码<br/>TypeScript] -->|import| B[scriptc-raylib<br/>TS 绑定层]
   B -->|scriptc-raylib run/build| C[ScriptC 编译器<br/>TS 类型检查 + 编译]
   C -->|FFI manifest| D[生成的 C shim<br/>raylib_shim.o / libraylib_shim.a]
   C --> E[应用目标码]
@@ -31,13 +31,13 @@ graph LR
 2. **绑定是「静态编译」进来的**：`scriptc-raylib run src/apps/01-window.ts` 会做一个**一次性源码暂存树**（`build/<平台>/.scriptc-raylib-source/`），把 `"scriptc-raylib"` 导入改写为包内 TS 绑定源码，再交给 scriptc 整体编译——不是运行时动态加载。
 3. **首次构建会下载宿主平台的 raylib 发行包并校验**（本机日志：`Downloading https://github.com/raysan5/raylib/releases/download/6.0/raylib-6.0_macos.tar.gz`），之后有缓存。
 
-实测版本组合：**scriptc 0.4.12 + scriptc-raylib 1.0.4（由 `@raylib/api` 6.0.1 元数据生成）+ raylib 6.0**。要求 Node ≥ 24（装包与开发工具链；运行期不需要）；构建原生产物需要链接器与平台 SDK（macOS 上即 Xcode Command Line Tools）。「实验性编译器」的身份要有心理预期：版本行为可能变，mini-gui 把实测过的版本组合钉在 `package.json`（`scriptc: ^0.4.12`、`scriptc-raylib: ^1.0.4`）里，这正是原因。
+实测版本组合：**scriptc 0.4.12 + scriptc-raylib 1.0.4（由 `@raylib/api` 6.0.1 元数据生成）+ raylib 6.0**。要求 Node ≥ 24（装包与开发工具链；运行期不需要）；构建原生产物需要链接器与平台 SDK（macOS 上即 Xcode Command Line Tools）。「实验性编译器」的身份要有心理预期：版本行为可能变，gui-lab 把实测过的版本组合钉在 `package.json`（`scriptc: ^0.4.12`、`scriptc-raylib: ^1.0.4`）里，这正是原因。
 
 暂存树（步 1）还有一个调试上的副作用要知道：**报错路径指向暂存副本而非你的源文件**。SC1013 的报错路径就是 `app/src/main.ts:3:1` 这样的暂存树路径——看到陌生路径先想到「暂存树改写」，对照回 `src/` 下的原文件即可，不是你的工程被改了（暂存树每次构建重建）。
 
 ## 2. 构建产物逐件解读
 
-`gui/labs/mini-gui/build/macos-universal/` 实测 `ls`，七个文件各有职责：
+`gui/labs/gui-lab/build/macos-universal/` 实测 `ls`，七个文件各有职责：
 
 ```text
 main                 ← 可执行文件，745,080 字节
@@ -94,7 +94,7 @@ drawCircle(400,225,18,GOLD)
         ◄────── 无返回值，调用结束 ──────────
 ```
 
-每一次跨界都要付三笔小税：**拆装（marshaling）、校验、调用开销**。这是「FFI 不是免费的」的具体形状——它解释了两条 mini-gui 的工程取向：
+每一次跨界都要付三笔小税：**拆装（marshaling）、校验、调用开销**。这是「FFI 不是免费的」的具体形状——它解释了两条 gui-lab 的工程取向：
 
 1. **绘制调用走显示列表整帧重放**（第二阶段）：内核先攒 TS 侧指令表，重放时连续跨界——而不是每个逻辑操作零散跨界；
 2. **重的数据（像素、字形）留在 C 侧**，TS 只拿句柄和度量值——「轻描述跨界、重资源留界」是整条工具链的内存观（第 4 册 §6 同款思路）。
@@ -163,7 +163,7 @@ TS 调用 loadFileData(path)
 ## 5. 构建命令与工程约定
 
 ```bash
-cd gui/labs/mini-gui
+cd gui/labs/gui-lab
 
 npx scriptc-raylib run  src/apps/01-window.ts --dev   # 开发构建 + 运行（编译更快）
 npx scriptc-raylib build src/apps/01-window.ts -o build/demo   # 发布构建
@@ -189,7 +189,7 @@ npx tsx src/foo.ts  # 怀疑脚本快速验证：.ts 直接跑（不经构建；
 
 ```jsonc
 {
-  "name": "mini-gui",
+  "name": "gui-lab",
   "version": "0.1.0",
   "private": true,
   "type": "module",                         // ← §5.1 的坑：没有这行 SC1013
@@ -253,7 +253,7 @@ where this ES-module syntax marker is a SyntaxError
   hint: use a .mjs/.mts extension or set the nearest package.json's "type" to "module"
 ```
 
-修法一行：`npm pkg set type=module`。mini-gui 工程已带。
+修法一行：`npm pkg set type=module`。gui-lab 工程已带。
 
 ### 5.2 坑 2：Math.* 的「内嵌动态引擎」边界
 
@@ -263,16 +263,16 @@ where this ES-module syntax marker is a SyntaxError
 // 自带数学库：scriptc-raylib 锁定的 scriptc 0.0.35 静态编译不含
 // Math.sqrt / Math.pow / Math.PI / 三角函数（它们属于内嵌动态引擎，本项目构建禁用，
 // 实测报 SC2012）。可用的只有：max / min / round / floor / ceil / trunc / abs、**、random。
-// 于是 mini-gui 自带一份确定性实现——顺带的好处：跨宿主（原生 / Node）逐位一致。
+// 于是 gui-lab 自带一份确定性实现——顺带的好处：跨宿主（原生 / Node）逐位一致。
 ```
 
-于是 mini-gui 带了自己的 `sqrt`（牛顿迭代）与 `sin/cos`（泰勒展开），并附赠一个工程优点：同一份实现在原生与 Node 两个宿主**逐位一致**，测试断言可以用 `<1e-9` 这种紧容差（`math.test.ts` 就是这么写的）。教训的通用形态：**「语言是 TS」不代表「标准库处处同构」**——跨宿主工程要逐 API 盘点，而不是假设。
+于是 gui-lab 带了自己的 `sqrt`（牛顿迭代）与 `sin/cos`（泰勒展开），并附赠一个工程优点：同一份实现在原生与 Node 两个宿主**逐位一致**，测试断言可以用 `<1e-9` 这种紧容差（`math.test.ts` 就是这么写的）。教训的通用形态：**「语言是 TS」不代表「标准库处处同构」**——跨宿主工程要逐 API 盘点，而不是假设。
 
 ## 6. 双宿主的 TS 子集与特性探测
 
 同一份源码要跑在两个宿主里：ScriptC（编译为原生）与 vitest（esbuild 转译）；本地快速验证走第三个入口 `npx tsx`——它与 vitest 同为 Node + esbuild 转译，语义一致，不引入新的宿主差异。实测结论：
 
-| 特性 | ScriptC | vitest / tsx（Node+esbuild） | mini-gui 取舍 |
+| 特性 | ScriptC | vitest / tsx（Node+esbuild） | gui-lab 取舍 |
 |---|---|---|---|
 | 类/继承/getter/静态成员 | ✅ | ✅ | 用 |
 | interface / 泛型 / Map / Set | ✅ | ✅ | 用 |
@@ -284,7 +284,7 @@ where this ES-module syntax marker is a SyntaxError
 
 **实跑**：`src/probe.ts` 特性探测（类继承、泛型、Map/Set、闭包计数器、展开解构、try/catch、switch、instanceof）经 `scriptc run` 输出 `PROBE-OK`，全部通过。三项排除的性质要分开看：Math.* 是硬性宿主限制（ScriptC 报 SC2012，「不能用而不用」）；`enum` 与参数属性在 vitest、tsx 都能跑（「能用而不用」的风格纪律），来历见下两段。
 
-「为什么不用 enum」值得多说一句——注意它**不是宿主限制**：enum 在 ScriptC、vitest、tsx 三个入口都能跑（实测 `npx tsx` 跑含 enum 的文件，连反向映射 `Mode[1]` 都正常输出）。mini-gui 仍坚持不用，理由有三：其一，`const 对象 + 联合类型`表达力等价（类型收窄、按键取值全都有），却没有 enum 反向映射的语义负担；其二，这种写法本身是「可剥离语法」（erasable），整个语言子集将来落到任何更保守的验证工具上也不踩坑；其三，三个入口行为逐位一致，交叉验证时不用怀疑「是不是 enum 的反向映射又在作怪」。一句话：**能跨宿主的写法不止一种时，选约束最少的**——这条对所有「一份代码多宿主」的项目通用。参数属性同理：显式声明字段在所有宿主行为一致，可读性也更好。
+「为什么不用 enum」值得多说一句——注意它**不是宿主限制**：enum 在 ScriptC、vitest、tsx 三个入口都能跑（实测 `npx tsx` 跑含 enum 的文件，连反向映射 `Mode[1]` 都正常输出）。gui-lab 仍坚持不用，理由有三：其一，`const 对象 + 联合类型`表达力等价（类型收窄、按键取值全都有），却没有 enum 反向映射的语义负担；其二，这种写法本身是「可剥离语法」（erasable），整个语言子集将来落到任何更保守的验证工具上也不踩坑；其三，三个入口行为逐位一致，交叉验证时不用怀疑「是不是 enum 的反向映射又在作怪」。一句话：**能跨宿主的写法不止一种时，选约束最少的**——这条对所有「一份代码多宿主」的项目通用。参数属性同理：显式声明字段在所有宿主行为一致，可读性也更好。
 
 为什么坚持要第三个入口（tsx）？因为它是「最快的怀疑验证器」：`npx tsx src/foo.ts` 直接跑，没有构建、没有 vitest 开销；而且它的转译语义与 vitest 同源（同为 esbuild），在这里验证通过的写法，回到回归宿主必然一致——配合上面的风格纪律，怀疑脚本的结论可以无修正地迁移。这条入口有一条明确的禁令：**不要用裸 `node` 直接执行 `.ts`**。Node 24 对 `.ts` 默认走「剥掉类型、直接执行」（strip-only）路线，需要「转译」的语法当场报错（实测原文，Node 24.10）：
 
@@ -298,21 +298,21 @@ SyntaxError [ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX]: TypeScript enum is not supporte
 
 ## 7. 回归开关与平台说明
 
-demo 全部尊重环境变量（原生进程里 `process.env` 实测可用——曾读到回归开关 `MINI_GUI_SECONDS=42` 的原生产物输出；`argv` 里则是暂存可执行文件的路径，不是你输入的命令行）：
+demo 全部尊重环境变量（原生进程里 `process.env` 实测可用——曾读到回归开关 `GUI_LAB_SECONDS=42` 的原生产物输出；`argv` 里则是暂存可执行文件的路径，不是你输入的命令行）：
 
 ```bash
-MINI_GUI_SECONDS=2 MINI_GUI_FPS=30 npx scriptc-raylib run src/apps/01-window.ts --dev
+GUI_LAB_SECONDS=2 GUI_LAB_FPS=30 npx scriptc-raylib run src/apps/01-window.ts --dev
 ```
 
 | 变量 | 作用 | 用法 |
 |---|---|---|
-| `MINI_GUI_SECONDS` | 累计时间到点自动退出并打印统计（帧数、耗时、avgFps、maxDt） | 不设 = 一直跑到关窗；回归脚本的「定时炸弹」 |
-| `MINI_GUI_FPS` | 目标帧率（`setTargetFPS` 的输入） | 第 6 册帧率无关实验的自变量 |
-| `MINI_GUI_SHOT` | 退出前把最后一帧存成 PNG | 视觉回归的取证手段（第 6 册 §6） |
+| `GUI_LAB_SECONDS` | 累计时间到点自动退出并打印统计（帧数、耗时、avgFps、maxDt） | 不设 = 一直跑到关窗；回归脚本的「定时炸弹」 |
+| `GUI_LAB_FPS` | 目标帧率（`setTargetFPS` 的输入） | 第 6 册帧率无关实验的自变量 |
+| `GUI_LAB_SHOT` | 退出前把最后一帧存成 PNG | 视觉回归的取证手段（第 6 册 §6） |
 
 工具链提供 `build:linux-x64` / `build:linux-arm64` / `build:windows-x64` 交叉目标。本课程只在 **macOS（arm64）实测**；Linux 侧按工具链支持声明，未实机验证——如果你在 Linux 上跑，流程应完全一致（首建同样会下载对应 raylib 包）。
 
-`MINI_GUI_SHOT` 的语义在 `01-window.ts` 的头注释里有原文（逐字摘录）：`MINI_GUI_SHOT 退出前把最后一帧存成 PNG（文件名，如 shot.png）`。它与截图时机的铁律（必须在 `endDrawing()` 之后，第 4 册 §3）配合，构成「视觉取证」的标准姿势；工程根目录下的 `shot01.png`/`shot02.png` 就是这么来的存档。
+`GUI_LAB_SHOT` 的语义在 `01-window.ts` 的头注释里有原文（逐字摘录）：`GUI_LAB_SHOT 退出前把最后一帧存成 PNG（文件名，如 shot.png）`。它与截图时机的铁律（必须在 `endDrawing()` 之后，第 4 册 §3）配合，构成「视觉取证」的标准姿势；工程根目录下的 `shot01.png`/`shot02.png` 就是这么来的存档。
 
 顺带一提回归文化的闭环：**「跑起来才算」之所以能自动化，靠的是这三件套**——定时退出（SECONDS）+ stdout 统计（第 6 册 §5）+ 截图（SHOT）。任何阶段的 demo 只要遵守这个约定，就能在 CI 里跑 2 秒、grep 数字、比截图。
 
@@ -322,7 +322,7 @@ MINI_GUI_SECONDS=2 MINI_GUI_FPS=30 npx scriptc-raylib run src/apps/01-window.ts 
 产物里没有。Node 只在构建期出场（跑编译器 CLI、装依赖），`main` 是链接了 shim 与 ScriptC 运行时支持的原生程序（745KB 的体积本身就是证据——任何 JS 引擎都以 MB 计）。「npm 装的包 = 运行时依赖」的直觉在这里失效：devDependencies 全是构建期工具。
 
 **误区 2：「FFI 调用和普通函数调用一样便宜。」**
-每次跨界都有拆装、校验与调用开销（§3）。单次微不足道，但「每帧每控件多次跨界」会积少成多。mini-gui 的对策是显示列表整帧重放、重资源走句柄——**减少跨界次数与跨界数据量**是 FFI 应用的两条基本纪律。
+每次跨界都有拆装、校验与调用开销（§3）。单次微不足道，但「每帧每控件多次跨界」会积少成多。gui-lab 的对策是显示列表整帧重放、重资源走句柄——**减少跨界次数与跨界数据量**是 FFI 应用的两条基本纪律。
 
 **误区 3：「scriptc-raylib 只是一份 .d.ts 类型声明包。」**
 它同时提供：TS 声明（开发期类型）、包内 TS 绑定源码（编译期被暂存进源码树）、原生 manifest 与 FFI 符号（构建期生成 shim）、以及首次构建时的 raylib 发行包下载与校验。把它当「纯类型包」会解释不了 `为什么裸调 scriptc build 失败`——manifest 的发现逻辑在它的 CLI 里。
@@ -344,7 +344,7 @@ MINI_GUI_SECONDS=2 MINI_GUI_FPS=30 npx scriptc-raylib run src/apps/01-window.ts 
 - 产物七件：main 745,080B、ffi.json 172,137B、shim.o 1,584B、generated.o 274,368B、shim.a 295,880B、libraylib.600.dylib 3,606,792B、LICENSE；dylib 相邻加载，发布成目录。
 - FFI 三笔税：拆装、校验、调用开销；对策是整帧重放与句柄化。
 - 安全模型：571 直调 + 9 对自动回收 + 20 个不提供 + traceLogText 变参替身；注册表拒绝悬空、重复释放、kind 错配。
-- 双宿主子集：Math.* 是唯一硬性宿主限制（SC2012），enum/参数属性属风格纪律排除（`const 对象 + 联合类型` 替代）；快速验证走 `npx tsx`，不用裸 node（strip-only 路线实测报 `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`）。`process.env` 可用（实测读到 MINI_GUI_SECONDS=42）。
+- 双宿主子集：Math.* 是唯一硬性宿主限制（SC2012），enum/参数属性属风格纪律排除（`const 对象 + 联合类型` 替代）；快速验证走 `npx tsx`，不用裸 node（strip-only 路线实测报 `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`）。`process.env` 可用（实测读到 GUI_LAB_SECONDS=42）。
 - 坑两条实锤：缺 `"type": "module"` 报 SC1013（原文在 §5.1）；Math.* 报 SC2012（math.ts 头注释）。
 
 ## 自测
@@ -354,8 +354,8 @@ MINI_GUI_SECONDS=2 MINI_GUI_FPS=30 npx scriptc-raylib run src/apps/01-window.ts 
 3. 代际句柄注册表拒绝哪三类错误操作？这为什么比「裸指针当数字传」安全？
 4. 那 20 个不提供的函数分六类，每类的「跨界障碍」分别是什么？变参 TraceLog 的替身长什么样？
 5. 裸调 `scriptc build` 会怎样？为什么？（用「谁负责发现 manifest」回答。）
-6. `enum` 与参数属性在 vitest/tsx 都能跑，mini-gui 为什么仍不用？这种「能用而不用」与 Math.* 的「不能用而不用」本质差别在哪？快速怀疑验证为什么走 tsx 而不是裸 node？
-7. `Math.sqrt` 在哪个宿主可用、哪个宿主报错（错误号是什么）？mini-gui 的替代方案附赠了什么工程优点？
+6. `enum` 与参数属性在 vitest/tsx 都能跑，gui-lab 为什么仍不用？这种「能用而不用」与 Math.* 的「不能用而不用」本质差别在哪？快速怀疑验证为什么走 tsx 而不是裸 node？
+7. `Math.sqrt` 在哪个宿主可用、哪个宿主报错（错误号是什么）？gui-lab 的替代方案附赠了什么工程优点？
 8. `libraylib.600.dylib` 为什么放在 main 相邻目录？把 main 单独拷走会发生什么？
 9. 原生产物里 `process.env` 读到的是什么？`argv[0]` 指向哪里？（提示：暂存树。）
 10. 实操题：跑 `ls -l build/macos-universal/` 对照 §2 的七件产物与字节数；再跑 `npm pkg get type` 确认模块制式（提示：如果不是 `"module"`，§5.1 的报错会在下一次构建等着你）。

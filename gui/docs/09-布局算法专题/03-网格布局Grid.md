@@ -1,7 +1,7 @@
 # 03. 网格布局 Grid：轨道先定型、格子后入座的两段式算法
 
 > [返回：布局算法专题导览](01-导览.md)
-> 本册走读 `gui/labs/mini-gui/src/core/render/grid.ts`（233 行）与 `grid.test.ts`（87 行，5 条手算断言）。读完你应当能在纸上算出：任意「轨道声明 + 单元格声明」在给定宽度里如何解出列宽行高表、每个格子拿多宽多高、摆在哪里——这是仪表盘、相册、设置页分组、桌面图标墙的底层算法。实跑口径：断言全部出自 vitest 实跑（全仓 25 文件 201 断言全绿，2026-11-14）。
+> 本册走读 `gui/labs/gui-lab/src/core/render/grid.ts`（233 行）与 `grid.test.ts`（87 行，5 条手算断言）。读完你应当能在纸上算出：任意「轨道声明 + 单元格声明」在给定宽度里如何解出列宽行高表、每个格子拿多宽多高、摆在哪里——这是仪表盘、相册、设置页分组、桌面图标墙的底层算法。实跑口径：断言全部出自 vitest 实跑（全仓 25 文件 201 断言全绿，2026-11-14）。
 
 ## 1. 概念坐标：与 Flow 的本质差别
 
@@ -301,7 +301,7 @@ this.setSize(c, { width: gridW, height: gridH });
 
 ## 8. 对标工业框架
 
-| mini-gui | CSS | Flutter | iOS |
+| gui-lab | CSS | Flutter | iOS |
 |---|---|---|---|
 | `RenderGrid` 轨道表 | `grid-template-columns/rows` | `GridView`（sliver 系）——本质是**单轴虚拟化**的行/列网格 | `UICollectionViewCompositionalLayout` |
 | `flexTrack` 分摊 | `fr` 单位 | `Expanded` + 内嵌 Row/Column 模拟 | 分布式 spacing |

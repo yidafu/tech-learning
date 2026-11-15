@@ -1,10 +1,10 @@
 {
-  "name": "@mini/math-lib",
+  "name": "math-lib",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "main": "index.mjs",
   "dependencies": {
-    "@mini/shared-utils": "workspace:*"
+    "shared-utils": "workspace:*"
   }
 }

@@ -233,8 +233,8 @@
     "referencedBy": []
   },
   {
-    "id": "01-mini-react-native总览",
-    "title": "01. mini-react-native 总览",
+    "id": "01-rn-lab总览",
+    "title": "01. rn-lab 总览",
     "linkTo": [],
     "referencedBy": [
       "rn-原理实战"
@@ -265,8 +265,8 @@
     ]
   },
   {
-    "id": "05-mini-react-native落地实现",
-    "title": "05. mini-react-native 落地实现（M0–M5）",
+    "id": "05-rn-lab落地实现",
+    "title": "05. rn-lab 落地实现（M0–M5）",
     "linkTo": [],
     "referencedBy": [
       "rn-原理实战"
@@ -308,11 +308,11 @@
     "id": "rn-原理实战",
     "title": "模块十 · 原理实战",
     "linkTo": [
-      "01-mini-react-native总览",
+      "01-rn-lab总览",
       "02-自定义TurboModule全流程",
       "03-Fabric原生组件开发",
       "04-调试工具链原理",
-      "05-mini-react-native落地实现",
+      "05-rn-lab落地实现",
       "06-宿主工程与视图原语",
       "07-渲染器与更新管线",
       "08-布局器与上屏后端",

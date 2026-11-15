@@ -1,4 +1,4 @@
-# mini-gui：贯穿 gui 课程的自研 GUI 框架 lab
+# gui-lab：贯穿 gui 课程的自研 GUI 框架 lab
 
 TypeScript（ScriptC 0.0.35 + scriptc-raylib 1.0.4 + raylib 6.0）写的教学 GUI 框架——`gui/docs/` 八个阶段与 09 布局专题的每册分册都以本 lab 的真实源码与实跑数据为地基。**每个机制结论都能下钻到「册 → 源码行号 → 实测数字」三级。**
 
@@ -19,7 +19,7 @@ src/core/
   widgets/                      TextField、RenderVirtualList（池化）——第八阶段
   pixel-probe.ts                无头像素断言（DisplayList 上虚拟取色）——第八阶段
   animation.ts                  AnimatedValue（tick 返回值即到点信号）——第六阶段
-  config.ts                     环境开关（MINI_GUI_*）
+  config.ts                     环境开关（GUI_LAB_*）
 src/scenes/                     各阶段集成场景（每场景带 *.test.ts）
 src/apps/                       demo01~08 的窗口入口（每阶段一个）
 src/platform/                   raylib backend/measurer/events + 字体加载（平台层，内核零平台分支）
@@ -33,10 +33,10 @@ npm run typecheck     # tsc --noEmit
 npm run dev           # demo01；换 demo：scriptc-raylib run src/apps/08-widgets.ts --dev
 
 # 环境开关四件套（demo 全家共享）
-MINI_GUI_SECONDS=2 MINI_GUI_SHOT=shot08.png MINI_GUI_FPS=60 npx scriptc-raylib run src/apps/08-widgets.ts --dev
+GUI_LAB_SECONDS=2 GUI_LAB_SHOT=shot08.png GUI_LAB_FPS=60 npx scriptc-raylib run src/apps/08-widgets.ts --dev
 ```
 
-无头压测/诊断脚本（06 册性能度量、附录 A 压测骨架）：`/private/tmp/mini-gui-bench/` 下 bench.ts / segments.ts / diag.ts——import 必须绝对路径，replay 的对象是 DisplayList。
+无头压测/诊断脚本（06 册性能度量、附录 A 压测骨架）：`/private/tmp/gui-lab-bench/` 下 bench.ts / segments.ts / diag.ts——import 必须绝对路径，replay 的对象是 DisplayList。
 
 ## 测试方法（四层塔，详见 docs/08-第八阶段/05-测试方法）
 

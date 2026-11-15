@@ -3,7 +3,7 @@
 //
 // 运行（交互）：npx scriptc-raylib run src/apps/05-events.ts --dev
 // 回归 + 截图：
-//   MINI_GUI_SECONDS=3 MINI_GUI_SHOT=shot05.png npx scriptc-raylib run src/apps/05-events.ts --dev
+//   GUI_LAB_SECONDS=3 GUI_LAB_SHOT=shot05.png npx scriptc-raylib run src/apps/05-events.ts --dev
 //
 // 操作：点击按钮计数；hover 变色；Tab 切换焦点（焦点环）；列表区滚轮（带惯性）
 import {
@@ -32,11 +32,11 @@ import { buildInteractiveScene } from "../scenes/interactive-scene";
 const WIDTH = 800;
 const HEIGHT = 450;
 
-const targetFps = envNumber(process.env.MINI_GUI_FPS, 60);
-const exitAfterSeconds = envNumber(process.env.MINI_GUI_SECONDS, 0);
-const shotPath = process.env.MINI_GUI_SHOT;
+const targetFps = envNumber(process.env.GUI_LAB_FPS, 60);
+const exitAfterSeconds = envNumber(process.env.GUI_LAB_SECONDS, 0);
+const shotPath = process.env.GUI_LAB_SHOT;
 
-initWindow(WIDTH, HEIGHT, "mini-gui 05 events");
+initWindow(WIDTH, HEIGHT, "gui-lab 05 events");
 setTargetFPS(targetFps);
 
 const backend = new RaylibBackend();
