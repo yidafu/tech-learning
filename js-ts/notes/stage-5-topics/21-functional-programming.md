@@ -271,7 +271,7 @@ user-7 user-7 1
 
 ### 与站内其他篇的接口（复述收尾）
 
-- 纯函数与不可变：[02-作用域与闭包](../stage-1-js-core/02-scope-and-closures.md) 的闭包捕获是"隐式可变状态"的头号来源——FP 化改造常从这里开刀；
+- 纯函数与不可变：[02-作用域与闭包](../stage-1-js-core/02-scope-and-closure.md) 的闭包捕获是"隐式可变状态"的头号来源——FP 化改造常从这里开刀；
 - 柯里化与组合：[32-ts-type-challenges](../stage-3-ts-types/32-ts-type-challenges.md) 的 Curry 题是这个概念的类型层版本；
 - Result/ADT：[13-ts-type-theory](../stage-3-ts-types/13-ts-type-theory.md) 的代数类型是 L3 层的地基。
 

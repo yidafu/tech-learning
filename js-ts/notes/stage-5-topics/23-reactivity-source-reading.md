@@ -280,7 +280,7 @@ console.log(ten.value, runs);
 
 | 层 | 代表 | 依赖追踪粒度 | 更新传播 | 本册读到的部分 |
 |---|---|---|---|---|
-| 全量重渲染 | React（ Fiber） | 无追踪（整组件树重算） | vdom diff | 对照组（[react 站](../../react/docs) 专册） |
+| 全量重渲染 | React（ Fiber） | 无追踪（整组件树重算） | vdom diff | 对照组（react 站专册，见仓库 react/ 目录） |
 | 脏检查 | Angular 旧版 | 无追踪（digest 轮询） | 多轮收敛 | 历史注脚 |
 | 按组件级订阅 | Vue 2 | 组件级 watcher | 组件重渲 | §1 的前身 |
 | 按属性级订阅 | Vue 3 / Solid / Preact Signals | **属性级**（Proxy/get 拦截） | 精确直达 effect | 本册正文 |
