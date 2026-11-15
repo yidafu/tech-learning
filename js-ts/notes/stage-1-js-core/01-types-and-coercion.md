@@ -385,3 +385,250 @@ true
 
 （下一主题对照大纲为阶段 1.2 作用域与闭包。）
 
+---
+
+## 深一层：ToPrimitive 两步算法的完整推演
+
+把 §7.1.1 压缩成一句话就是**两步结构**：有协议钩子（`Symbol.toPrimitive`）则只走协议钩子、成败自负；没有协议钩子才进入「`valueOf` 与 `toString` 按 hint 排序、谁先交出原始值谁胜出」的第二步。两步之间**没有回头路**——钩子返回对象直接抛错，不会回落到 `valueOf`；第二步两个方法都交不出原始值同样抛错。下面三条实跑收据（node v24.10.0）把两步结构的每个拐点都钉死：
+
+```js
+const tri = {
+  valueOf() { return 1; },
+  toString() { return "I am toString"; },
+  [Symbol.toPrimitive](hint) { return "tp:" + hint; },
+};
+console.log(tri + "");  // "tp:default" —— 钩子存在，valueOf/toString 根本没被问
+console.log(`${tri}`);  // "tp:string"
+console.log(tri * 1);   // NaN —— 钩子返回的字符串再被乘法 ToNumber 加工
+
+const tpObject = { [Symbol.toPrimitive]: () => ({}) };
+try { tpObject + 1; } catch (e) {
+  console.log(e instanceof TypeError, e.message); // true "Cannot convert object to primitive value"
+}
+```
+
+第三行值得停下来想：钩子「成功」返回了原始值 `"tp:number"`，乘法拿到它之后还要按自己的规则（ToNumeric）再加工一次——字符串转数字得 NaN。**ToPrimitive 只负责交出原始值，运算符的语义在拿到值之后才开始**，两件事永远不要混为一谈。
+
+hint 的决策树补一张更全的速查（正文第 5 节表格的延伸，检索主键是语法而不是对象）：
+
+| 语法 | 传给钩子的 hint | 二步法顺序 |
+| --- | --- | --- |
+| 二元 `+`、`==`、`!=` | `"default"` | valueOf 先 |
+| `*` `/` `%` `-`、一元 `+` `-`、关系运算符 | `"number"` | valueOf 先 |
+| 模板字符串、`String()`、数组 `join`/`concat`、`alert` 类 | `"string"` | toString 先 |
+| `Date` 在 `+` 与 `==` 中 | `"default"` 但被 Date 的钩子改道 | toString 先 |
+
+手推任何「对象参与运算」的题，套这个三问模板：①对象有没有 `@@toPrimitive`？有则按 hint 调用、看返回值是不是原始值；②没有则按 hint 排序问 `valueOf`/`toString`，谁先返回原始值用谁；③拿到原始值后**回到运算符自己的规则**（加法看拼接还是数值、乘法转数字、模板直接字符串化）。正文可运行示例 A 组与上一块收据，就是这套模板的两次完整走查。
+
+## 深一层：`==` 逐分支手推配方（含 BigInt / Symbol 分支）
+
+正文第 8 节给了伪代码，这里给「拿到任意题都能落笔」的四步配方：
+
+1. **贴标签**：给两侧各标一个类型（null / undefined / Boolean / Number / String / BigInt / Symbol / Object）；
+2. **空值对判定**：null 与 undefined 成对出现即 `true`；含空值但不成对即 `false`，**到此终止，不做任何转换**（所以 `null == 0`、`undefined == ""` 全是 false）；
+3. **同类型退化**：两侧标签相同则直接按 `===` 判（NaN 在此永远 false，对象在此比身份）；
+4. **查分支表**：不同类型时按下表只做**一次**转换，然后**带着新值回到第 1 步**重新分类。
+
+| 分支（以现行规范 IsLooselyEqual 的分支集合为准，顺序随版本微调） | 动作 |
+| --- | --- |
+| Number vs String | 字符串侧 ToNumber |
+| BigInt vs String | 字符串侧 StringToBigInt；解析失败直接 `false`（不是 NaN） |
+| 任一侧 Boolean | Boolean 侧 ToNumber |
+| Object vs (String / Number / BigInt / Symbol) | 对象侧 ToPrimitive 后回第 1 步 |
+
+十个手推样例全部实跑验证（node v24.10.0，结果依次为）：
+
+```js
+[] == false;            // true   分支4：[] → "" → 分支1："" → 0 → 0 == 0
+[] == "0";              // false  [] → "" 后是 String vs String → 严格比较，不再转数字
+[0] == false;           // true   false → 0；[0] → "0" → 0
+null == "";             // false  空值短路，第 2 步终止
+1n == "1";              // true   StringToBigInt("1") = 1n
+Object(Symbol(1)) == Symbol(1); // false！
+```
+
+最后一个 false 是**符号唯一性**的陷阱而非分支表的例外：`Symbol(1)` 调用两次产生两个互不相等的符号，包装对象拆箱后与右侧那个「新符号」同类型严格比较，自然 false。换成同一个符号就成立：
+
+```js
+const sym = Symbol("shared");
+console.log(Object(sym) == sym); // true —— 拆箱后是同一个符号值
+try { Symbol(sym); } catch (e) {
+  console.log(e.message); // "Cannot convert a Symbol value to a string"（description 也不收 symbol）
+}
+```
+
+BigInt 分支再补三个易漏点（实跑：`1n == 1`、`1n == "1"`、`0n == false`、`1n == "0x1"` 依次为 true、true、true、true）：`StringToBigInt` 与 `ToNumber` 一样接受 `0x` 前缀；BigInt 与 Number 之间在宽松相等里**有**专门分支，按精确数学值比较——`1n == 1` 为 true，`1n == 1.5` 为 false，甚至 `10n ** 21n == 1e21` 也是 true（数学值相等，绕开浮点表示误差）；而「刻意收紧」发生在算术运算符：`1n + 1` 直接 TypeError（正文第 5 节），比较允许、运算禁止，两件事不要混为一谈。
+
+## 工程三陷阱：隐式转换在生产代码里的真实伤害
+
+**陷阱一：表单与 `+` 的拼接**。`input.value` 永远是字符串，`"5" + 3` 得 `"53"` 而减法 `"5" - 3` 得 `2`（实跑收据：`53 2 11`——`1 + "1"` 同理拼接）。防御三件套：入口处显式 `Number()`；转换结果用 `Number.isNaN` 校验（全局 `isNaN` 会先帮你转，掩盖问题）；参与算术前确保已转数。约定「减法能跑通」绝不能当正确性证据，它只是碰巧走了数值分支。
+
+**陷阱二：对象当属性键**。`ToPropertyKey` 对对象键走 ToString，任何对象都归一成 `"[object Object]"`（实跑收据：给同一个空对象用两个不同对象做键各赋一次值，`Object.keys` 长度是 `1`，唯一键名正是 `"[object Object]"`——第二次赋值悄悄覆盖了第一次）。需要对象/符号做键就用 `Map`：键按 SameValueZero 与身份比较，`NaN` 可命中、`+0`/`-0` 同键，且不经过字符串化。实测对照：`Object.is(Math.round(-0.4), -0)` 为 true、`m.get(0)` 能取回 `-0` 键的值、`[NaN].includes(NaN)` 为 true 而 `indexOf(NaN)` 为 -1——三种判等语义在容器场景各司其职。
+
+**陷阱三：`join` 与模板字符串里的静默字符串化**。`[null, undefined, 1].join(",")` 得 `",,1"`（null/undefined 渲染为空串，与 `[null] == 0` 为 true 是同一机制）；`String(null)`、`String(undefined)` 拼进日志后与真字符串无法区分，下游拿到 `""` 或 `"undefined"` 再做 `==` 判空时整套逻辑被字符串化污染。判空请用 `v == null`（一条同时覆盖 null 与 undefined、且不误伤 0 和空串的惯用法——它正是 IsLooselyEqual 空值特判分支的正面应用，实跑：null、undefined 为 true，0 为 false）。
+
+## 输出预测题（进阶）
+
+先闭卷手写全部输出，再对照下一节的逐项解析（全部片段均可在 node 里验证）。
+
+**题 1**
+
+```js
+const box = {
+  count: 3,
+  valueOf() { return {}; },
+  toString() { return `count=${this.count}`; },
+};
+console.log(box * 1);
+console.log(`${box}`);
+console.log(box == "count=3");
+```
+
+**题 2**
+
+```js
+const weird = {
+  valueOf() { return 100; },
+  toString() { return "100str"; },
+  [Symbol.toPrimitive](hint) {
+    return hint === "number" ? 999 : { again: true };
+  },
+};
+console.log(weird * 2);
+try { console.log(`${weird}`); } catch (e) { console.log(e instanceof TypeError); }
+console.log(typeof (() => {}), typeof class {});
+console.log(1 instanceof Number, new Number(1) instanceof Number);
+```
+
+**题 3**
+
+```js
+console.log([] == false);
+console.log([] == "0");
+console.log([0] == false);
+console.log(null == "");
+console.log(1n == "1");
+console.log(Object(Symbol(1)) == Symbol(1));
+```
+
+**题 4**
+
+```js
+console.log(Object.is(Math.round(-0.4), -0));
+const m = new Map([[-0, "zero-key"]]);
+console.log(m.get(0));
+console.log([NaN].includes(NaN), [NaN].indexOf(NaN));
+const s = new Set([NaN, 1]);
+console.log(s.size, s.has(NaN));
+```
+
+**题 5**
+
+```js
+class Even {
+  static [Symbol.hasInstance](n) { return Number.isInteger(n) && n % 2 === 0; }
+}
+console.log(4 instanceof Even, 3 instanceof Even);
+class Tagged { get [Symbol.toStringTag]() { return "MyTag"; } }
+console.log(Object.prototype.toString.call(new Tagged()));
+console.log(Object.prototype.toString.call(new Date(0)));
+const wallet = {
+  balance: 7,
+  valueOf() { return this.balance; },
+  toString() { return `余额:${this.balance}`; },
+};
+console.log(wallet * 2, `${wallet}`);
+```
+
+## 进阶预测题答案
+
+以下输出全部经 node v24.10.0 实跑核对。
+
+**题 1**：`NaN`、`count=3`、`true`。解析：无 `@@toPrimitive`，走二步法。`box * 1` 的 number hint 下 `valueOf` 先答、返回对象视为「没答」，回落 `toString` 得 `"count=3"`，乘法把它 ToNumber 得 NaN；`` `${box}` `` 的 string hint 直接问 `toString` 得 `"count=3"`；`box == "count=3"` 是 Object vs String 分支，对象侧 ToPrimitive（default hint，valueOf 没答后 toString 答出）得 `"count=3"`，两侧同为字符串走严格比较——**最后一步没有再转数字**。
+
+**题 2**：`1998`、`true`、`function function`、`false true`。解析：`weird * 2` 钩子返回 `999`，`999 * 2 = 1998`（valueOf 的 100 从未被问）；`` `${weird}` `` 钩子返回**对象**，两步算法在钩子处直接抛 TypeError，`toString` 没有兜底机会；函数与类都是实现了 `[[Call]]` 的对象，typeof 均为 `"function"`，其 new 出的实例是 `"object"`；instanceof 不装箱（正文第 4 节），包装对象才命中自身构造器。
+
+**题 3**：`true`、`false`、`true`、`false`、`true`、`false`。解析：第一题见第 8 节推演①；`[] == "0"` 与 `[] == 0` 的分野在最后落地分支——前者 String vs String 严格比较（"" 与 "0" 不等），后者 String vs Number 转 0 相等；`[0] == false` 经 false→0、[0]→"0"→0 得 true；`null == ""` 空值短路 false；`1n == "1"` 走 StringToBigInt；最后一题的 false 来自符号唯一性（`Symbol(1)` 两次调用产生两个不同符号，拆箱后同类型严格比较），换成同一个符号则为 true（见上文收据）。
+
+**题 4**：`true`、`zero-key`、`true -1`、`2 true`。解析：`Math.round(-0.4)` 返回 `-0`，`Object.is` 区分 ±0 故与 `-0` 相等；Map 键用 SameValueZero，±0 同键所以 `m.get(0)` 命中 `-0` 键；数组 `includes` 用 SameValueZero 找得到 NaN，`indexOf` 用 `===` 永远 -1；Set 同为 SameValueZero，NaN 可作为成员被命中。
+
+**题 5**：`true false`、`[object MyTag]`、`[object Date]`、`14 余额:7`。解析：`instanceof` 先查静态 `@@hasInstance`，Even 用自己的偶数判定接管了运算符；`Symbol.toStringTag` 改写 `Object.prototype.toString` 的标签位，日期对象是该机制的内置用户；`wallet * 2` 走 number hint 的 `valueOf` 得 14，`` `${wallet}` `` 走 string hint 的 `toString` 得 `"余额:7"`——同一个对象、两种运算、两个答案，hint 由调用方决定。
+
+## 规范原文对照（ECMA-262 要点转述）
+
+以下为便于检索的**要点转述**而非逐字引文；引用请以 tc39.es 现行版为准，编号会随年度快照漂移，检索主键用操作名。
+
+- **§7.1.1 ToPrimitive** 要点：输入为原始值时原样返回；否则以 `GetMethod(input, @@toPrimitive)` 取钩子，取到则按 `preferredType`（缺省视为 `"default"`）调用，返回值是对象即抛 TypeError；没有钩子则按 hint 顺序调用 `toString`/`valueOf`（string 侧 toString 先，否则 valueOf 先），均未交出原始值抛 TypeError。
+- **§7.1.2 ToBoolean** 要点：假值仅六种——undefined、null、Boolean 的 false、Number 的 0 与 NaN（含 ±0）、空字符串；**Object 一行恒为 true**，无任何例外（含 `new Boolean(false)`）。
+- **§7.1.4 ToNumber** 要点：字符串按 StringNumericLiteral 文法解析，前后空白与空串合法归 0、含非法残留即 NaN、支持进制前缀与指数记法；undefined 映射 NaN 而 null 映射 0，二者刻意不对称。
+- **§7.2.14 IsLooselyEqual** 要点：同类型退化 IsStrictlyEqual；null 与 undefined 互相成立且对其他一切类型短路为 false；Number/String 互转、BigInt/String 走 StringToBigInt（失败即 false）、Boolean 转 Number、对象侧 ToPrimitive 后**递归重新分派**；Symbol 只在「对象 vs Symbol」分支作为保留侧出现（包装对象会被拆箱），两个裸 Symbol 之间同类型严格比较——符号唯一性因此生效。
+
+## 深一层：`null >= 0` 为什么是 true——关系运算符的算法走查
+
+正文易错点第 3 条给过结论，这里把算法走全，因为它是「`==` 与关系运算符走不同算法」的最硬证据。关系运算符（小于、大于、小于等于、大于等于）共用抽象操作 **IsLessThan**（检索主键同名，编号随版本漂移），其要点转述：
+
+1. 两侧先各自 ToPrimitive（对象传 number hint——所以 `[]` 在这里被问的是 `valueOf` 再 `toString`，得到 `""`）；
+2. 若两侧都是字符串，按字符串序比较（不是转数字）；
+3. 否则各自 ToNumeric（ToNumber），**任一侧是 NaN 就返回 undefined，表示「不可排序」**；
+4. 数值比较返回 true 或 false。
+
+四个关系运算符对「undefined」的处理完全一致：**一律返回 false**——所以只要任何一侧转出 NaN，四种关系比较全为 false（这也是 `NaN >= NaN` 为 false 的原因）。在此之上，`a >= b` 的语义是「a 小于 b 不成立」：先算 `a < b`（经 IsLessThan），结果不是 undefined 就取反。
+
+走查 `null >= 0`：`null < 0` 先走 IsLessThan——null 不是对象，直接 ToNumber 得 0；右侧 0。`0 < 0` 数值比较得 **false**（注意是 false 不是 undefined，null 不产生 NaN）——「小于不成立」→ 取反 → `>=` 得 **true**。对照 `null == 0`：IsLooselyEqual 第 2 步空值短路直接 false，全程没碰 ToNumber。同一个 null、两个算法、两种命运，这就是「背结论不如背算法」的活例子。
+
+再走两个变式（均有实跑收据）：`[] >= 0` 为 true——`[]` 经 ToPrimitive 得 `""`，与 0 不同为字符串，双双 ToNumeric 得 0，`0 < 0` 不成立取反后 true；而 `null >= undefined` 是 **false**——undefined 经 ToNumber 得 NaN，触发第 3 条的「不可排序」，四个关系运算符统一 false。顺带一个展示字符串序的收据：两个内容相同的空对象 `{}` 互相 `>=` 得 true（都 ToPrimitive 成 `"[object Object]"` 后按字符串序相等、取反成立）——对象之间的大小于几乎是纯巧合语义，工程里禁止使用。
+
+## 手推配方演练：十道变式题全程推演
+
+用上一节配方逐题推演（全部结论经 node v24.10.0 实跑核对，先自己推再看答案行）：
+
+1. `[undefined] == false` → false 是 Boolean 转 0；`[undefined]` 是 Object vs Number，ToPrimitive（number hint）→ valueOf 返回数组本身（没答）→ toString → join 把 null/undefined 元素渲染为空串 → `""`；String vs Number → `ToNumber("") = 0` → true。
+2. `[1, 2] == "1,2"` → Object vs String → 数组 toString 走 join 得 `"1,2"` → 两侧同为字符串严格比较 → true（注意最后没有转数字）。
+3. `new String("a") === "a"` → 类型不同（对象对字符串）直接 false；但 `new String("a") == "a"` → 对象侧 ToPrimitive（default hint）→ valueOf 拆出原始值 `"a"` → true。严格看类型、宽松拆包装，一行题把两种语义都考了。
+4. `NaN == false` → false 是 Boolean 转 0 → NaN 与 0 同为 Number → 严格比较，NaN 对一切不等 → **false**。布尔侧转换救不了 NaN，这是「Boolean 一定可转」的错觉反例。
+5. `[] == null` → 空值短路，false，不做任何转换（`"" == null` 同理 false）。
+6. `[] == {}` → 两侧同为 Object → 第 3 步退化严格比较 → false（两步转换都不触发；「都转成字符串比内容」是错误想象）。
+7. `Object(sym) == sym`（同一符号）→ Object vs Symbol → 对象侧 ToPrimitive → Symbol 包装对象的 valueOf 拆出同一个符号 → 同类型严格比较 → true；换成两次 `Symbol(1)` 则是两个不同符号 → false。
+8. `1n == 1.5` → BigInt vs Number 分支按数学值比较：1 对 1.5 不等 → false；`1n == 1` 则 true。
+9. `null >= undefined` → 关系运算符不是 `==`：undefined 转 NaN → 不可排序 → false。
+10. `[] >= 0` → IsLessThan 链路（见上一节）→ true。与第 5 题连起来看：「`==` 被空值短路拒绝、`>=` 却能成立」与「`[]` 对 null 短路、对 0 成立」是同一套机制的两面。
+
+推演的纪律要求：每一步写出**当前两侧的类型标签**和**触发的是哪一条分支**，跳步即重推。能对陌生表达式不假索隐地写出这两列，本题库就毕业了。
+
+## 工程实践：判等与转换的评审检查单
+
+把正文规范知识折算成可执行的评审动作，六条检查逐条过：
+
+1. **算术入口**：外部输入（表单、URL 参数、localStorage）参与算术前是否显式 `Number()` 并用 `Number.isNaN` 校验？没有就标红——`"5" + 3` 拼接事故几乎都从这里漏进来；
+2. **键类型**：普通对象上是否用对象/数组做键？一律建议改 `Map`（身份键 + SameValueZero）；
+3. **容器查 NaN**：数组是否用 `includes`（SameValueZero）而不是 `indexOf`（严格相等）查 NaN？
+4. **判空惯用法**：同时覆盖 null 与 undefined 的判空是否写成 `v == null`？这个刻意的 `==` 是惯用法，评审意见应放行并注明理由；其余场景默认要求 `===`；
+5. **值对象协议完整性**：自定义了 `valueOf` 的对象是否也实现了 `toString`（或 `@@toPrimitive`）？只答一半 hint 会在模板字符串里爆出 `"[object Object]"` 类日志；
+6. **禁用清单**：`new Number/String/Boolean`、对象间的大小比较、`Symbol` 参与模板字符串拼接——三者见一个拦一个，理由均已在正文。
+
+这六条的价值不在条文本身，而在每条都能回答「违反它的现象是什么、根源是哪条规范分支」——把规范背进评审动作里，知识才算落袋。
+
+## 深一层：二元加法的完整决策树（要点转述）
+
+`+` 是唯一「数字与拼接双语义」的算术运算符，它的算法（二元加法运行时语义，检索 BinaryOp Evaluation）值得单独立一个转述版决策树：
+
+1. 两侧各自 ToPrimitive（**default hint**：无钩子时 valueOf 先）；
+2. 任一侧是**字符串** → 另一侧 ToString → 字符串拼接；
+3. 否则两侧各自 ToNumeric（大数或数字）→ **BigInt 与 Number 混用直接 TypeError** → 同类型数值相加。
+
+三个容易被问漏的推论：其一，第 2 步的「另一侧 ToString」发生在 ToPrimitive **之后**，所以 `1 + {}` 得 `"1[object Object]"`——数字先算术没戏，被拼接分支截胡；其二，`1n + 1` 的 TypeError 出在第 3 步的混用检查，而 `1n == 1` 走的是宽松相等里的数学值分支，所以「加法报错、比较允许」并不矛盾；其三，Symbol 的防爆线在 ToPrimitive 之外：`Symbol(1) + 1` 是「原始值 + 数字」直接 TypeError——Symbol 作为原始值根本没有数值形态，拼接分支会要求 ToString 而规范禁止 symbol 隐式转字符串（正文第 10 节）。三元齐备后，「`+` 到底是加还是拼」这类题不再需要背答案，按树走一遍即可。
+
+## 深一层：typeof 的能力边界与使用建议
+
+typeof 在表里最特殊的两行（未声明标识符返回 `"undefined"` 不抛错、`document.all` 报 `"undefined"`）给了它一个广为流传的副业——「存在性检测」。这个副业的边界值得说清，三条实打实的限制：
+
+1. **只救得了 typeof 自己**。「未声明不抛错」是 typeof 这一个运算符的语义特权，同一种引用换任何别的写法（取属性、传参、比较）都抛 ReferenceError。所以它只能回答「访问它安不安全」，不能回答「声明了吗」；
+2. **救不了 TDZ**。`let`/`const` 声明之前的区域属于「已声明但不可访问」，typeof 同样抛 ReferenceError——规范把这种绑定归为「无法解析引用」之外的情形，特权不覆盖。模块顶层把 const 提到使用之后，typeof 检测形同虚设；
+3. **函数与跨 realm**。typeof 判断函数比 instanceof 可靠：它查的是对象有没有 `[[Call]]` 内部方法，与原型链无关，跨 iframe 判断函数类型依然准确（对照正文第 4 节 instanceof 跨 realm 失效的根源——原型链比对）。但「typeof x === 'object'」在跨 realm 判断数组时毫无分辨力，还是要 `Array.isArray`。
+
+由此给出使用建议：typeof 适合做**类型分派**（函数检测、运行时分支），不适合做**存在性检测**——存在性检测的正解是属性访问侧的工具（`in` 检查键、`Object.hasOwn` 检查自有属性、可选链 `?.` 处理空值），而不是借道一个类型运算符。面试里被问「typeof 为什么安全」时，能把「特权只属于 typeof、边界在 TDZ」两层都说出来，才算超出背诵。
+
+## 深一层：包装对象写入的两种模式对照
+
+正文第 2 节给过现象（给原始字符串写属性，严格模式抛错、非严格静默），这里补机制层的三点推论。其一，两种模式里**写入都注定丢失**：属性访问求值创建的临时包装对象只活当个表达式，写入落在它身上、表达式结束即回收——严格模式的 TypeError 只是把这个注定失败的操作提前拦下来喊出声，不抛错的非严格模式同样什么都没写进去（事后读回 undefined 与模式无关）。其二，「喊出声」的开关就是严格模式：模块代码（ESM）恒为严格模式，所以现代工程里这段代码一律抛错，靠静默失败「跑过去」的写法只在老脚本里见过——排查老代码时别被它的沉默迷惑。其三，同族操作里有一个**连静默版本都没有**的：`Object.defineProperty` 与 `Object.setPrototypeOf` 要求第一个参数是对象，收到原始值直接 TypeError，两种模式都抛——因为它们没有「属性访问」这个先经过 ToObject 的求值阶段，参数校验失败无处可逃。把「临时对象、模式开关、无静默版」三点记齐，包装对象的所有变式题就都有出处了。
+

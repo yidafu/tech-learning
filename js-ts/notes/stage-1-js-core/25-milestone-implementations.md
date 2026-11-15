@@ -318,3 +318,171 @@ E: 'bound Greet' 0 —— SetFunctionName 前缀；max(0 - 0, 0) = 0
 - **lodash cloneDeep**（函数/Symbol 键/原型各自的处理边界，可与 structuredClone 三方对照）
 - 本仓库关联笔记：`notes/stage-1-js-core/04-async-programming.md`（事件循环与微任务）、`notes/stage-1-js-core/03-this-and-prototype.md`（this 四规则）、`notes/stage-1-js-core/06-memory-management.md`（WeakMap 与循环引用）
 
+---
+
+## 工程化补遗 · Promise 边界用例表与抓错映射
+
+正文给了「错误写法对照表」，这里补它的上游——**用例从哪来**。把 A+ 条款逐条翻译成「恶意输入」，每个分支配一个能单独验证它的最小场景。下表右列写明每条用例能抓住哪类错误实现（全部行为先在原生 Promise 上取证，node v24.10.0 实跑）：
+
+| 用例 | 期望行为（实测收据） | 抓的错误实现 |
+| --- | --- | --- |
+| `Promise.resolve(1).then(42)` 长链 | 值 1 原样穿到最后一级 then（实测打印 1） | 把非函数参数当回调调用、或参数校验抛错 |
+| `Promise.reject(e)` 后接两级非函数 then 再 catch | 拒因跳过中间层直达 catch（实测 caught boom 后紧跟 after） | 2.2.7.3/2.2.7.4 的透传代理缺失，中间层「吞错」或提前进 fulfilled |
+| then 回调返回 `Promise.resolve()` 再接下一级 | 采纳要多排一个微任务（顺序实测为 a c b：直接 return 原始值的 c 排在后面但先执行） | promise2 同步 resolve、不把采纳当微任务排队的实现时序全错 |
+| `const p2 = Promise.resolve().then(() => p2)` | 抛 TypeError，原生文案含 Chaining cycle（实测确认） | 未实现 2.3.1 自引用检测，死循环爆栈 |
+| thenable 用 getter 定义 `then` 并计数 | 属性访问**恰好一次**（实测 reads = 1，值正确送达 7） | `x.then(...)` 直接调用导致 getter 副作用跑两次 |
+| 同一个 thenable 先 resolve 后 reject | 只有第一次调用生效（实测拿到 1，late 分支未走） | 缺 called 标志，二次决议覆盖终值 |
+| `Promise.reject(普通对象)` | 拒因就是对象本身（实测取回其属性） | reject 也去展开 thenable，拒因被换成 undefined |
+| executor 里同步 throw | promise 进入 rejected（实测 catch 到 thrown） | executor 未包 try/catch，异常直接冒泡成未处理错误 |
+
+用例的写法纪律：**一个用例只指控一个分支**。把「值穿透 + 冒泡 + 时序」塞进一个用例，挂了也不知道是哪条违反。上表八行就是八份独立「起诉书」，正文的骨架三函数（`_settle` / `_resolveInternal` / `then`）每一行都能在其中一行找到原告。
+
+## 工程化补遗 · bind / new 边界用例表
+
+原生行为取证（node v24.10.0 实跑，逐条对应正文取舍得当与不当的写法）：
+
+| 场景 | 实测结果 | 说明与抓错点 |
+| --- | --- | --- |
+| `(a, b, c)` 函数 bind 预置 1 参后读 `length` | 2 | max(3−1, 0)，clamp 正确性直接可测 |
+| 双重 bind 后传新 this 调用 | this 仍是第一层（实测 `[1, 10, 200, 300]`，第二层预置的 this 未生效） | 「连续 bind 改不了 this」的可执行证据 |
+| 原生 bound 函数读 `prototype` | undefined | 手写 wrapper 必须显式补 `instanceof` 链，否则该用例暴露差异 |
+| `new (f.bind(obj))` | thisArg 被整体忽略，`instanceof` 原函数为 true（实测 `g`、`true`、`name` 为 bound G） | 忘了 new 分支的实现会把 obj 写脏 |
+| 箭头函数 bind | this 不变、预置参数生效（实测参数数组 `[1, 2]`） | 「bind 修 this」的传言在箭头函数上失效，正解是 [[Call]] 无视 this |
+| 构造器 `return 42` / `return null` 后 new | 都得到空对象（`typeof` 实测 object） | 「返回 null 被当对象」的典型错误用例 |
+| `class.call(obj)` | TypeError，文案 Class constructor ... cannot be invoked without new | class 必须走 `Reflect.construct`（实测其返回值字段正确） |
+
+这九行的意义在于把正文的三条规范依据（[[Call]] 与 [[Construct]] 分离、BoundFunctionCreate 槽位、[[IsClassConstructor]]）全部落到可断言的观测点。测试里每行一个断言，任何一条红了都能直接指回对应内部方法名。
+
+## 工程化补遗 · 深拷贝与 structuredClone 的 Node 实测差异
+
+正文对照表偏规范描述，这里给 node v24.10.0 的实测清单（可直接抄进测试断言），并标出与直觉相悖的三处：
+
+- **抛 DataCloneError 的两类**：函数（实测 S1）、Symbol 值（实测 S2）——「序列化器无法表达」的硬失败；
+- **静默丢弃的一类**：含 Symbol 键的普通对象克隆**不报错**，键直接消失（实测 clone ok）——最阴的一档，因为它不失败、只悄悄少数据；
+- **与直觉相悖三处**：正则克隆后 `lastIndex` 归零（源上设了 5，实测克隆体为 0——g/y 标志的迭代状态不跨克隆）；类实例克隆后**字段在、原型不在**（实测 `instanceof` false 但普通字段取值正常）；私有字段实例克隆成功，但克隆体连原型一起丢，原型上的 getter 读出来是 undefined（私有字段本体存内部槽，随实例克隆而失联）——「克隆成功」绝不等于「克隆完整」；
+- **保真的一批**：嵌套 Map/Set 保留类型、NaN 原样、Date 保留时间值、稀疏数组的空洞保留（`1 in arr` 仍 false）、循环引用正常且克隆体是断开的独立副本（实测自引用不相等、内容一致）。
+
+对手写版验收的启示：深拷贝的测试集必须覆盖六类样本——原型、私有字段、稀疏数组、循环引用、Symbol 键、函数。少测任何一类，都可能交付一个「对演示数据完美、对生产数据悄悄出错」的克隆函数。正文手写版与 structuredClone 的三大差异（原型保留、Symbol 键保留、函数共享引用）每一处都要有**双向断言**：手写版得到什么、structuredClone 得到什么，两边都不许只测自己。
+
+## 工程化补遗 · EventEmitter 边界用例表
+
+Node 原生 events 模块实测（node v24.10.0），五条边界行为：
+
+1. **once + off 引用一致性**：`once` 注册后立刻 `off` 原函数——监听数归 0、emit 静默（实测 listenerCount 为 0）。off 的匹配锚点必须是用户手里的原函数，正文 `{ raw, call }` 设计的直接验收点；
+2. **once 只触发一次**：连发两次，回调只跑一遍，之后监听数为 0（实测一致）；
+3. **emit 快照语义**：三个监听 A、B、C，A 在回调里 off 掉 B、再 on 一个新监听——本次派发仍打出 a、b、c（快照含 B），第二次 emit 才变成 a、c、新监听（实测顺序完全一致）。边遍历边改数组的实现会在第一轮就漏掉 B；
+4. **同一函数多次注册**：注册两次、触发两次（实测计数 2），不去重；
+5. **maxListeners 只警告不拦截**：超限后控制台出现 MaxListenersExceededWarning 文案，注册依然成功（实测第三个 on 之后 listenerCount 为 3）——警告是提示不是异常，写实现时 throw 就错了。
+
+另有一条防污染用例：`listeners()` 返回的数组被外部 push 后，内部监听数不变（实测仍为原值）——返回拷贝是封装边界，不是性能优化的可选项。
+
+## 工程化补遗 · 可测试性设计
+
+同一份手写实现，「能被测」与「难测」的差距在设计而非努力。五个具体做法：
+
+1. **调度器注入**：构造函数留第二个参数接收调度函数，默认 `queueMicrotask`。测试注入「收集函数到数组」的假调度器，就能同步地断言「回调在队列清空前绝不执行」（2.2.4 的白盒等价物），不必与真实微任务时序赛跑；
+2. **行为断言优先**：断言「回调执行顺序的数组」而不是内部状态字段——`_state` 属于实现细节，改内部结构不该连坐测试；状态查询仅作为白盒补充（用符号键或只读方法暴露）；
+3. **flush 技巧**：需要真实微任务时序时，`await` 一个 `setTimeout(0)` 的宏任务——宏任务必然排在当前所有微任务之后，是「前面队列已清空」的稳定后盾（上一节微任务顺序收据即由此取证）；
+4. **恶意对象库**：为 2.3 的每个分支造一个「对手」——getter 抛错的 thenable、getter 计数的 thenable、指向自身的循环 thenable、then 为非函数的对象。这些对象写一次、全部分支测试复用；
+5. **用例名带条款号**：命名形如「2.2.4 回调在同步栈清空后执行」「2.3.3.1 then 只取一次」，回归失败时条款号直接定位规范原文，评审时也方便核对「每条规范至少有一个用例」。官方 promises-tests 套件要求的 adapter（导出一个 deferred 工厂）正是这种设计的现成范本——为合规测试而暴露的接口，本身就是可测试性设计的教科书。
+
+## 输出预测题（工程化进阶）
+
+**题 1**（值穿透与拒因冒泡的完整链路，node 实跑验证过）：
+
+```js
+console.log('start');
+Promise.resolve(1)
+  .then(42)
+  .then()
+  .catch(() => console.log('never'))
+  .then((v) => {
+    console.log('A', v);
+    return Promise.reject(new Error('r1'));
+  })
+  .then(() => console.log('B never'))
+  .catch((e) => console.log('C', e.message))
+  .then(() => console.log('D'));
+console.log('sync-end');
+```
+
+**题 2**（按 Node EventEmitter 语义推演，实跑同样成立）：
+
+```js
+const em = new EventEmitter();
+const calls = [];
+function first() {
+  calls.push('first');
+  em.off('tick', second);
+  em.on('tick', () => calls.push('late-join'));
+}
+function second() { calls.push('second'); }
+em.once('tick', first);
+em.on('tick', second);
+em.on('tick', () => calls.push('third'));
+em.emit('tick');
+em.emit('tick');
+console.log(calls.join(' | '));
+console.log('listenerCount =', em.listenerCount('tick'));
+```
+
+## 进阶预测题答案
+
+**题 1**，实跑输出：
+
+```text
+start
+sync-end
+A 1
+C r1
+D
+```
+
+逐项解析：`start`、`sync-end` 同步先打。`then(42)` 与 `then()` 两级非函数参数被透传代理替换，值 1 一路穿到 A（打印 A 1）；A 的回调 return 一个 rejected promise，promise2 进入 rejected——B 只有 onFulfilled，透传继续；C 的 onRejected 接住拒因打印 C r1；catch 返回 fulfilled promise，D 打印。`never` 全程不出现：第一段链从未 rejected，第二段链的拒绝发生在 catch 之前。这条链同时考了 2.2.7.3/2.2.7.4（透传）、2.2.7.2（回调返回值决议 promise2）与 2.3（采纳 rejected thenable）。
+
+**题 2**，实跑输出：
+
+```text
+first | second | third | third | late-join
+listenerCount = 2
+```
+
+逐项解析：第一次 emit 的快照是注册时的三个监听（first、second、third），所以 first 回调里 off 掉的 second **本批仍执行**、on 的新监听**本批不执行**——顺序 first、second、third；once 让 first 本批执行后自动注销。第二次 emit 的现役监听只剩 third 与 late-join，于是 calls 里出现第二次 third、再一个 late-join。最终监听数 2（third 原函数与新加入的匿名函数）。本题把快照遍历、once 的先移除再调用、off 的原函数锚点三个设计要点压进同一段六行代码，任何一处实现走样，输出都会多一行或少一行。
+
+## 工程化补遗 · 手写实现的 API 表面设计
+
+测试能抓错的前提，是实现的对外形状先设计得可测。四条具体约定：
+
+1. **私有命名与观察口分开**。内部方法用下划线前缀（正文骨架的 `_settle`、`_resolveInternal`）表达「实现细节，勿外调」；与此同时给测试留一个**显式**观察口，比如只读的 `inspect()` 返回当前状态、终值或拒因。不建议用井号私有字段实现教学版：井号私有是硬隔离，白盒测试与冒烟 demo 都会被挡在外面——教学实现用约定私有，业务实现才升级为井号私有加受限观察口，这是有意识的取舍而不是偷懒。
+2. **状态用判别联合描述**。Promise 的三态天然适合 TypeScript 的可辨识联合：pending 无载荷、fulfilled 带终值、rejected 带拒因，三种形状分开建模。收益是穷举检查——新增分支处理时编译器立刻指出哪里没覆盖，等于把「状态只能迁移一次」的一部分检查外包给类型系统。
+3. **不用 freeze 充当不可变**。终值与拒因不可变（2.1.2.2/2.1.3.2）靠「settle 之后代码路径不再写入」保证，即唯一的迁移入口加守卫；对终值本身做冻结会连带冻结用户对象，越权改变外部语义——实现的不变量只约束自己内部的字段。
+4. **类型签名复刻规范形状**。`MyPromise` 的 then 泛型让回调返回值决定 promise2 的类型参数，链式约束在类型层重现；手写 bind 用元组推导保留预置参数的类型位置，调用侧少写一个 any 就少一个真实类型风险。类型层的对齐不改变运行时行为，但让「实现是否符合规范形状」在编译期多一道闸门。
+
+## 工程化补遗 · 时序断言的三种写法与适用边界
+
+| 写法 | 做法 | 能断言什么 | 局限 |
+| --- | --- | --- | --- |
+| 注入假调度器 | 构造器第二参注入「收集到数组」的函数 | 同步断言回调未执行、队列长度、派发顺序 | 只适用于支持注入的实现；测不到与原生微任务的互操作 |
+| 顺序数组 | 各回调统一 push 到同一数组再整体比对 | 相对顺序，成本最低 | 断言的是顺序不是时刻；对「多一拍」不敏感 |
+| flush 宏任务 | await 一个 `setTimeout` 零延迟回调 | 「此刻之前微任务队列已清空」这类绝对时刻 | 每次断言多一拍；层级写错（宏任务里再等宏任务）会引入不稳定 |
+
+原则：能用假调度器就不用 flush；flush 只留给「验证与原生 Promise 互操作」的场景（上一节微任务多一拍的收据即由此取证）；顺序数组是最常用的默认写法。三种写法的共同前提是**断言点唯一**——一个用例里出现两个时刻断言，flaky 与假绿会一起回来。
+
+## 工程化补遗 · 三种假阳性测试（反模式对照）
+
+绿灯不等于正确，三种最常见的假阳性：
+
+1. **只测成功半边的透传**。`.then(42)` 的值穿透单测通过，不代表 `.then(null, 42)` 的拒因透传也实现了——透传在规范里是两半（2.2.7.3 与 2.2.7.4），漏掉 rejected 半边的实现，所有成功链用例全绿。抓法：成功链与拒绝链各一条对称用例；
+2. **用定时器竞争断言微任务顺序**。把断言放进第二个 `setTimeout`、以为「晚的就是对的」，实际是在与其他宏任务（I/O、信号）竞争，偶发乱序。抓法：改用顺序数组或 flush 一拍（上一节的写法表）；
+3. **深拷贝只测两层字面量**。循环引用、Symbol 键、私有字段、稀疏数组一个不测——实现对这些样本的行为可能是静默出错而非抛错，演示数据上永远绿灯。抓法：六类样本清单（structuredClone 实测差异一节）作为用例集的最低覆盖线。
+
+共同根因：**用例只覆盖「实现做到了什么」，没覆盖「规范要求什么」**。反模式检查的方法是把规范条款号列出来逐条对照用例名，缺一条就补一条——这也是上一节「用例名带条款号」的另一半价值。
+
+## 工程化补遗 · 自测 67 例与官方 872 例的合规差距
+
+本仓库五个实现共 67 个自测用例，官方 promises-aplus-tests 套件是 872 个合规用例——差距主要在三块：其一，参数组合的海量枚举（then 的两个参数各自取函数、null、数字等各种非函数值的排列，逐一验证透传）；其二，thenable 的深度递归采纳（resolve 一个 then 返回 then 的 thenable，多层嵌套下 first-call-wins 依然成立）；其三，adapter 形状的合规（套件只要求导出一个 deferred 工厂，返回 promise 与 resolve、reject 三件套——这正是「为测试而设计 API」的最小实例）。结论定位要准：**自测全绿证明关键分支都想对了，官方套件全绿才证明合规**；教学实现的目标是分支全覆盖，发布级实现必须补跑官方套件。这个分层同样适用于 bind、new 与深拷贝：把「正文依据 + 边界用例表 + 官方或对标行为的对照验收」当作三级验收流程，一级比一级更接近「敢上生产」。
+
+## 工程化补遗 · 错误信息的可诊断性设计
+
+手写实现的最后一道工程关是报错质量——错误信息是给「没读过实现的人」看的。四条做法，全部能对回正文的实现点：其一，**错误文案带决议上下文**，自引用检测的报错写明「promise 被自身 resolve（循环决议）」而不是笼统的循环检测失败——对照原生的 Chaining cycle 文案，能定位到 2.3.1 的实现才有资格谈友好；其二，**抛 TypeError 的场景与规范对齐**，2.3.1、getter 抛错的包装（2.3.3.2）都按规范用 TypeError，让上层 catch 能按类型分支；其三，**never-resolve 类缺陷要在文档里声明症状**，promise2 永远 pending 的实现 bug 在外部看来是「回调不执行」，把这类症状写进实现的头注释，排障时先对症状再读代码；其四，**EventEmitter 的警告带事件名与计数**（对照原生的 MaxListenersExceededWarning 文案——含事件名、当前数、上限数），让警告本身可行动。诊断性不是锦上添花：手写实现最常见的死法不是逻辑错，而是「错了但没人知道错在哪」，报错质量直接决定实现的存活时间。面试白板时把报错文案与条款号一并写出来，往往比多写一个工具方法更能体现工程成熟度。
+
