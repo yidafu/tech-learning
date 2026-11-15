@@ -303,3 +303,190 @@ pnpm workspace 解决的是**依赖布局**，多包项目的另一半是**任�
 - 《关于 npm 幽灵依赖》相关讨论（如 pnpm 博客与知乎专栏文章）
 - turborepo 文档《Remote Caching》、changesets 文档（github.com/changesets/changesets）
 - 呼应：`notes/stage-4-engineering/16-modules-esm-cjs.md`（exports 字段与双格式包）、`notes/stage-4-engineering/17-build-tools.md`（lockfile 变化触发 Vite 依赖预构建失效）
+
+---
+
+## 机制增补：lockfile 逐字段解析与 diff 的语义
+
+前文「深挖三节」给了 lockfile 的信息结构总览，这里下沉到逐字段——以本工作区真实存在的 lockfile 为实物。收据：node v24.10 读取本仓 `js-ts/package-lock.json` 与 `js-ts/docs-site/package-lock.json` 实测，以下数字均为实读结果。
+
+- **顶层四键**：`lockfileVersion`（值 3，v3 是当前主流形态）、`name`（工程名）、`packages`（核心区）、`requires`（v1 时代的遗留键，v3 里已无实际作用——读 lockfile 时忽略它）。
+- **`packages` 是一张「路径 → 条目」映射**：键是 `node_modules/...` 形式的**安装路径**，另有一个空字符串键代表根工程（实测根条目带 `name` 与 `devDependencies`）。条目核心字段五件套：
+  - `version`：解析后的精确版本（实测 typescript 5.9.3、@types/node 26.6.6）；
+  - `resolved`：下载 URL（registry 快照地址）；
+  - `integrity`：子资源完整性哈希（实测 `sha512-` 前缀）——「装到的字节」与「解析时看到的字节」逐位对账的依据；
+  - `dev`：是否仅开发依赖（实测 @types/node 与它的依赖 undici-types 全部 `dev: true`——dev 标记沿依赖树传播，生产安装据此裁剪）；
+  - `dependencies`：条目自身的依赖（如有）。
+- **同名多版本不需要任何特殊标记**：键名即路径，两个版本天然是两个键。收据（实测 docs-site 的 lockfile）：1542 个条目中 119 个包名存在多版本，例如 `@algolia/autocomplete-shared` 同时以 1.19.12（顶层）与 1.19.2（`node_modules/@docsearch/react/node_modules/...` 路径下）两个键存在——这是 Node「就近解析」在 lockfile 层的固化形态，也给出「同一个包为什么有两份」这类问题的查法：搜包名、数键、看路径。
+- **pnpm-lock.yaml 的双区结构**（文档依据手推，pnpm 官方对 lockfile 格式的说明）：`importers:` 区按 workspace 包逐个记录直接依赖的**范围声明**（谁要什么），`packages:` 区按「包名@版本（可选 peer 后缀）」记录解析结果与 integrity（装的是什么）。对照 npm v3 的单区映射，差异本质是 pnpm 把**声明层也进了锁**——workspace 包多、声明分散时，一份锁文件即可还原每个包各自要什么。
+
+**lockfile diff 的四类语义**（review 依赖变更时逐行在读什么）：
+
+| diff 行 | 语义 | 附加动作 |
+|---|---|---|
+| specifier（声明范围）变化 | 有人改了 package.json | 核对声明改动是否合理、意图是否成对出现 |
+| resolved/version 变化、键不变 | 范围内重解析（重装或更新触发） | 确认是有意升级还是意外松动 |
+| 新增一整棵条目树 | 引入了新依赖 | 回到声明侧看谁引入、为何需要 |
+| integrity 变化、其余不变 | 上游重发了同版本 dist（少见） | 安全审查点：确认发布方公告再放行 |
+
+理解 diff 语义的直接收益在合并冲突现场：能判断「这行冲突属于哪一类」，而不是逐行盲选一边。
+
+---
+
+## 决策速查表：包管理器与 monorepo 工具
+
+包管理器选型（对正文选型建议表的机制细化）：
+
+| 维度 | npm | pnpm | yarn classic（1.x） | yarn berry（2 以上） |
+|---|---|---|---|---|
+| 依赖布局 | 扁平 hoist | symlink 加 `.pnpm` 邻接 | 扁平 hoist | PnP（默认无 node_modules） |
+| 幽灵依赖 | 普遍存在 | 结构性杜绝 | 普遍存在 | 杜绝（无 node_modules 可钻） |
+| 磁盘与安装速度 | 一般 | store + 硬链接，最优 | 一般 | zip 模式快，兼容层有成本 |
+| 工具链兼容 | 最好 | 极少数「依赖路径假设」的工具需逃生舱 | 好 | 需要编辑器与 CI 适配（PnP 门槛） |
+| 适用判据 | 小项目、零心智负担 | 默认推荐：单仓与 monorepo 通吃 | 存量项目维护 | 有专人管工具链的团队 |
+
+判据一句话：**新项目默认 pnpm，除非明确付不起 symlink 的边角成本；yarn berry 是「有专人负责工具链」团队的选项，不是团队默认**。
+
+monorepo 编排工具（与正文「为什么还需要 turbo/nx」互补的信号表）：
+
+| 信号 | 选择 |
+|---|---|
+| 包少于约 5 个、全量构建几分钟内 | 不上编排器（概念税大于收益） |
+| 包多、CI 时长主要耗在重复构建 | turbo（约定优于配置，接 pnpm workspace 顺滑） |
+| 需要代码生成、分布式任务、精细依赖图策略 | nx（插件生态与任务图能力更强，配置面更大） |
+| 多语言、非 Node 包共存 | 先声明边界：已超出本册范围，评估 bazel 级方案 |
+
+---
+
+## 工程三陷阱（依赖管理）
+
+1. **lockfile 合并冲突手乱解**。冲突时手动「两边都保留」或随手 checkout 一方，产出的锁文件「既不代表任何一方的意图、也不对应任何真实解析」——声明区与 packages 区脱节、resolved 与 integrity 错位。CI 的 `npm ci` 当场报错算轻的，重则静默装出一份没人见过的组合。正解：**冲突不留手解，整文件重新生成**——以合并后的 package.json 为准重跑安装（npm 有 `--package-lock-only` 模式，不动 node_modules 只重算锁；pnpm 直接 `pnpm install`），把生成结果整体提交；review 看的是「重新生成的 diff 是否只包含两个分支声明的并集」。
+2. **monorepo 根目录 add 运行时依赖**。`pnpm add xxx` 不带 `--filter` 就落在根 package.json。开发工具（typescript、eslint、turbo）放根没问题，但**运行时依赖放根是幽灵依赖的 monorepo 变体**：各包代码沿 node_modules 向上解析，能 require 到根里的包，而包自己的 package.json 从未声明；单包 pack 发布后消费者装不上，线上 MODULE_NOT_FOUND。判据：**运行时依赖必须进「用它」的那个包**，根目录只留跨包开发工具。
+3. **peer 依赖写成 dependencies**。React 组件库把 `react` 放进自己的 `dependencies`——安装者项目里本来有 React，又给库装了一份它的 React，同一应用两个 React 实例并存：hooks 报「Invalid hook call」、状态互不相通，而且报错点在业务代码、根因却在库的依赖声明。判据：**宿主环境必然提供的包写 `peerDependencies`**（组件库对 React、路由封装对 react-router），并且 peer 范围要克制——声明兼容 `^18` 就别用 19 才有的 API。库作者发包前解包 `npm pack` 产物：依赖分区是验收点之一。
+
+---
+
+## 排查速查表：安装与运行现象 → 根因 → 动作
+
+| 现象 | 最可能根因 | 动作 |
+|---|---|---|
+| 本地能跑，CI 或同事机器 MODULE_NOT_FOUND | 幽灵依赖：能 require 到是因为 hoist，不是声明 | 补 package.json 声明；上依赖 lint 防复发 |
+| `npm ci` 报 lock 与 package.json 不一致 | 改了声明、锁没重生成 | 重跑安装重生成锁，整体提交 |
+| 本地与 CI 装出的版本不同 | CI 误用 install（顺手更新了锁）或锁没入库 | CI 强制 ci；锁文件必须提交 |
+| 明明装了还是找不到 | 同名包就近遮蔽（嵌套 node_modules 里的旧版挡路） | 删 node_modules 重装；查锁里该包有几个键、各在什么路径 |
+| ERESOLVE：peer 冲突装不上 | 宿主包与插件声明的 peer 范围打架 | 升级统一版本；应急用 overrides 钉版本 |
+| node_modules 磁盘异常巨大 | 跨分区安装使硬链接退化为拷贝 | store 与项目放同一分区，`pnpm store path` 核对 |
+| docker 镜像或网盘里 symlink 失效 | COPY 或同步工具不支持符号链接 | 支持链接的复制方式，或临时 hoisted 布局 |
+| 切 pnpm 后「隐式能用的包」全断 | 幽灵依赖被结构性杜绝始于切换 | 逐个补声明——这是切换的收益，不是事故 |
+
+分诊三步：现象先分「装不上（解析期）」还是「装上了跑不起来（运行期）」；装不上再看报错出自依赖仲裁（ERESOLVE 走 peer 通道）还是文件解析（MODULE_NOT_FOUND 走 Node 解析算法）；跑不起来再分本地与 CI 的差异（锁与安装方式）还是本地之间的差异（遮蔽与幽灵）。三步走完，多数依赖事故能定位到四套事实系统（声明、解析、安装、发布）中的哪一套。
+
+---
+
+## Code review 检查单（依赖变更）
+
+依赖相关 PR 按此单过，每条可机械执行：
+
+- package.json 与 lockfile 必须在同一 PR 内变更（只改声明不带锁，等于让别人 CI 挂）；
+- lockfile diff 按四类语义逐类过目：specifier 变化对应声明意图；resolved 变化确认是有意升级；integrity 变化必须有公告依据；
+- 新增依赖三问：有没有更轻的现成方案？维护度如何（最近发布时间、open issues 走势）？体积与传递依赖数量多少？
+- workspace 内部依赖用 `workspace:` 协议，禁止 `file:`（发布不替换，产物必坏）；
+- peer 声明克制：宿主必然提供的才进 peerDependencies，范围与实际用到的 API 匹配；
+- overrides 与 resolutions 必须附注释：为什么覆盖、上游修复后何时拆除——应急手术要有拆线计划；
+- 版本与发布类改动必须随 changeset 文件（版本是流程的产出，不是拍脑袋）；
+- 发库类改动跑 `npm pack` 检查产物：依赖分区、files 白名单、协议替换逐一确认；
+- 依赖 lint（dependency-cruiser 一类）在 CI 保持绿：幽灵依赖新增即拦截。
+
+清单的底层逻辑是本册机制的逆向应用：每一条检查都在把「声明、解析、安装、发布」四套事实系统的脱节点提前到 review 阶段暴露——与其在 CI 或线上撞上，不如在 diff 上对齐。
+
+---
+
+## 机制增补二：changesets 发布流程逐步走
+
+正文用一句话带过了 changesets，这里把一次完整发布按时间轴走通——monorepo 发包的坑大多长在流程的衔接处，逐段看清才能排障。
+
+第一步，开发者在 PR 里附 changeset 文件：`npx changeset` 交互式生成，产物是一个 markdown 文件，frontmatter 写「哪些包、什么级别」，正文写给人看的变更说明：
+
+```yaml
+---
+"@acme/ui": minor
+"@acme/app": patch
+---
+Button 补充暗色主题对比度与 focus 态样式。
+```
+
+级别就是 semver 三位（major/minor/patch），正文是 CHANGELOG 的素材。文件随 PR 提交——**代码改动与版本意图在同一 PR 里评审**，这是流程的第一道闸：评审者看到的不是「有人要发版」，而是「这次改动声称自己破坏了什么、新增了什么」。
+
+第二步，PR 合并后，CI 里的 changesets 机器人（Version Job）消费所有积累的 changeset：把「多包级别」翻译成版本号 bump、重写各包 CHANGELOG，随后处理**互为依赖的兄弟包联动**——ui 升了 minor，依赖它的 app 的依赖声明按所选协议写法更新指向新版本。机器人开出一个「Version PR」，内容就是全部版本号与 CHANGELOG 的变更。人类 review 这个 PR 等于 review「这次发布到底发了什么」——发布内容本身成了可评审对象。
+
+第三步，合并 Version PR 后 CI 的 Publish Job 执行发布：构建、逐包 `npm publish`、打 git tag。`workspace:*` 在 publish 时刻被替换成真实版本号（正文深挖三节已展开三种协议写法的替换差异）——「发布时自动替换」的机制位置就在这一步；替换前的产物可用 `npm pack` 预检。
+
+两个进阶配置一句话带过：**fixed 版本组**——组内包版本号强制一致，适合强耦合包族（一个成员发版全组齐升）；**prerelease 模式**——进入 RC 通道，版本按 prerelease 规则递增，适合「发而不放」的灰度节奏。
+
+判据收尾：为什么不手改版本号？手改绕过了流程的三个产物——CHANGELOG 缺素材、多包联动退化成人脑对表、发布时机不可审计。changesets 的本质是把**版本号变成版本控制之下可评审、可回滚的流程产物**；monorepo 的包越多，这条越接近刚需，而不是流程洁癖。排障时也按这三段定位：版本没动查 changeset 文件是否随 PR 入库，Version PR 没开查机器人配置与令牌权限，publish 失败查 registry 令牌与 workspace 协议替换产物。
+
+---
+
+## 手推配方：pnpm install 之后磁盘上有什么——按路径逐步推演
+
+给定最小 monorepo：`packages/web` 依赖 `packages/ui`（workspace 协议）与外部包 `lodash`；`packages/ui` 也依赖 `lodash`。根 package.json 只声明开发工具。跑完 `pnpm install`，磁盘形态可逐条推出（依据：正文的三层结构与 workspace 文档，手推口径）：
+
+```text
+<root>/node_modules/
+  .pnpm/                          ① 全部外部包的「包@版本」虚拟目录
+    lodash@4.17.21/node_modules/lodash/   （内容硬链接 → 全局 store）
+  .bin/                           ② 全仓开发工具的可执行链接
+  （没有 lodash——根没声明它）
+<root>/packages/web/node_modules/
+  lodash   → ① 的 symlink        ③ web 的直接外部依赖
+  @acme/ui → ../../ui            ④ workspace 协议链接：直连源码目录
+<root>/packages/ui/node_modules/
+  lodash   → ① 的 symlink        ⑤ ui 的直接外部依赖，与 ③ 同一虚拟目录
+```
+
+六条推论直接从这张图读出：
+
+1. **一份字节、多个视口**：lodash 的真实字节只在 store 一份，`.pnpm` 里一个虚拟目录，web 与 ui 各持一个 symlink 入口——「省磁盘」与「各包依赖隔离」同时成立的原因就在这里；
+2. **workspace 链接进的是「依赖方」的 node_modules**（④），不是根 node_modules——这与 npm workspaces 把 workspace 包提升到根的做法不同，查「为什么 app 找不到 ui」时先看依赖方的 node_modules；
+3. **根代码 require lodash 会失败**（根没有声明）——monorepo 级幽灵依赖的拦截点；
+4. **web 里的 ui 源码改动立即可见**（④ 直连源码目录，无构建同步环节）；
+5. **删 node_modules 重装不重复下载**（store 还在，硬链接重建是本地操作）——CI 缓存策略可利用这一点缓存 store 而不是缓存整个 node_modules；
+6. **升级 lodash 只动 `.pnpm` 与各 symlink**——版本仲裁与磁盘布局解耦，lockfile 的 diff 只体现声明与解析变化。
+
+这份推演是排查的底图：任何「链接在哪、字节在哪、谁能看见谁」的疑问，先在这张图上定位，再用 `ls`（列目录）验证——目录树是机制的可视化投影，机制背熟了，目录树不用背。
+
+---
+
+## 进阶输出预测题
+
+### 题 3（lockfile diff 推事故）
+
+对照机制增补的四类 diff 语义，判断以下三段 diff「发生了什么」，并给出 review 的追问点：
+
+- 段 A：packages 区新增 `node_modules/left-pad` 条目（无子依赖），package.json 的 dependencies 多了 `"left-pad": "^1.3.0"`；
+- 段 B：`node_modules/typescript` 的 version 从 5.9.3 变为 5.9.4、resolved 相应更新，package.json 未动；
+- 段 C：`node_modules/somepkg` 仅 integrity 字段变化，version 与 resolved 均不变。
+
+### 题 4（0.x 的发布联动）
+
+monorepo 里 `@acme/utils` 当前版本 0.3.0，`@acme/app` 用 `"@acme/utils": "workspace:*"` 声明依赖。changeset 给 utils 标了 major，发布后：
+
+1. utils 的版本变成什么？app 的声明在发布时被替换成什么？
+2. monorepo 之外的外部消费者声明 `"@acme/utils": "^0.3.0"`，能否装到新版本？为什么？（答案见文末）
+
+---
+
+## 进阶预测题答案
+
+### 题 3
+
+段 A：新增依赖的正常形态——声明行与条目树**成对出现**，diff 自洽；追问点只剩「为什么需要它」与体积评估（检查单三问），没有机制疑点。
+
+段 B：范围内重解析——声明未动而 version 变了，说明有人跑了更新类命令触发了范围重解析；patch 位升级（5.9.3 到 5.9.4）在 `^5.9.3` 范围内合法。追问点：这是有意的升级吗？若是有意，配套的 changeset/测试在哪里；若是误触发（比如本地误跑更新提交了锁），恢复锁文件即可——**声明未动而锁动了，永远是 review 的必问项**。
+
+段 C：同版本重发 dist——version 与 resolved 都没动、只有 integrity 变，这是「上游用同一个版本号重新发布了包」的特征签名。这是安全敏感场景：可能是一次正常的修复性重发，也可能是供应链事故的前兆。处置：核实发布方公告与官方渠道后才能放行，不能当作普通变更合并；已装环境可对照新旧哈希确认实际字节。
+
+### 题 4
+
+1. 按 semver.org 规范手推：major 位直接进一，0.3.0 的下一个 major 是 **1.0.0**（0.x 转 1.0 没有特殊规则；changesets 工具的具体行为以其文档为准，级别语义与 semver 对齐）。app 的声明在发布时 `workspace:*` 替换为 **`"@acme/utils": "1.0.0"`**（精确版本——`workspace:*` 的替换结果）。
+2. **不能**。外部消费者声明的 `^0.3.0` 按 0.x 特例解析为 `>=0.3.0 <0.4.0`（0.x 阶段 MINOR 位承载不兼容变更），1.0.0 不在范围内——这正是正文反复强调的 0.x 特例在发布链路上的后果：内部包族用 workspace 协议全速联动，外部消费者却被 0.x 范围锁死在 0.3.x。**发包前尽快把 0.x 毕业到 1.x** 是库作者的常规责任：0.x 的「MINOR 即破坏」语义只适合开发期，长期停在 0.x 等于把每次功能发布都变成外部消费者的破坏性升级。

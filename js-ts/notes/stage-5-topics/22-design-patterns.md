@@ -299,3 +299,244 @@ console.log(log);
 - 锁回归：改造前后行为对拍（fixture 风格）。
 
 四步把"模式现代化"变成可回退的机械操作，而不是一次性大爆炸重构。
+
+---
+
+## 补遗：State、Template Method、Visitor 的 TS 落地与类型安全化
+
+速配表把这三行一笔带过，这里按正文同款四段式展开——它们恰好覆盖「行为随状态变」「流程骨架」「数据变体上的新操作」三种最常见的变化形态。
+
+### State（GoF 行为型）
+
+- **意图**：允许对象在内部状态改变时改变其行为，对象看起来修改了自己的类。
+- **经典实现**：Context 持有抽象 State 引用，每个具体状态一个子类，方法调用转发给当前状态对象，状态自己决定下一个状态是谁。
+- **TS 现代载体**：**判别联合 + 纯转换函数**。状态是联合、事件是联合、转换是 `(state, event) => state` 的纯函数（形态上就是 reducer）。类型安全化的关键一步是把「哪些转换合法」变成**编译期数据**——一张转换表：
+
+  ```ts
+  type Transition = Record<StateKind, Partial<Record<EventKind, StateKind>>>;
+  ```
+
+  表里查不到的「状态 × 事件」组合在类型层就不可表达；配合穷尽 switch 处理副作用挂载点，非法转换运行时静默通过的可能性被拆掉。
+- **与 Strategy 的高频辨析**：两者类图几乎一样，意图的差别在「谁决定切换」——Strategy 的各算法互不知晓，由客户端选择替换；State 的状态知道自己何时转向谁（转换逻辑内聚在状态里）。答面试时用「切换的决策权在哪」一句话分开。
+- **class 版 State 的残余价值**：状态对象需要自带数据与生命周期（比如「连接中」状态要持有重连计时器、离开状态时要清理）时，函数版转换表会显得拘谨，此时退回对象形态，但联合分派的结构不变。
+
+### Template Method（GoF 行为型）
+
+- **意图**：定义算法的骨架，把某些步骤延迟到子类实现；子类重定义特定步骤而不改变算法结构。
+- **经典实现**：abstract 基类写固定调用顺序的模板方法，抽象方法留给子类填充。
+- **TS 函数式替代**：**高阶函数模板**——把「骨架」写成接收步骤对象的函数，步骤对象的类型约束了必须提供哪些环节：
+
+  ```ts
+  type Steps = {
+    parse(src: string): Node1;
+    check(n: Node1): Diagnostic[];
+    emit(n: Node1): string;
+  };
+  function runPipeline(steps: Steps, src: string): string {
+    const ast = steps.parse(src);        // 骨架：顺序固定
+    const diags = steps.check(ast);      // 每个环节可替换
+    return steps.emit(ast);
+  }
+  ```
+
+  少一个环节 → 对象字面量缺属性被编译期点名（TS2741）；多一个环节 → excess property check 拦下。骨架的「不可变」从基类的权限控制变成了类型的形状约束。
+- **类型安全化要点与限制**：TS 没有 `final`，抽象类的模板方法被子类覆写只能靠约定或 lint 规则；abstract 类漏实现抽象方法是编译期错误、实例化抽象类是 TS2511。函数式版本的优势是**组合可变**：想要「跳过 check 的流水线」，传入不完整步骤对象加适配函数即可，不必另立子类。
+- **何时用**：流程固定、环节可变——构建管线、报表生成、测试框架的生命周期钩子（beforeEach/afterEach 就是模板方法的函数形态）。
+
+### Visitor（GoF 行为型）
+
+- **意图**：表示一个作用于对象结构中各元素的操作，使得可以在不改变元素类的前提下定义新操作。
+- **经典实现**：元素实现 `accept(visitor)`，内部回调 `visitor.visit(this)`——所谓**双分派**。它的原始动机是 C++ 的方法重载静态绑定（不靠 accept 绕一道，调用的重载版本在编译期就定死了）。JS 的属性分派天然动态，这个动机不存在——**直接按 `kind` 分派即可，accept 仪式可以整体删掉**。
+- **TS 现代载体**：节点判别联合 + visitor 对象（每个 kind 一个处理函数）+ switch 分派。类型安全化是本模式在 TS 里的最大增量：
+
+  ```ts
+  type Visitor = { [K in AST['kind']]: (n: Extract<AST, { kind: K }>) => string };
+  ```
+
+  mapped type 遍历所有 kind、`Extract` 把每个方法的参数精确收窄到对应变体。两条保证同时成立：**完备性**（漏一个 kind 报 TS2741）与**参数精确性**（方法体里不必再判 kind，实跑收据见下节题 4）。
+- **何时用**：AST 遍历、序列化、diff——「数据变体集合稳定、操作持续增加」的场景。反过来（操作稳定、变体持续增加）时，把操作内联进 switch 更顺手：这是「表达式问题」的两个方向，Visitor 只解决其中之一，选型前先判断自己的代码往哪个方向变。
+- **与 26 册的衔接**：Babel 的 visitor、tsc 的 visitor、迷你编译器的 checkStmt，三处实现形态一致——数据变体集合 + 分派机制，类只是历史载体（速配表已点，此处补足「为什么可以没有 accept」）。
+
+---
+
+## 手推配方：模式选择的决策树
+
+拿到一个「变化的需求」，按顺序问：
+
+```text
+① 变化的是「同一接口的不同实现」吗？
+   是 → 各实现有状态和生命周期吗？
+        无 → union + Record 函数表（Strategy 现代化）
+        有 → 类 + 接口（或函数式 mixin）
+② 变化的是「对象怎么被创建」吗？
+   → 工厂函数：重载/泛型 + 判别联合返回（Factory 现代化）
+③ 变化的是「流程的某些步骤」吗？
+   → 步骤对象/abstract 类（Template Method）
+④ 变化的是「状态的转移规则」吗？
+   → 判别联合 + 转换表（State）
+⑤ 要对一组稳定的数据变体「持续增加新操作」吗？
+   → mapped type visitor（Visitor）
+⑥ 只是想「给函数加职责」？
+   → 高阶函数装饰（withRetry/withLog）
+⑦ 只是想「控制对对象的访问」？
+   → 需要拦截一切基本操作才用 JS Proxy；只包个别方法就用高阶函数
+⑧ 都不是，只是字段映射？
+   → 一个纯函数 + 两个 DTO 类型（Adapter），别建类
+```
+
+决策树的哲学与速配表一致，两问定一模式：**先问「变化的是什么」**——它决定模式的意图归属；**再问「有没有状态与生命周期」**——它决定载体选函数还是类。两问答完，23 个模式里真正适合当前业务的就浮出来一两个，剩下的都是「听起来相关、实际不搭界」。面试里被问「你项目里用过哪些设计模式」时，用这两问组织回答，比背模式清单高一个档次。
+
+---
+
+## 工程三陷阱（模式 × TS）
+
+1. **kind 字段被宽化成 `string`**。判别联合的全部编译期红利都建立在「判别字段是字面量类型」上。一旦写成 `kind: string`（常见于从 JSON 反序列化时偷懒），穷尽 switch 不再报漏分支、Record 函数表不再查漏、assertNever 永远绿灯——整套安全网静默失效，而且失效得毫无症状。review 判据：判别字段必须是字面量联合；数据入口处用收窄校验（运行时判 kind 合法性）把外部数据**洗成**字面量联合，而不是直接把类型放宽。
+2. **Visitor 用 `Partial` 关掉完备性检查**。`const v: Partial<Visitor> = {...}` 配 `v[node.kind]?.(node)`——新增节点类型时静默跳过，不报错也不告警，漏处理的节点带着 undefined 返回值流向下游。正确做法：完备 visitor（编译期强制每个 kind 都有实现），确实想「只处理部分节点」就补一个默认处理器（Null Object 模式在此的第二个用武之地：`const fallback = () => ''`），让「跳过」成为显式声明的行为而非类型系统的漏洞。
+3. **State 的转换规则散落两处**。一部分转换写在状态对象（或分支函数）里，另一部分写在上下文的 switch 里——转移图失去单一事实来源，非法转换（比如 done 直接转回 loading）运行时静默通过，出问题后没人能从代码里读出「合法转换全集」。收敛办法：转换表（或单点穷尽 switch）作为唯一数据源，状态函数只查表执行副作用；表本身就是团队可读的状态机文档。这张表还能直接喂给测试：合法转换逐条生成用例、非法组合断言被拒。
+
+---
+
+## 类型层输出预测题（tsc 实跑收据）
+
+以下四题全部考察「模式现代化后，类型系统替你守住了什么」。每题先自己判断能否通过 `tsc --strict`，再看答案与收据。
+
+### 题 1（Record 函数表的完备性）
+
+```ts
+type Kind = 'none' | 'vip' | 'full-reduction';
+const STRATEGIES: Record<Kind, (price: number) => number> = {
+  none: (p) => p,
+  vip: (p) => p * 0.8,
+};
+```
+
+问：能否通过编译？报错号是什么、报错点定位在哪一行哪一列？
+
+### 题 2（穷尽 switch 漏分支）
+
+```ts
+type State = { kind: 'idle' } | { kind: 'loading' } | { kind: 'done' };
+function label(s: State): string {
+  switch (s.kind) {
+    case 'idle': return 'idle';
+    case 'loading': return 'loading';
+  }
+}
+```
+
+问 1：报什么错、错误号是什么？问 2：若补一个 `default: return assertNever(s)`（其中 `assertNever(x: never): never`），错误信息会怎么点名漏掉的成员？
+
+### 题 3（未收窄的属性访问）
+
+```ts
+type State = { kind: 'idle' } | { kind: 'loading'; progress: number };
+function getProgress(s: State): number {
+  return s.progress;
+}
+```
+
+问：报什么错？错误信息里 TS 是怎么「指认」具体元凶成员的？
+
+### 题 4（mapped type visitor 的两条保证）
+
+```ts
+type AST =
+  | { kind: 'num'; value: number }
+  | { kind: 'add'; left: AST; right: AST };
+type Visitor = { [K in AST['kind']]: (n: Extract<AST, { kind: K }>) => string };
+const v: Visitor = { num: (n) => String(n.value) };
+```
+
+问：这段代码同时验证了 Visitor 类型安全化的哪两条保证？报什么错？
+
+---
+
+## 类型预测题答案与收据
+
+实跑环境：TypeScript 5.9.3（本工作区 `js-ts/node_modules` 内置），命令 `tsc --strict --noEmit --pretty false`，四个题面文件与 assertNever 变体文件分别落盘后一次性编译，退出码 2。以下错误信息为实跑原文摘录。
+
+### 题 1
+
+```text
+a-record.ts(2,7): error TS2741: Property '"full-reduction"' is missing in type
+'{ none: (p: number) => number; vip: (p: number) => number; }' but required in
+type 'Record<Kind, (price: number) => number>'.
+```
+
+`Record` 的完备性检查把漏写的 kind **按名字点名**，定位精确到对象字面量的 2 行 7 列。这正是「union + 函数表」的核心安全红利：新增策略时 union 加一个字面量、表里漏一行，编译立刻红——继承版策略要等运行时（甚至 review 时人眼）才发现漏实现。
+
+### 题 2
+
+问 1 的收据：
+
+```text
+b-switch.ts(2,34): error TS2366: Function lacks ending return statement and
+return type does not include 'undefined'.
+```
+
+TS 的控制流分析知道：三个 kind 只覆盖两个，`done` 的输入会让函数走不到任何 return，而声明的返回类型 `string` 不含 `undefined`——专门为此设了 TS2366。问 2 的收据（assertNever 变体）：
+
+```text
+e-assertnever.ts(9,33): error TS2345: Argument of type '{ kind: "done"; }' is
+not assignable to parameter of type 'never'.
+```
+
+`never` 是底类型——只有「不可能存在的值」才能赋给它。控制流分析发现 default 分支里 `s` 仍可能是 `{ kind: "done" }`，不是 `never`，于是报错，并把漏掉的成员名直接写进错误信息。两种写法都拦得住；assertNever 的错误信息更点名，工程上优先。
+
+### 题 3
+
+```text
+c-narrow.ts(3,12): error TS2339: Property 'progress' does not exist on type 'State'.
+  Property 'progress' does not exist on type '{ kind: "idle"; }'.
+```
+
+注意第二行：TS 不仅说 `State` 上没有 `progress`，还指出**是 idle 变体上没有**——判别联合未收窄时的访问检查精确到具体成员。修复：先 `if (s.kind === 'loading')` 收窄再访问；收窄后同样的访问编译通过。这也是 State 模式函数版里「switch 前先判 kind」的类型学依据：不是风格，是让编译器放行唯一安全的访问路径。
+
+### 题 4
+
+```text
+d-visitor.ts(5,7): error TS2741: Property 'add' is missing in type
+'{ num: (n: { kind: "num"; value: number; }) => string; }' but required in
+type 'Visitor'.
+```
+
+两条保证同时显形：其一，**完备性**——漏 `add` 被按名点名（TS2741）；其二，**参数精确性**——错误信息里 `num` 方法的参数类型被精确渲染成 `{ kind: "num"; value: number }` 而非整个联合，说明 mapped type + `Extract` 确实把每个方法的入参收窄到了对应变体，方法体内不必再判 kind。新增节点类型（比如加一个 `mul`）时：union 加一个成员、visitor 表漏一行 → 编译期红，所有处理点一个不漏地被逼出来。
+
+---
+
+## Code review 检查单（模式使用）
+
+模式相关代码进 review 时按此单过一遍，每条都是「可机械执行」的判据：
+
+- 判别字段的类型是字面量联合，不是 `string`；外部数据入口有收窄校验把它洗成联合；
+- 函数表用 `Record` 收联合——漏项必须编译报错，而不是落到 `undefined` 再运行时炸；
+- 穷尽 switch 配 assertNever 兜底：新增联合成员时流程是「先红（点名漏分支）后绿（补实现）」，而不是静默加一个 case；
+- Visitor 不用 `Partial`、不给可选方法；「跳过部分节点」用默认处理器显式声明；
+- State 的合法转换有单一事实来源（转换表或单点穷尽 switch），非法组合可被测试断言拒绝；
+- EventEmitter 的事件表用 type 对象字面量声明（interface 无隐式索引签名，过不了 `Record` 约束）；
+- emit 遍历前先拷贝快照（正文预测题 2 的教训，Vue trigger 同款处理）；
+- 新增一个模式实现前，先过决策树两问：变化的是什么？有没有状态与生命周期？class 是最后一档选项，不是第一档。
+
+---
+
+## 补遗二：消失的模式——被语言机制吸收的 GoF 条目
+
+速配表列的是「该换载体」的模式，还有一批 GoF 条目在 JS/TS 里不是换载体，而是**整个问题被语言机制或生态默认件吸收**了。辨清「消失」与「换载体」的差别，能避免拿着锤子找钉子：
+
+- **Prototype（原型）**：JS 的对象模型本身就是基于原型的——语言机制与模式同名同义，谈「用原型模式」等于谈「用对象」。这是「模式消失于语言」的最纯案例：GoF 写它是因为 C++ 需要绕开类来复用对象，而 JS 里这是默认路径，无需任何设计动作。
+- **Flyweight（享元）**：解决「大量细粒度对象共享内部状态」的内存问题。JS 里三处吸收：字符串驻留（引擎自动共享字符串实例）、引擎的隐藏类与内联缓存、以及「用数据而非对象」的默认倾向（普通对象与数组的字段共享代替对象包装）。语言层手写享元的场景只剩极端热点，多数业务代码一辈子碰不到。
+- **Mediator（中介者）**：把网状对象交互收拢到一个中介。现代前端的「状态库 + 订阅」（Redux/Zustand 一族）就是全局中介者：组件互不认识、只跟 store 说话。手写 Mediator 类已无场景，但辨析价值还在：中介者握有全部交互规则，Observer 只负责通知——这正是「该不该把业务规则写进事件总线」的判断依据：规则进总线，总线就变成无人能懂的中介者，解耦退化成转移耦合。
+- **Interpreter（解释器）**：为语言定义文法与解释器。JS/TS 里它的现代形态就是「AST 联合 + visitor/switch」（衔接 26 册）；一般业务规则的「解释」用数据表加函数更直白。GoF 原书也标注这是不常用的一类。
+- **Bridge（桥接）**：把抽象与实现两个维度分开演化。函数一等的世界里，「两个维度」直接用两个参数表达——`render(shape, renderer)` 天然就是桥，不需要抽象类层级持有一个实现引用再转发。
+
+一句话总纲：**GoF 的模式清单是「语言表达力不足时的补偿方案目录」；语言表达力越强，需要补偿的场景越少**。JS/TS 吸收了 Prototype/Flyweight/Mediator 三类问题，改造了 Strategy/Factory/State/Visitor 等一批载体，剩下真正需要「设计」的场景远少于 23——这既是本册总纲（模式从类结构走向数据加函数）的最后一层注脚，也是「面试背模式清单」不如「讲清两问决策树」的根本原因：清单在变，判断力不变。
+
+### 收尾自测（增补二）
+
+1. 中介者与 Observer 的边界一句话怎么说？（中介者握交互规则、Observer 只管通知——业务规则写进事件总线即越界）
+2. Flyweight 被哪三处吸收？（字符串驻留、隐藏类与内联缓存、「数据而非对象」的默认倾向）
+3. Bridge 在函数一等的世界里退化成什么？（两个维度两个参数：`render(shape, renderer)`）
+
+### 收尾一句话（增补二）
+
+判断一个模式该不该出现在你的代码里，顺序是：先问它解决的变化是不是你有的（意图层），再问语言机制是否已经吸收了这个问题（消失层），最后才问载体用函数还是类（速配表层）。三问都过才动手——多数「模式改造事故」都坏在直接跳到第三问。把三问写进设计文档的「备选方案」一栏，评审时逐条对答，能省掉大量关于「为什么不用某某模式」的无效讨论：答案要么是变化不存在，要么是问题已被吸收，要么是载体有更简形态。
