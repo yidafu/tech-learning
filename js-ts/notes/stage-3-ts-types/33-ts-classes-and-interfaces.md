@@ -298,3 +298,260 @@ const x4: IA = { hello: () => 'obj' };
 一句话收束：**早失败用 extends，晚失败（表达合法冲突）用交叉**——两分岔点写进团队的类型评审清单，能消灭一半的 interface/type 之争。
 
 把两分岔点加进你项目的类型规范只需要两行——"声明扩展用 extends（早爆）"、"合法冲突建模用交叉（never 收口）"——写进规范的那一刻，本册的机制辨析就变成了团队资产。
+
+## 附录一：机制深一层——参数属性的四层账本
+
+参数属性 `constructor(public name: string)` 不是单纯的语法糖：编译器为它做了三件事——**类型层**给实例类型添加同名属性、**emit 层**生成赋值语句、**检查层**在环境声明里拒绝它。三个层面各有一条真实错误码兜底，本节逐一验明（全部收据出自 tsc 5.9.3 加 `--strict`，target es2022）。
+
+**类型层**：参数属性与「显式字段加构造器内赋值」产生的实例类型完全一致——`class C` 带 `constructor(public x: number)`，实例类型就是 `x: number`。所以参数属性不添加任何名义性（结构比较照常通过），它省的只是样板代码。想用成员做名义隔离，还是 §4 的 private 同源那一套，参数属性帮不上忙。
+
+**emit 层**：`useDefineForClassFields` 为 true 时（ES2022 目标的默认值），参数属性被降级成「字段声明加构造器体顶部赋值」。先看源码与实跑收据：
+
+```ts
+class Task {
+  label = 'field:' + 'init';
+  constructor(public name: string, private note = 'note-default') {
+    console.log('ctor-body sees:', this.name, this.note, this.label);
+  }
+}
+new Task('param-arg');
+```
+
+tsc emit 出的 JS（收据，实跑）：
+
+```js
+class Task {
+    name;
+    note;
+    label = 'field:' + 'init';
+    constructor(name, note = 'note-default') {
+        this.name = name;
+        this.note = note;
+        console.log('ctor-body sees:', this.name, this.note, this.label);
+    }
+}
+```
+
+node v24 实跑输出 `ctor-body sees: param-arg note-default field:init`。读出三件事：
+
+1. 参数属性的字段声明排在类体最前（与形参声明顺序对齐），初始化器是空的——真正的赋值在构造器体顶部；
+2. 类字段初始化器按声明顺序在「实例创建时」执行，先于构造器体任何语句。一手依据是 ECMA-262 类定义求值步骤（`ClassDefinitionEvaluation` 收集 `ClassFieldDefinition` 记录，实例化时由 `InitializeInstanceElements` 执行）——字段的初始化发生在构造器体语句之前；
+3. 重要推论（工程陷阱一，见附录四）：**字段初始化器读参数属性永远读到 undefined**——初始化器跑的时候构造器体还没执行，赋值尚未发生。实跑收据：
+
+```js
+class P {
+  tag = 't:' + this.name;
+  constructor(name) { this.name = name; }
+}
+console.log(new P('x').tag); // 't:undefined'
+```
+
+**检查层**：两个错误码。其一，`declare class`（环境声明）里写参数属性直接报错——实测 `TS2369: A parameter property is only allowed in a constructor implementation.`。环境声明只描述类型不做实现，而参数属性的本质一半是「实现」（那条赋值语句），所以它被拒之门外；写 `.d.ts` 时必须把参数属性展开成显式成员声明。其二，参数属性与同名字段互斥——`class Dup` 里字段 `g` 与 `constructor(public g: string)` 同名，实测 `TS2300: Duplicate identifier 'g'.`，编译器不调和「一处声明、两处赋值」的归属，直接判重名。
+
+**与声明合并的正交性**：参数属性只动「实例侧实现」，声明合并只动「声明侧类型」，两条通道互不感知。给一个带参数属性的类合并 interface，合并进去的成员不出现在构造器形参上；反过来 namespace 合并追加静态成员，也不影响参数属性的 emit。实用结论：想让成员沿继承链可见，走 extends；想给类从外部追加类型成员，走声明合并——两条通道别指望互相替代。
+
+## 附录二：abstract 与 implements 的静态侧检查
+
+abstract 成员有两张检查面：**声明面**（谁没补全实现）与**消费面**（谁实例化了抽象类型）。两张面各自的真实错误码如下。
+
+**声明面：TS2515。** 抽象类的子类必须补全全部 abstract 成员，否则实测：
+
+```text
+TS2515: Non-abstract class 'Bad' does not implement inherited abstract member m from class 'Abs'.
+```
+
+措辞里的「inherited abstract member」是关键：这不是 implements 的形状检查（那是接口契约），而是 extends 链上的**成员补全义务**——抽象成员从基类一路继承，任何非抽象中间类必须把它落地，或者把自己也声明成 abstract 把义务继续下传。补全检查逐级发生，隔代继承不会漏。
+
+**消费面：TS2511。** `new Abs()` 实测 `TS2511: Cannot create an instance of an abstract class.`。这条检查跟着**类型**走而不跟声明走，三个变体都验过：
+
+1. `const a: typeof Abs = Impl;`（具体子类构造器赋给抽象类静态侧）**合法**——「抽象性」在 assignability 上单向放宽：具体可以给抽象，抽象不能给具体；
+2. 但 `new a()` 报 TS2511——静态侧类型携带抽象标记，编译器拒绝任何经由抽象类型发起的实例化；
+3. 连类型层显式写出的抽象构造签名也一样：`type AbsCtor = abstract new (...args: never[]) => SomeShape` 的值直接 `new` 同样报 TS2511。`abstract new` 类型的正当用途是**作为 extends 的目标**或工厂参数位（表示「可能还是抽象的」），最终落地侧必须是具体构造器。
+
+**消费面的例外：成员访问不拦。** 抽象性只挡实例化，不挡成员访问——`declare const a: Abs` 之后调 `a.m()` 在类型上完全合法，因为运行时它必然是某个已补全的子类实例。这条对写抽象工厂很有用：工厂签名收 `abstract new` 构造器，内部只 new 具体子类，对外只暴露抽象基类的实例类型。
+
+**implements 撞上 protected：TS2720。** 一个类 implements 含 protected 成员的类，实测错误是长文：
+
+```text
+TS2720: Class 'ImplP' incorrectly implements class 'Protected'.
+Did you mean to extend 'Protected' and inherit its members as a subclass?
+Property 'v' is protected but type 'ImplP' is not a class derived from 'Protected'.
+```
+
+机制：protected 的语义是「血缘内的可见性」，implements 的语义是「形状匹配」，两者不是一件事——形状相同但无血缘的实现不被接受。编译器给的建议（Did you mean to extend）就是正确修法：要血缘用 extends，要形状约束用 interface，别混。
+
+**private 同源报错的准确原文**（§4 的机制在检查器里的呈现）也值得记住，实测：
+
+```text
+TS2322: Type 'Truck' is not assignable to type 'Car'.
+  Types have separate declarations of a private property 'vin'.
+```
+
+「separate declarations」一语道破同源判定：比较的不是值的结构，而是声明出身。
+
+## 附录三：装饰器与类字段语义——set 与 define 两种世界
+
+TS 5.0 起默认实现 ES 标准装饰器（stage 3 提案，一手依据：TS 5.0 Release Notes《Decorators》与 tc39 的 proposal-decorators）。标准装饰器与 legacy（TS 4.x `experimentalDecorators`）的分界，恰好落在本册反复出现的 set/define 语义上：
+
+| | legacy 装饰器 | 标准装饰器 |
+| --- | --- | --- |
+| 字段装饰器拿到的参数 | `target`、`name`、**descriptor**（含 value/get/set） | `value`、`context`（context 里有 access，没有 descriptor） |
+| 工作面 | 原型上的属性描述符（set 语义假设） | 类字段定义动作（define 语义） |
+| 替换字段行为 | 改 `descriptor.value` 后返回 | 返回新的初始化函数，或用 `context.addInitializer` 注册初始化器 |
+
+机制根源：类字段在标准语义下不是原型上的属性，而是「每个实例创建时执行的定义动作」——所以字段装饰器**根本没有描述符可拿**（描述符是原型属性的元数据，字段不在原型上，访问器装饰器才拿得到 get/set）。legacy 装饰器生态（旧版 class-validator、旧 NestJS 路线）大量依赖「字段装饰器里换 `descriptor.value`」，迁移到标准装饰器时这些代码会**静默失效**而不是报错——这是 TS 5 迁移期最大的暗坑。
+
+实践结论：新库一律标准装饰器加 `addInitializer` 模式；维护旧库时，看到「字段装饰器解构 descriptor」就知道它属于 set 语义世界，迁移方案是改成初始化器包装——把原字段值包一层函数，再由初始化器在实例上重新定义。这也反向解释了附录一收据里「参数属性被降级为字段声明加赋值」的形态：emit 层必须与 define 语义的时序保持一致，装饰器与字段才有统一的账本可查。
+
+## 附录四：工程三陷阱（现象、根因、修复）
+
+**陷阱一：字段初始化器读「构造器才赋值的成员」拿到 undefined。** 现象：`class C` 里 `tag = 't:' + this.name`，构造器里 `this.name = name`（或写参数属性），运行时 tag 是 `t:undefined`。根因：附录一的时序收据——字段初始化器先于构造器体执行（ECMA-262 `InitializeInstanceElements` 在构造器体语句前）。修复：初始化逻辑移进构造器体并放在赋值之后；或把 tag 改成 getter 惰性求值。review 时看到「字段初始化器引用 this 的其他成员」一律拦下。
+
+**陷阱二：在 `declare class` 或 `.d.ts` 里写参数属性。** 现象：给第三方类补环境声明时顺手写 `constructor(private x: number)`，实测 TS2369。根因：参数属性一半是实现，环境声明没有实现的席位。修复：展开成显式成员声明——`private x: number` 作为字段声明一行，构造器照普通签名写。连带提醒：合并第三方类的类型（interface 与 class 合并）时也一样，合并侧只写类型成员，永远不带实现痕迹。
+
+**陷阱三：子类用字段「重写」父类访问器。** 现象两副面孔：父类在同一工程里时，编译期就报 `TS2610: 'v' is defined as an accessor in class 'AccessorBase', but is overridden here in 'FieldChild' as an instance property.`（tsc 5.9.3 实测）；父类来自 `.d.ts` 或纯 JS 库时编译器看不见，运行时静默遮蔽——define 语义在实例上创建自有值属性，原型链上的 getter/setter 从此不被调用。运行时收据（node v24）：
+
+```js
+class A { get v() { return 'getter'; } }
+class B extends A { v = 'field'; }
+const b = new B();
+console.log(b.v);                                    // 'field'（getter 未被调用）
+console.log(Object.hasOwn(B.prototype, 'v'), Object.hasOwn(b, 'v')); // false true
+```
+
+修复：真要重写访问器就成对写 get/set；只是想要初始值就换个名字。review 时「子类字段名与父类访问器同名」与「父类访问器在链上」两问一起过。
+
+## 附录五：排查速查表（错误码均为 tsc 5.9.3 加 `--strict` 实测）
+
+| 错误码 | 报错原文（截取） | 机制归属 | 修复方向 |
+| --- | --- | --- | --- |
+| TS2369 | A parameter property is only allowed in a constructor implementation. | 环境声明禁止实现痕迹 | `.d.ts` 展开为显式成员 |
+| TS2300 | Duplicate identifier 'g'. | 参数属性与字段同名互斥 | 二选一 |
+| TS2610 | 'v' is defined as an accessor in class ... overridden ... as an instance property. | define 语义遮蔽访问器 | 成对 get/set 重写 |
+| TS2511 | Cannot create an instance of an abstract class. | 抽象标记随类型走 | 经具体子类实例化 |
+| TS2515 | Non-abstract class ... does not implement inherited abstract member ... | extends 链补全义务 | 补实现或自身声明 abstract |
+| TS2717 | Subsequent property declarations must have the same type. | 声明合并同型约束 | 合并侧类型对齐 |
+| TS2720 | Class ... incorrectly implements class ...（protected 提示） | protected 是血缘语义 | 改 extends 或改接口 |
+| TS2322 | Types have separate declarations of a private property 'vin'. | private 同源名义检查 | 主动名义化或去掉 private |
+
+用法：报错码先查此表定位「属于哪条机制」，再回正文对应小节展开。表里每一行都能在附录一至四找到带收据的完整论证——速查表是论证的压缩包，与决策速查表同一设计原则。
+
+## 附录六：输出预测题（三道，附逐步解析）
+
+**题 3（类字段与静态块初始化顺序）**：以下代码输出什么？
+
+```ts
+const seq: string[] = [];
+class Base {
+  b1 = seq.push('base-field');
+  constructor() { seq.push('base-ctor'); }
+}
+class Sub extends Base {
+  static sInit = seq.push('static-field');
+  static { seq.push('static-block'); }
+  s1 = seq.push('sub-field');
+  constructor() { seq.push('sub-pre'); super(); seq.push('sub-post'); }
+}
+new Sub();
+console.log(seq.join(','));
+```
+
+**答案**（node v24 实跑收据）：`static-field,static-block,sub-ctor-pre-super,base-field,base-ctor,sub-field,sub-ctor-post-super`。
+
+逐步推演：① 静态侧最先完成——静态字段与静态块按声明顺序执行（字段在前、块在后），发生在类定义求值时，先于任何实例化；② 子类构造器体在 `super()` 前的语句可以执行（只要不碰 this），记录 sub-pre；③ `super()` 调用：基类字段 b1 初始化，随后基类构造器体执行；④ `super()` 返回的那一刻，子类实例字段 s1 才初始化（规范依据：派生类的 `InitializeInstanceElements` 在父构造器返回后执行）——所以 sub-field 落在 base-ctor 之后、sub-post 之前；⑤ 构造器体余下语句。一句话：**静态先于实例，super 返回是子类字段的起点**。`super()` 前碰 this 直接 ReferenceError，是同一时序账本的另一面。
+
+**题 4（字段遮蔽访问器的运行时判定）**：见附录四陷阱三的收据代码，问三行输出各是什么，以及 `B.prototype` 上到底有没有 `v`。
+
+**答案**：`'field'`；`false true`。逐步推演：字段 `v = 'field'` 按 define 语义在**实例**上创建自有值属性，读 `b.v` 时自有属性直接命中，原型链（含 A 的 getter）根本不被查询；`Object.hasOwn(B.prototype, 'v')` 为 false 证明字段不落原型——这正是「字段装饰器拿不到 descriptor」的同一根源（附录三）。TS 在父类可见时用 TS2610 把这件事拦在编译期；父类来自 `.d.ts` 时只能靠 review。
+
+**题 5（声明合并的重载优先级）**：
+
+```ts
+interface Api {
+  fetch(x: string): string;
+  fetch(x: 'user'): 'user-data';
+}
+declare const api: Api;
+const r = api.fetch('user');
+const t: 'user-data' = r;
+```
+
+问：`t` 的赋值能通过类型检查吗？
+
+**答案**：能（tsc 5.9.3 实测收据）。§2 说过「同名方法合并成重载」，本补充它的另一半：**后声明的排前面**——`fetch('user')` 首先匹配第二条声明，返回 `user-data`。推论是写声明合并时「更精确的分支要写在后面」；若两侧属性类型不一致（同名属性而非方法），才走 TS2717 的同型约束报错。方法合并成重载与属性同型检查，是声明合并的两条平行规则，别混。
+
+## 附录七：code review 检查单（类与接口）
+
+1. **字段初始化器不读 this 的其他成员**——时序上读到的必然是 undefined（附录一收据），初始化逻辑进构造器体。
+2. **参数属性只用于无逻辑的注入字段**——有默认值以外逻辑的成员，写显式字段加构造器体，别让 emit 的隐性顺序替你做决定。
+3. **`declare class` 与 `.d.ts` 不出现参数属性**——TS2369；环境声明一律显式成员。
+4. **子类不重名遮蔽父类访问器**——TS2610 拦得住同工程的；跨包的靠这一条 review 红线。
+5. **private 成员的名字登记进团队规范**——名义性靠「同源声明」支撑，重命名或删除都会静默改变兼容矩阵（TS2322 separate declarations）。
+6. **abstract 类的 abstract 成员不带实现体**——要部分实现就拆 protected 具体方法；TS2515 的补全义务沿 extends 链逐级检查，中间类别「替子类偷懒」。
+7. **工厂签名需要「可能抽象」的构造器时用 `abstract new` 类型**——落地 new 的那一处必须拿到具体构造器（TS2511 随类型走）。
+8. **implements 含 protected 或 private 成员的类视为错误信号**——TS2720，先问「是不是想要 extends」。
+9. **新代码装饰器用标准语义**——字段装饰器禁止解构 descriptor（不存在），扩展点用 `addInitializer`；发现 descriptor 用法即视为 legacy 迁移欠账。
+10. **声明合并必须注明合并对象与动机**——`declare global` 写在模块内并注释「合并进 Window / Array 的哪个成员」；公开 API 若有意开放合并口子，在文档里写明「允许扩展」，否则用 type 别名封口。
+
+## 附录八：手推配方——从报错原文回到机制的定位法
+
+排查类与接口的不兼容报错，固定三步走：**先读错误码，再问「比较的是形状还是出身」，最后落到本册机制**。两道完整推演示例示范这套配方。
+
+**示例一：`Types have separate declarations of a private property 'vin'`（TS2322）。** 第一步读错误码：TS2322 是赋值不兼容的总码，关键在第二行的措辞。第二步问比较对象：报错说的是「separate declarations」——不是属性值不等、不是形状有差，而是**声明出身不同**。第三步落机制：private 成员触发同源检查（§4），两个类的 `vin` 起源于两处声明，结构再像也不兼容。推演到此结束，修复方向自动浮现：要么让两处声明同源（抽公共基类），要么去掉 private 回归结构比较，要么利用它做名义隔离（保留报错、改变语义）。
+
+**示例二：`Class 'ImplP' incorrectly implements class 'Protected'`（TS2720）。** 第一步读错误码：TS2720 专指 implements 一个类（而不是接口）。第二步问比较对象：protected 成员的检查走「血缘」通道——错误原文里「not a class derived from」就是血缘判定的原话。第三步落机制：§5 的「implements 是形状检查」在 protected 成员这里被打开一个口子——形状相同不足以满足 protected，因为 protected 承诺的是继承链内的可见性，一个无血缘的「同形状」实现兑现不了这个承诺。修复方向同样自动浮现：想继承保护成员用 extends；只想约束形状，把 protected 成员抽成接口。
+
+配方的通用价值：TS 的类相关错误码几乎都在报错第二行给了**机制层的原话**（separate declarations、not a class derived from、inherited abstract member、Cannot assign an abstract constructor type）——读第一行定位「什么事不行」，读第二行定位「为什么不行」，后者直接索引到机制小节。面试里复述报错时引用第二行原话，比背错误码更见功力。
+
+## 附录九：输出预测题（第四道，抽象性的单向门）
+
+**题 6**：以下五行各能否通过类型检查？
+
+```ts
+abstract class Abs2 { abstract go(): void }
+class Done extends Abs2 { go(): void {} }
+
+const p1: typeof Abs2 = Done;
+const p2: typeof Done = Abs2;
+type C1 = abstract new (...args: never[]) => Abs2;
+declare const c: C1;
+const p3: typeof Abs2 = c;
+const p4: C1 = Abs2;
+```
+
+**答案**（tsc 5.9.3 实测收据）：`p1`、`p3`、`p4` 通过；`p2` 报错，错误原文第二行是 `Cannot assign an abstract constructor type to a non-abstract constructor type.`。
+
+逐行解析：
+
+- `p1` 通过：具体子类构造器赋给抽象类静态侧——抽象性在 assignability 上单向放宽，具体是抽象的充分形态（附录二已证）。
+- `p2` 报错：反向不成立。抽象静态侧携带「可能未补全」的标记，交给具体类型后调用方就能 `new` 出一个 `go` 未实现的实例——检查器用专用措辞拦下这一整类风险。
+- `p3` 通过：`abstract new` 类型注解与 `typeof Abs2` 都是「抽象构造器」的两种写法，同为抽象侧互赋无碍——抽象标记跟着类型走，两边的抽象性对齐即可。
+- `p4` 通过：类静态侧赋给抽象构造签名注解，同上。两个抽象形态（声明侧的 Constructor 节点与注解侧的 ConstructorType 节点）在类型层等价。
+
+一句话延伸：**抽象性是一张单向门——具体可以充任抽象，抽象不能冒充具体**。工厂设计的直接推论：想收「可能还是抽象的」构造器就用 `abstract new` 签名，想在签名处承诺「一定可实例化」就写具体类型；前者更宽松、后者更安全，按调用方需求选。
+
+## 附录十：第二条名义通道的实证与第七道预测题
+
+§5 提过「接口可以继承类」是 TS 的第二条名义通道，本节把它验到错误码层。收据（tsc 5.9.3）：
+
+```ts
+class Klass { private secret = 1; }
+interface IEdge extends Klass { tag: string }
+class Outsider implements IEdge { tag = 'x'; private secret = 9; }
+```
+
+实测报错：
+
+```text
+TS2420: Class 'Outsider' incorrectly implements interface 'IEdge'.
+  Types have separate declarations of a private property 'secret'.
+```
+
+机制读法：`interface IEdge extends Klass` 把类 Klass 的形状**连同 private 成员的出身**一起抄进接口——此后 `IEdge` 的兼容判定里藏着一条「secret 必须起源于 Klass」的要求。`Outsider` 自带的 `private secret = 9` 形状完全一致，但出身不同，同源检查照样拦截（TS2420）。唯一的实现路径是血缘：`class Heir extends Klass implements IEdge`（实测通过）。对照收据：把 `IEdge` 换成纯结构接口 `interface IEdge2`（只有 `tag: string`），任何形状匹配的类都能 implements——两条通道的差异全部来自那一个 private 成员。
+
+**题 7**：基于以上收据回答三问：① `IEdge` 还能被哪些类 implements？② 这条通道与 §4 的「类间 private 同源」是同一机制吗？③ 想要「只有本家族能实现」的契约，为什么这条通道比品牌类型更彻底？
+
+**答案**：① 只有 Klass 及其子类（血缘是唯一钥匙）；② 是——报错原文都是「separate declarations of a private property」，同源判定同一套，只是触发位从类间赋值挪到了 implements 检查；③ 品牌类型（`__brand`）是 TS 层的仿制品，编译器只是「顺便」因为不认识属性而报错，且可用断言绕过；接口继承类的通道动用的是编译器的**正式**同源规则，连 `as` 断言也绕不过去（断言不改变声明出身）。代价是该契约把实现者绑死在类的继承链上——需要在「家族封闭」与「开放实现」之间做选择时，这条通道的语义恰好就是「家族封闭」。
+
+
+

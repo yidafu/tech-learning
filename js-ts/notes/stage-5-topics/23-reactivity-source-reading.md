@@ -298,3 +298,438 @@ console.log(ten.value, runs);
 ### 收尾一句话（增补）
 
 响应式的本质是**把"哪部分界面依赖哪部分数据"显式化**——四层谱系就是四种显式化的精度档位，源码阅读读的是最高档位的实现代价，选型时读的是哪一档配得上你的业务。
+
+## 精读补遗一：dep.ts——Dep 与 Link 的双向链表（v3.5.13 实录）
+
+本册正文按 3.4 的「Set 集合」讲 Dep，这里补 3.5 重构后的真实形态。以下引文全部出自 `vuejs/core` tag `v3.5.13` 的 `packages/reactivity/src/dep.ts`（为省篇幅去掉 `__DEV__` 调试分支，主干原样保留）。`Link` 是 dep 与订阅者之间那条边的对象化——正反两条链共用一批节点：
+
+```ts
+export class Link {
+  version: number
+  nextDep?: Link   // 订阅者的依赖链（effect 的 deps 表）
+  prevDep?: Link
+  nextSub?: Link   // 依赖的订阅链（dep 的 subs 表）
+  prevSub?: Link
+  prevActiveLink?: Link
+  constructor(public sub: Subscriber, public dep: Dep) {
+    this.version = dep.version
+    // 五根指针全部置 undefined
+  }
+}
+
+export class Dep {
+  version = 0
+  activeLink?: Link = undefined
+  subs?: Link = undefined          // 订阅链（尾）
+  sc: number = 0                   // 订阅计数
+  constructor(public computed?: ComputedRefImpl | undefined) {}
+}
+```
+
+读这张结构的三个要点：
+
+1. **一节 Link 同时活在两条链上**——挂在 sub（effect）的 `deps` 链上，也挂在 dep 的 `subs` 链上。cleanup 时摘一个节点等于同时从两边注销，这正是 3.4 里「Set 与反向 Set」合体的链表版。
+2. **`version` 是 cleanup 的标记位**：每次 run 前（`prepareDeps`）把该订阅者全部旧 Link 的 version 置 -1；track 时复用旧 Link 并同步成 dep 的当前 version；run 后（`cleanupDeps`）version 仍是 -1 的 Link 就是「本轮没读过」的死边，双双摘除。§4 讲的 cleanup 语义，3.5 的实现从「遍历 dep 集合删除」变成了「版本标记筛选」——意图不变，复杂度从遍历 dep 变成只动链表节点。
+3. **`targetMap` 的建账仍是惰性的**（与 3.4 一致）：
+
+```ts
+export function track(target: object, type: TrackOpTypes, key: unknown): void {
+  if (shouldTrack && activeSub) {
+    let depsMap = targetMap.get(target)
+    if (!depsMap) {
+      targetMap.set(target, (depsMap = new Map()))
+    }
+    let dep = depsMap.get(key)
+    if (!dep) {
+      depsMap.set(key, (dep = new Dep()))
+      dep.map = depsMap   // 反向指回所在 Map，供「无订阅者时删账」用
+      dep.key = key
+    }
+    dep.track()
+  }
+}
+```
+
+`trigger` 侧（同一文件）：`dep.trigger()` 只做三件事——`version++`、`globalVersion++`（模块级全局版本号，供 computed 走快路径，见补遗三）、`notify()`；`notify` 用 `startBatch/endBatch` 包住「沿 `subs` 链从尾向头逐个 `link.sub.notify()`」的通知过程。另有一个内存优化值得记住：`removeSub` 里当某属性 dep 的订阅计数 `sc` 归零时，会把它从 `depsMap` 里删掉（源码注释引用 issue #11979）——「对象长期存活、但只有部分属性被间歇 track」的场景不会积累死账。
+
+## 精读补遗二：effect.ts——run 的五步与批量刷新队列
+
+引文出自同 tag 的 `packages/reactivity/src/effect.ts`。`ReactiveEffect.run` 是整册最核心的十行：
+
+```ts
+run(): T {
+  if (!(this.flags & EffectFlags.ACTIVE)) {
+    return this.fn()   // 已 stop：裸跑，不收集
+  }
+  this.flags |= EffectFlags.RUNNING
+  cleanupEffect(this)        // 用户级 onEffectCleanup 函数
+  prepareDeps(this)          // 旧 Link 全部置 version = -1（待定标记）
+  const prevEffect = activeSub
+  const prevShouldTrack = shouldTrack
+  activeSub = this           // 3.5 的「栈顶」就这一个变量
+  shouldTrack = true
+  try {
+    return this.fn()
+  } finally {
+    cleanupDeps(this)        // 摘除 version 仍为 -1 的死边
+    activeSub = prevEffect   // 恢复外层
+    shouldTrack = prevShouldTrack
+    this.flags &= ~EffectFlags.RUNNING
+  }
+}
+```
+
+对照 §4：3.4 的 `activeEffect` 栈在这里退化成「一个 `activeSub` 加 `prevEffect` 保存恢复」——嵌套恢复的正确性不再需要数组，函数调用栈天然就是那个栈。cleanup 拆成了两层：`cleanupEffect` 跑用户注册的清理函数（历史 API），`prepareDeps/cleanupDeps` 负责依赖边的版本标记筛选，两件事在 3.4 里都堆在 cleanupEffect 名下。
+
+**触发侧的三个新细节**（同文件）：
+
+```ts
+trigger(): void {
+  if (this.flags & EffectFlags.PAUSED) {
+    pausedQueueEffects.add(this)
+  } else if (this.scheduler) {
+    this.scheduler()
+  } else {
+    this.runIfDirty()   // 3.5：普通触发也先查脏，版本没变就不跑
+  }
+}
+```
+
+其一，无 scheduler 的普通 effect 也**不再直接重跑**，而是 `runIfDirty`——沿自己的 deps 链逐个比较 `link.version` 与 `dep.version`，全等就免跑。其二，`notify()` 遇到自身 `RUNNING` 且未开 `ALLOW_RECURSE` 直接 return，这是 §易错点 7「effect 内自写不无限递归」在 3.5 的实现位（mini 版用「effectsToRun 排除 activeEffect」表达同一意图）。其三，`batch/endBatch` 维护**两条队列**：`batchedComputed` 先清标志（只置脏不执行），`batchedSub` 再逐个 `trigger()`——computed 的「下传」与 effect 的「执行」被拆成两个阶段，同一轮 set 里多次赋值只触发一轮执行。
+
+## 精读补遗三：computed.ts 与 refreshComputed——两级版本号
+
+引文出自 `packages/reactivity/src/computed.ts` 与 `effect.ts` 的 `refreshComputed`。`ComputedRefImpl` 的字段里有三处「初值即机关」：
+
+```ts
+export class ComputedRefImpl<T = any> implements Subscriber {
+  _value: any = undefined
+  readonly dep: Dep = new Dep(this)   // 把自己作为 computed 传进 Dep
+  flags: EffectFlags = EffectFlags.DIRTY            // 初始即脏：首读必须真算
+  globalVersion: number = globalVersion - 1         // 故意错位：首读绕不过快路径
+```
+
+`get value` 只有三步：`this.dep.track()`（把读 `.value` 的外层 effect 挂到 computed 自己的 dep 上）→ `refreshComputed(this)`（保证值新鲜）→ 同步 `link.version` 并返回 `_value`。真正的账在 `refreshComputed`，四道闸门按序过：
+
+```ts
+export function refreshComputed(computed: ComputedRefImpl): undefined {
+  if (computed.flags & EffectFlags.TRACKING && !(computed.flags & EffectFlags.DIRTY)) {
+    return                                   // 闸门一：没脏不算
+  }
+  computed.flags &= ~EffectFlags.DIRTY
+  if (computed.globalVersion === globalVersion) {
+    return                                   // 闸门二：全局无任何变更，快路径
+  }
+  computed.globalVersion = globalVersion
+  const dep = computed.dep
+  if (dep.version > 0 && !computed.isSSR && computed.deps && !isDirty(computed)) {
+    return                                   // 闸门三：逐边查版本，全等不重算
+  }
+  activeSub = computed                       // 以 computed 身份跑 getter（重新收集依赖）
+  try {
+    prepareDeps(computed)
+    const value = computed.fn(computed._value)
+    if (dep.version === 0 || hasChanged(value, computed._value)) {
+      computed._value = value
+      dep.version++                          // 闸门四之后：结果真变了才推进自己的版本
+    }
+  } finally {
+    cleanupDeps(computed)
+    activeSub = prevSub
+  }
+}
+```
+
+对照 §5 的惰性链，3.5 把「只置脏不重算」升级成两级：依赖变化时 `notify` 只把 `flags |= DIRTY` 并下传通知（computed 的 `notify` 返回 true，`Dep.notify` 里就地再 `dep.notify()` 通知下游，源码注释写明这是为减少调用栈深度）；真正重算推迟到读取，读取还要过三道闸门。而闸门四的 `hasChanged` 是「依赖变化但计算结果不变时，下游不重跑」的根基——getter 产出与缓存相同就不推进 `dep.version`，下游 `isDirty` 逐边比较时版本全等，整段下游直接免跑。3.4 的布尔 `dirty` 表达不了这个语义（置脏必然导致重算），这正是重构的动机。SSR 分支（`isSSR`）绕过闸门三强制重算，因为服务端没有渲染 effect、computed 无订阅者，脏检查无从谈起。
+
+## 精读补遗四：baseHandlers.ts——set 的三个判定细节
+
+引文出自同 tag 的 `packages/reactivity/src/baseHandlers.ts`（`MutableReactiveHandler.set`）。正文 §2 的表格给了骨架，这里补三个容易读漏的判定：
+
+```ts
+set(target, key, value, receiver) {
+  let oldValue = target[key]
+  if (!this._isShallow) {
+    if (!isArray(target) && isRef(oldValue) && !isRef(value)) {
+      // 旧值是 ref、新值不是：直接改 ref 的 .value，而不是替换属性
+      oldValue.value = value
+      return true
+    }
+  }
+  const hadKey = isArray(target) && isIntegerKey(key)
+    ? Number(key) < target.length   // 数组索引：比 length 判新旧
+    : hasOwn(target, key)
+  const result = Reflect.set(target, key, value, isRef(target) ? target : receiver)
+  if (target === toRaw(receiver)) {  // 只有「归属代理」的写入才触发
+    if (!hadKey) {
+      trigger(target, TriggerOpTypes.ADD, key, value)
+    } else if (hasChanged(value, oldValue)) {
+      trigger(target, TriggerOpTypes.SET, key, value, oldValue)
+    }
+  }
+  return result
+}
+```
+
+1. **ref 旧值解包**：给「值为 ref 的属性」赋普通值，走的是 `oldValue.value = value`（改 ref 内部）而不是替换属性——这就是「reactive 对象里 ref 自动解包」在写方向的实现。非数组限定是因为数组元素不解包（正文 §2 的 ref unwrapping 同款例外）。
+2. **ADD 与 SET 的分界**决定触发哪些依赖：新增走 ADD（会联动 ITERATE_KEY，见 dep.ts trigger 的 switch 分支），覆盖走 SET（只触发本 key）。数组索引用「索引小于 length」判新旧，等价于 hasOwn 但免去一次属性查找。
+3. **`target === toRaw(receiver)` 才 trigger**：拦截的是「在继承代理上写父对象属性」的场景——此时 set 陷阱的 receiver 是上游代理而非自己的代理，`toRaw` 解包后不相等，跳过触发；真正的触发由 receiver 所属的那层代理完成，避免一次写入两次 trigger。
+
+同文件还有一个对正文表格的**补正**：`ownKeys` 对数组 track 的不是 ITERATE_KEY 而是 `'length'`——
+
+```ts
+ownKeys(target) {
+  track(target, TrackOpTypes.ITERATE, isArray(target) ? 'length' : ITERATE_KEY)
+  return Reflect.ownKeys(target)
+}
+```
+
+配套地，dep.ts 的 trigger 里有专门的 length 分支：写 `length` 时遍历 depsMap，把 `length` 自身、`ARRAY_ITERATE_KEY`、以及所有「大于等于新 length 的索引」的 dep 全部触发（缩短数组会杀掉尾部元素，这些索引的依赖必须失效）。正文 §2「数组与 length」一段的「特判」，在 3.5 里精确落在这两处。`ARRAY_ITERATE_KEY`（`dep.ts` 定义，与 ITERATE_KEY、MAP_KEY_ITERATE_KEY 并列的第三个 symbol）是 `for...of`/展开专用的数组迭代依赖。
+
+## 精读补遗五：ref.ts 的 3.5 形态——RefImpl 同样换装 Dep
+
+正文 §3 贴的是 3.4 形态（`trackRefValue/triggerRefValue`）。3.5 里 `RefImpl` 与全局响应式共用同一套 Dep：
+
+```ts
+class RefImpl<T = any> {
+  _value: T
+  private _rawValue: T
+  dep: Dep = new Dep()
+
+  get value() {
+    this.dep.track()
+    return this._value
+  }
+  set value(newValue) {
+    const oldValue = this._rawValue
+    const useDirectValue =
+      this[ReactiveFlags.IS_SHALLOW] || isShallow(newValue) || isReadonly(newValue)
+    newValue = useDirectValue ? newValue : toRaw(newValue)
+    if (hasChanged(newValue, oldValue)) {
+      this._rawValue = newValue
+      this._value = useDirectValue ? newValue : toReactive(newValue)
+      this.dep.trigger()
+    }
+  }
+}
+```
+
+与 §3 的语义清单逐条对上：`.value` 读时收集、写时 `hasChanged`（内部即 `!Object.is`，`@vue/shared` 出品）判变再触发；`toRaw/toReactive` 维持 `_rawValue`（原始值）与 `_value`（代理化值）双份存储。新增的精确细节是 `useDirectValue` 的三个条件——shallow 自身、新值是 shallow、新值是 readonly 时直接存（不代理化）：readonly 对象不该被复制成可写代理，shallow 语义不该被 ref 的深层默认悄悄覆盖。读到这里可以合上正文 §3 与 §4 的断言：3.5 之后 ref、reactive、computed 三者共用 Dep/Link 一套底座，「三种响应式原语、两套记账结构」的说法在 3.5 已不成立。
+
+## 精读补遗六：工程三陷阱（源码对齐版）
+
+**陷阱一：把「依赖变了必触发下游」当成铁律。** 3.5 的 computed 是「结果变了才下传」（补遗三闸门四），副作用是：下游 effect 读 computed 时，若两次读取间 getter 结果恰好相同，effect 不重跑——若下游效果依赖「调用次数」而非值（计数器、日志），会少跑。跨实现核对语义时尤其小心：mini 版的布尔 dirty 语义没有这道闸门，同样代码两个实现跑出的次数不同。修复思路：次数敏感的逻辑移出 computed 读取链，或显式用 ref 记录。
+
+**陷阱二：手写 set 用 `!==` 或 `===` 判变。** 正文易错点 3 的源码级呼应：Vue 全库统一用 `hasChanged`（`!Object.is`）。用 `===` 时 `NaN = NaN` 赋值会误触发，`+0 = -0` 会漏触发（`Object.is` 区分 ±0 而 `===` 不区分）。修复：判变一律 `!Object.is(a, b)`，与官方保持同一个函数。
+
+**陷阱三：在「祖先代理」上写字对象属性，期望触发却没触发。** 场景：`const child = Object.create(reactiveParent)` 后写 `child.x = 1`（x 定义在 parent 上）。set 陷阱的 receiver 是 child 所属的代理，`target === toRaw(receiver)` 不成立，这一层不触发——触发交给归属层完成。若你的包装层又手动 `Reflect.set(parent, ...)` 二次写入，就可能真的双触发或零触发。修复：写入永远走「归属对象的那层代理」；包装层不要代写。
+
+## 精读补遗七：手推配方——v3.5 名词版全链路推演
+
+把本册核心场景用 3.5 的真实函数名推一遍（与 §补遗一至四互为索引）：
+
+```text
+初始：reactive({ n: 1 }) → createReactiveObject → proxyMap 无记录 → new Proxy(target, mutableHandlers)
+     effect(fn) → new ReactiveEffect(fn) → runner = e.run.bind(e) → e.run()
+
+读 state.n（fn 内）：
+  get 陷阱 → track(target, 'get', 'n')
+    → targetMap 建 depsMap、new Dep
+    → Dep.track：new Link(activeSub, dep) → 挂 sub.deps 尾部 + addSub 挂 dep.subs（sc=1）
+
+写 state.n = 2：
+  set 陷阱 → hadKey 为 true → Reflect.set → hasChanged(2, 1) 成立
+    → trigger(target, 'set', 'n', 2, 1)
+    → Dep.trigger：version++、globalVersion++ → notify
+    → startBatch → 沿 subs 链：link.sub.notify()
+      → ReactiveEffect.notify：无 RUNNING 冲突 → batch(this) 入 batchedSub 队列
+    → endBatch（计数归零）→ 队列逐个 e.trigger()
+      → 无 scheduler → runIfDirty → isDirty：dep.version !== link.version → true
+      → run()：prepareDeps 置 -1 → activeSub = this → fn 重跑 → cleanupDeps 摘死边
+```
+
+推演时自查三处易断点：activeSub 是否在 fn 执行前挂好（否则收集不到）；isDirty 比较的是「边上的旧版本 vs dep 的新版本」（不是值比较）；endBatch 的队列先 computed 后 effect（顺序错了会出现用旧 computed 值渲染的脏读）。能把这十二行名词推演口播到底，源码阅读就算通关。
+
+## 精读补遗八：输出预测题（题 3、题 4，附解析）
+
+**题 3（判变语义）**：用 mini-reactivity 语义（对齐 `hasChanged` 实现），以下输出什么？
+
+```ts
+const state = reactive({ n: 1 });
+let runs = 0;
+effect(() => { runs += 1; void state.n; });
+state.n = 1;
+state.n = 2;
+state.n = 2;
+console.log(runs);
+```
+
+**答案**：`2`（本仓库 mini-reactivity 实跑收据，`npx tsx` 直跑）。逐步：初次执行 runs=1；`n = 1` 与旧值 `Object.is` 相等不触发；`n = 2` 触发重跑 runs=2；再赋 `2` 又不触发。机制出处：mini 版 set 的 `!Object.is(oldValue, value)`（第 185 行附近）对应 Vue `@vue/shared` 的 `hasChanged`——判变是 `Object.is` 不是 `===`，NaN 与正负零两处行为因此不同（正文易错点 3）。延伸：任何「写后必然读」的调试日志放在 effect 里时要记得同值写不进循环。
+
+**题 4（自写自读）**：
+
+```ts
+const state = reactive({ n: 1 });
+let runs = 0;
+effect(() => { runs += 1; state.n += 1; });
+console.log(runs, state.n);
+```
+
+**答案**：`1 2`（同上，实跑收据）。逐步：初次执行 runs=1，读取 `state.n`（收集依赖）后写回 2；这次 set 在**自己执行期间**发生，trigger 排除当前活跃 effect，不重跑——运行停在 n=2。机制出处：mini 版的 `if (fn !== activeEffect) effectsToRun.add(fn)`；3.5 源码对应 `ReactiveEffect.notify` 里 `RUNNING` 且未开 `ALLOW_RECURSE` 即返回（补遗二）。两版意图一致：没有这道闸，`n += 1` 自己触发自己，无限递归。延伸：真需要自写循环推进时，用 `triggerRef`/手动 `runner()` 这类「显式驱动」，别指望关掉闸门。
+
+## 精读补遗九：reactive.ts——createReactiveObject 的四道闸门
+
+引文出自同 tag 的 `packages/reactivity/src/reactive.ts`。`reactive/readonly/shallowReactive/shallowReadonly` 四个入口全部汇到 `createReactiveObject`，它按序过四道闸门：
+
+```ts
+function createReactiveObject(target, isReadonly, baseHandlers, collectionHandlers, proxyMap) {
+  if (!isObject(target)) return target            // 闸门一：非对象直接返回
+  if (target[ReactiveFlags.RAW] && !(isReadonly && target[ReactiveFlags.IS_REACTIVE])) {
+    return target                                  // 闸门二：已是代理，原样返回
+  }
+  const existingProxy = proxyMap.get(target)
+  if (existingProxy) return existingProxy          // 闸门三：同一 target 已包过
+  const targetType = getTargetType(target)
+  if (targetType === TargetType.INVALID) return target  // 闸门四：不可代理类型
+  const proxy = new Proxy(target,
+    targetType === TargetType.COLLECTION ? collectionHandlers : baseHandlers)
+  proxyMap.set(target, proxy)
+  return proxy
+}
+```
+
+正文 §2 说「同一 target 只包一次」，这里补全精确语义。闸门二与闸门三都防止重复包装，但键不同：闸门二检查的是**入参本身**是不是代理（读它的 `RAW` 标记属性），闸门三查的是 proxyMap 里有没有**这个原始对象**的记录。两者的组合产生一个重要特例：`readonly(reactive(obj))` 不走「原样返回」——条件里 `isReadonly && IS_REACTIVE` 的例外放行，让 readonly 包一层 reactive 代理，得到「外层只读、内层可写」的组合（读走 readonly 陷阱并向下转 readonly，写经由内层 reactive 生效，两套行为叠加在同一数据上）。另外每个入口各带一张专属 proxyMap（reactiveMap、readonlyMap、shallowReactiveMap、shallowReadonlyMap）——「同一个对象被 reactive 和 readonly 各包一次」是合法且必要的，因为两张缓存互不干扰；`isProxy` 只查 `RAW` 标记，四种代理都算。
+
+## 精读补遗十：arrayInstrumentations.ts——数组方法劫持的三个动机
+
+正文 §2 的「数组与 length」一句话带过了方法劫持，v3.5 的 `packages/reactivity/src/arrayInstrumentations.ts`（328 行）值得专门一读。劫持分三组，各有独立动机：
+
+**第一组：身份敏感的查找方法**（includes、indexOf、lastIndexOf）。 motives 写在 `searchProxy` 里：
+
+```ts
+function searchProxy(self, method, args) {
+  const arr = toRaw(self)
+  track(arr, TrackOpTypes.ITERATE, ARRAY_ITERATE_KEY)
+  const res = arr[method](...args)          // 先用原实参（可能是代理）找一遍
+  if ((res === -1 || res === false) && isProxy(args[0])) {
+    args[0] = toRaw(args[0])                // 找不到且实参是代理：换原始值再找一遍
+    return arr[method](...args)
+  }
+  return res
+}
+```
+
+动机：数组内部存的是**原始值**，而调用方手里的是**代理**——`reactive(arr).includes(reactive(obj))` 直接比会因引用不等而误判「不存在」。双查询（先代理后原始）是纯工程补丁，一次没找到可能多跑一遍遍历。同时注意 `track` 的是 `ARRAY_ITERATE_KEY`：indexOf 这类「可能扫全数组」的方法，按最坏情况记全量迭代依赖。
+
+**第二组：遍历类方法**（forEach、map、every、find 一族，经 `apply` 收口）。统一做三件事：转原始数组再调原生方法（内层循环不再每步过陷阱）、track 全量迭代依赖（`shallowReadArray` 里那一行）、按需包回代理——回调拿到的 item 用 `toReactive` 转换，第三个参数（数组本身）传**代理** `self` 而不是原始数组，保持「回调里看到的数组与调用方一致」。源码里 `#11759` 分支处理用户自定义 Array 子类的方法（方法不在 Array.prototype 上时不做处理），是防御性兼容的样本。
+
+**第三组：改长度的写方法**（push、pop、shift、unshift、splice）经 `noTracking` 收口：
+
+```ts
+function noTracking(self, method, args = []) {
+  pauseTracking()
+  startBatch()
+  const res = (toRaw(self))[method].apply(self, args)
+  endBatch()
+  resetTracking()
+  return res
+}
+```
+
+动机写在源码注释引用的 issue #2137：push 内部读 `length` 再写回，若 length 被当前 effect track 住，「读 length 收集依赖、写 length 触发自己」就是无限循环。解法是调用期间 `pauseTracking`（`shouldTrack` 压栈置 false——effect.ts 末尾的 trackStack 那四个函数）加批量。这解释了一个易错点：**push 不触发「依赖 length」的 effect 吗？** 触发照常发生（写 length 的 trigger 不受影响），只是 push 自己执行期间不收集——被 track 住的是「读 length 的那个 effect」，push 之后它照常重跑。
+
+## 精读补遗十一：collectionHandlers.ts——Map/Set 为什么必须换路线
+
+引文出自同 tag 的 `packages/reactivity/src/collectionHandlers.ts`。正文 §2 说 Map/Set「用方法劫持替代 get/set」，这里给出精确原因与实现形态。**原因在规范**：Map/Set 的数据不在普通属性槽位里，Proxy 的 get/set 陷阱拦不到内部槽操作（ECMA-262 的 Map.prototype.get 不经过属性访问），且很多方法要求 `this` 是真 Map（内部槽校验），拿代理当 this 会直接 TypeError。所以路线换成：Proxy 的 get 陷阱只拦截**方法名**，返回劫持版函数：
+
+```ts
+get(this: MapTypes, key: unknown) {
+  const target = this[ReactiveFlags.RAW]
+  const rawTarget = toRaw(target)
+  const rawKey = toRaw(key)
+  if (!readonly) {
+    if (hasChanged(key, rawKey)) track(rawTarget, TrackOpTypes.GET, key)
+    track(rawTarget, TrackOpTypes.GET, rawKey)     // 原始 key 与代理 key 各记一笔
+  }
+  const { has } = getProto(rawTarget)
+  if (has.call(rawTarget, key)) return wrap(target.get(key))
+  else if (has.call(rawTarget, rawKey)) return wrap(target.get(rawKey))
+  // …
+}
+```
+
+三个读点：其一，`this[ReactiveFlags.RAW]` 拿原始 Map 再操作——方法都作用在原始对象上，避开内部槽校验；其二，键是原始值，但调用方可能用代理键存取，所以 key 与 rawKey **各 track/查一笔**（和数组的双查询同一动机）；其三，迭代方法（`createIterableMethod`）track 的是 ITERATE_KEY 或 MAP_KEY_ITERATE_KEY（Map 的 keys() 专用，dep.ts 里定义的第二个 symbol），返回手动包装的迭代器——值按 shallow/readonly/reactive 三种策略 wrap。写方法（set/add/delete/clear）同理由劫持函数手写 trigger：`has` 判新旧走 ADD/SET 分岔，clear 触发整个 depsMap（dep.ts trigger 的 CLEAR 分支）。读 Map/Set 相关断言时，把「方法调用」当作「属性读加函数调用」的合成物来推理即可。
+
+## 精读补遗十二：effectScope.ts——组件卸载即作用域注销
+
+引文出自同 tag 的 `packages/reactivity/src/effectScope.ts`。正文 §4 讲泄漏时说「effect 反向被 dep 引用，需要 stop」，这里补上「谁负责批量 stop」的机制——`EffectScope`：
+
+```ts
+constructor(public detached = false) {
+  this.parent = activeEffectScope
+  if (!detached && activeEffectScope) {
+    this.index = (activeEffectScope.scopes || (activeEffectScope.scopes = [])).push(this) - 1
+  }
+}
+run<T>(fn: () => T): T | undefined {
+  if (this._active) {
+    const currentEffectScope = activeEffectScope
+    try {
+      activeEffectScope = this
+      return fn()
+    } finally {
+      activeEffectScope = currentEffectScope
+    }
+  }
+}
+stop(fromParent?: boolean): void {
+  // 遍历 effects 逐个 stop → 跑 cleanups → 递归 stop 子作用域 → 从父 scopes 摘除
+}
+```
+
+与补遗二呼应的那一行在 `ReactiveEffect` 的构造器里：`if (activeEffectScope && activeEffectScope.active) { activeEffectScope.effects.push(this) }`——**effect 创建时自动登记进当前活跃作用域**，与 `activeSub` 的 track 自动收集互为镜像：一个管「我依赖谁」，一个管「谁负责回收我」。`run` 的时序结构与 `ReactiveEffect.run` 完全同构（保存、换入、try/finally 恢复），`activeEffectScope` 就是作用域版的 activeSub。stop 的最后一段值得细读：非 detached 的作用域销毁时用 `pop + index 回填` 做 O(1) 从父数组摘除（swap-remove 技巧）。组件卸载时 runtime-core 停掉组件的渲染 effect 所在的作用域，整棵 effect/computed/子作用域树一并注销——正文 §4 说的「cleanup 防泄漏」在框架层由这条链兜底。
+
+## 精读补遗十三：输出预测题（题 5、题 6，附解析）
+
+**题 5（嵌套代理的引用稳定性）**：用 mini-reactivity 语义，以下输出什么？
+
+```ts
+const state = reactive({ nested: { v: 1 } });
+console.log(state.nested === state.nested);
+```
+
+**答案**：`true`（本仓库 mini-reactivity 实跑收据）。逐步：第一次读 `state.nested`，get 陷阱拿到原始内层对象、惰性调 `reactive()` 包装——proxyMap 以**原始内层对象**为键缓存代理；第二次读取查同一张表命中缓存，返回同一个代理。注意缓存键是内层**原始对象**而非「读取路径」——从另一个代理对象读到同一个内层对象，拿到的仍是同一代理（这也是 `proxyMap` 必须是 WeakMap 的第二个理由：内层对象随外层一起可被 GC）。反例陷阱：若手写实现把缓存键写成属性路径字符串，两条路径读到同一对象会产出两个代理，`===` 与依赖记录全部失配。
+
+**题 6（重复包裹与 RAW 门）**：Vue 3.5 源码语义下，`reactive(reactive(obj))` 与 `readonly(reactive(obj))` 各返回什么？依据哪道闸门？
+
+**答案**（手推加源码依据，v3.5.13 `createReactiveObject`，见补遗九）：`reactive(reactive(obj))` 返回**内层那个代理本身**——入参已是代理，闸门二读到 `RAW` 标记直接原样返回；`readonly(reactive(obj))` 返回**新的 readonly 代理**——闸门二的条件里 `isReadonly && IS_REACTIVE` 是例外放行，允许 readonly 包 reactive，形成「外层只读、内层可写」的组合。解析：两道闸门的分工——闸门二问「入参是不是代理」，闸门三问「这个原始对象包过没有」；`reactive(p) === p` 是闸门二的结论，而「同一原始对象既被 reactive 又被 readonly 各包一份」是闸门三按入口专属 proxyMap 得出的合法结论。延伸一问自测：`toRaw(readonly(reactive(obj)))` 返回什么？（返回 obj——`toRaw` 沿 `RAW` 标记递归解到底，reactive.ts 源码里它的实现只有三行。）
+
+### 精读补遗收束
+
+八段补遗读完，把「推荐阅读顺序」升级成 v3.5.13 的终版：`constants.ts` → `dep.ts` → `effect.ts`（含 `refreshComputed`）→ `reactive.ts` → `baseHandlers.ts` → `arrayInstrumentations.ts` → `ref.ts` → `computed.ts` → `collectionHandlers.ts` → `effectScope.ts`。正文各节给的是 3.4 心智模型（Set 集合、dirty 布尔、直接重跑），补遗一至五给出 3.5 的精确对应（Link 双向链表、两级版本号、批量队列加查脏）——面试时先讲模型再讲版本演进，比只背一套名词高一个层级。所有引文出自 `vuejs/core` tag `v3.5.13`，读其它版本时按「函数名定位、行号不认」的规则迁移。
+
+## 精读补遗十四：tracking 开关家族——shouldTrack 的栈式保存
+
+引文出自同 tag `packages/reactivity/src/effect.ts` 尾部。`track` 的第一道门槛是全局开关 `shouldTrack`（补遗一 track 源码里的 `if (shouldTrack && activeSub)`），而操作这个开关的是一组**栈式保存**的小函数：
+
+```ts
+export let shouldTrack = true
+const trackStack: boolean[] = []
+
+export function pauseTracking(): void {
+  trackStack.push(shouldTrack)
+  shouldTrack = false
+}
+export function resetTracking(): void {
+  const last = trackStack.pop()
+  shouldTrack = last === undefined ? true : last
+}
+```
+
+三个读点：其一，`trackStack` 保存的是**进入前的旧值**而不是固定 true——允许嵌套暂停（暂停之中再暂停），恢复时弹栈还原，这与 `activeSub/activeEffectScope` 的「保存、换入、finally 恢复」是同一时序模式在布尔开关上的化身；其二，`resetTracking` 在弹栈为空时回退到 true，这是「配对调用被破坏」的兜底——`pauseTracking` 之后忘了 reset，后续所有 track 静默失效，组件「莫名不更新」的又一嫌疑点（引擎侧有 `noTracking` 的 startBatch/endBatch 包裹保证配对，补遗十的写方法正是样板）；其三，`cleanupEffect` 跑用户清理函数前也把 `activeSub` 置空再恢复（effect.ts 的 finally 块）——清理函数里的响应式读取不该被记到本 effect 名下，三处机制（shouldTrack 栈、activeSub 保存恢复、activeLink 版本标记）各管一段「谁不该被收集」。
+
+工程对照：业务代码不该直接调这三个内部函数（`@vue/reactivity` 的导出面里它们偏内部），等价的公开姿势是 `pauseTracking` 所服务的场景——遍历大结构做预读、读已知静态配置、在 trigger 的传播路径上避免自收集。手写迷你版时若遇到「effect 里读配置对象也被记录」的噪音，就是这道开关缺失的症状。
+
+
+
+

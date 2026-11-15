@@ -306,3 +306,200 @@ NoInfer 的机制一句话：**把该位置从 T 的候选源里除名，但保�
 - `q2` **非法**：答应返回 number 的位置放一个可能不返回值的函数，返回类型不兼容（豁免只有 void 方向）。
 - `q3` **非法**：参数逆变要求**源函数参数能装下目标类型可能传来的值**。`NarrowCb` 的调用方会传 `number | string`，而 `num` 只接受 `number`——`number` 不是 `number | string` 的超类型，报「Types of parameters 'x' are incompatible」。反过来，`(x: number | string | boolean) => void` 赋给 `NarrowCb` 才合法（参数更宽，装得下）。注意返回方向本来有 void 豁免兜着，但参数方向先失败——两个方向**各自独立判定**。
 - `mh.m = num` **合法**（若取消注释）：方法简写位置双变豁免——尽管 `num` 只接受 number、调用方可能传 string，strictFunctionTypes 不检查方法声明，放行。这个「不报错」本身就是方法豁免的活证据（也是该避免方法简写的理由）。
+
+## 附录一：机制深一层——重载解析的手推配方（五步）
+
+重载解析发生在「调用表达式」上，把 checker 的行为压缩成固定五步，任何题面都能照此手推：
+
+**第一步：列出候选。** 对外可见的只有声明签名列表，实现签名不参与（§2 规则 2）——候选集在声明处就已确定，与实现体毫无关系。
+
+**第二步：验参数数量。** 每条声明的必选参数数、可选参数数、剩余参数构成一个「可容纳区间」，实参数量落在区间内才继续，否则该条声明立即淘汰（实测错误码 `TS2554: Expected 2 arguments, but got 1.`——数量不合格是最先淘汰的一关）。
+
+**第三步：逐参数位判 assignability。** 对每个实参问一句「实参类型可赋给这条声明的形参类型吗」——注意方向是**实参给形参**（协变的调用安全方向，与赋值兼容时的参数逆变相反，两件事别混）。联合类型的实参按整体判定：`string | number` 装不进 `string` 形参——联合不逐成员拆开试（收据见附录六题 3）。
+
+**第四步：第一个全过的声明胜出，返回类型取自它。** 后面的声明不再看——「更精确」无意义，顺序即优先级（§2 规则 1）。
+
+**第五步：全军覆没报 TS2769。** 错误信息自带推演轨迹，实测结构：
+
+```text
+TS2769: No overload matches this call.
+  Overload 1 of 2, '(x: string): "s"', gave the following error.
+    Argument of type 'boolean' is not assignable to parameter of type 'string'.
+  Overload 2 of 2, '(x: number): "n"', gave the following error.
+    Argument of type 'boolean' is not assignable to parameter of type 'number'.
+```
+
+每条「Overload N of M」就是该声明在第三步的失败记录——**读 TS2769 不用猜，它把每条候选的死因都写全了**。排查时从第一条失败原因往回推：多数时候是实参比想象中宽（联合、字面量放宽成 string、null 混入）。
+
+**手推配方表**（写题与排查共用）：
+
+| 步骤 | 判定什么 | 失败呈现 |
+| --- | --- | --- |
+| 候选列表 | 只有声明签名 | 实现签名再宽也帮不了调用方 |
+| 数量 | 实参数落入容纳区间 | TS2554 |
+| 逐位 assignability | 实参可赋给形参（整体判定，联合不拆） | 并入 TS2769 的逐条说明 |
+| 胜出 | 第一条全过的声明 | 返回类型取声明不取实现 |
+| 兜底 | 无声明通过 | TS2769（附每条死因） |
+
+**实现侧的对称检查**（TS2394）走同一套参数比较，方向反过来：实现签名必须「装得下」每条声明的形态——实测原文 `This overload signature is not compatible with its implementation signature.`。两侧用同一条参数比较规则，方向相反：调用侧是实参喂给声明，实现侧是声明喂给实现。记住这一对，TS2394 与 TS2769 就是一张纸的正反面。
+
+## 附录二：strictFunctionTypes 豁免边界的精确账本
+
+§1 引用的 TS 2.6 原文「except those originating in method or constructor declarations」容易被读成「构造器类型一律双变」。本节用 tsc 5.9.3 的检查器源码与实测矩阵，把豁免边界钉到 AST 节点级。
+
+**检查器源码实证**（typescript 5.9.3 编译产物中 `compareSignaturesRelated` 的实际判定，注释里的数字为 SyntaxKind 编号）：
+
+```js
+const strictVariance = !(checkMode & 3 /* Callback */) && strictFunctionTypes
+  && kind !== 175 /* MethodDeclaration */
+  && kind !== 174 /* MethodSignature */
+  && kind !== 177 /* Constructor */;
+```
+
+三个事实一次看清：其一，豁免与否取决于 `kind`——**目标（被赋给的那一侧）签名的声明节点类型**，与源签名无关；其二，豁免清单只有三种节点：方法声明（类体内 `m() {}`）、方法签名（接口与类型字面量里的 `m(x): v` 简写）、类构造器声明（类体内 `constructor(x) {}`）；其三，构造器类型注解 `new (x: string) => T` 的节点是 ConstructorType（编号 186）——**不在豁免清单里**。
+
+用 TS API 实测两种目标签名的 declaration kind（收据）：`typeof C` 的构造签名 decl 是 `Constructor(177)`（豁免），注解 `new (x) => T` 的 decl 是 `ConstructorType(186)`（严格）。至此「constructor 豁免」的准确含义是：**只有类声明自己的静态侧豁免，注解世界一律严格**。
+
+**四行矩阵收据**（tsc 5.9.3 加 `--strict`，源函数形参 string、目标要求容纳 string 加 number，即「源更窄」的不安全方向）：
+
+| 目标形态 | 声明节点 | 判定 | 结果 |
+| --- | --- | --- | --- |
+| `new (x: string \| number) => C` 注解 | ConstructorType(186) | 严格 | 报 TS2322 |
+| `typeof C`（类声明静态侧） | Constructor(177) | 双变豁免 | 放行 |
+| 接口里的构造签名声明 `new (x): C` | ConstructSignatureDeclaration | 严格 | 报 TS2322 |
+| 函数类型注解 `(x: string \| number) => C` | FunctionTypeNode | 严格 | 报 TS2322 |
+
+第四行与方法位对照：同样的窄源函数赋给接口方法签名（MethodSignature 174）实测放行——方法豁免依然健在，恰是新代码的陷阱（附录四陷阱二）。TS 2.6 文档里的「constructor declarations」指的是类内构造器声明节点，从来不含注解写法；把「构造器双变」当成注解世界的规则，是这句历史措辞最常见的误读。
+
+一句话收束：**豁免跟着「目标是怎么声明的」走，不跟着「它像不像构造器」走**。`typeof C` 一家人双变，`new (...) => T` 注解一家人严格——写工厂签名时想要宽松就传类声明类型，想要严格就写注解，两种意图从此都有准确的语法开关。
+
+## 附录三：this 参数与泛型 this 的两套账
+
+**this 上下文是签名的一部分。** §5 的 `query(this: Db, sql: string)` 裸调实测：
+
+```text
+TS2684: The 'this' context of type 'void' is not assignable to method's 'this' of type 'Db'.
+```
+
+读法：游离变量 `q` 的 this 上下文被定为 void，与声明要求的 Db 比较、不兼容——this 参数把「调用必须有接收者」抬进了 assignability 判定，与参数、返回类型并列为第三条检查轴。`bind` 在 lib 里的签名正是绕这条轴的官方通道（lib.es5.d.ts 骨架，简化）：`bind` 的 this 参数要求「源函数声明了 this 类型 T」，第二参数收 `thisArg: T`，返回剥离 this 的纯参数函数——`ThisParameterType` 与 `OmitThisParameter` 两个工具类型就是这套签名上提取与剥离的公开 API。
+
+**泛型 this（多态 this 返回）的函数册视角。** 33 册 §6 从类链看 `add(p): this`，函数册补一枚推演齿轮：this 返回类型在 assignability 上靠「this-is-type」关系支撑——`incr(): this` 的实例调用时，this 由接收者的真实类型代入（SubCounter 调用代入 SubCounter），链上不降级。它与 this 参数是一对互补（本册深挖三节已给结论）：this 参数约束「调用方必须提供什么 this」，多态 this 约束「子类里返回什么 this」；一进一出，方向相反。
+
+**两者互斥的边界**：箭头函数既不能声明 this 参数（没有自己的 this），也不需要多态 this（捕获词法 this）——两套账都对箭头函数关账。review 时「游离函数钉 this 参数、方法用多态 this 返回、回调转交用箭头捕获」三句各管一段，混用即报错或静默失效。
+
+## 附录四：工程三陷阱
+
+**陷阱一：宽声明在前，窄声明永不命中——类型静默变宽而非报错。** 现象：`f(x: string | number): 'both'` 排在 `f(x: string): 'str'` 之前，`f('a')` 永远拿联合类型，编译器全程零警告。根因：附录一第四步「第一个全过即胜」，顺序错误不触发任何诊断。修复与自检：声明列表写完后，为每个期望分支写一行赋值断言（`const probe: 'str' = f('a')`），窄签名排前面直到断言全绿；CI 里保留这几行断言就是顺序回归测试。
+
+**陷阱二：新接口用方法简写，逆变错误被豁免吞掉。** 现象：业务接口写成 `m(x: string | number): void`，随后把只接受 string 的回调赋给它——零报错（豁免），运行时传 number 进回调崩溃。根因：附录二矩阵第四行的 MethodSignature 豁免。修复：新代码一律函数属性写法 `(x: string | number) => void`；方法简写只留给描述宿主既有 API 的 `.d.ts`。
+
+**陷阱三：删掉 this 参数的「结构假等价」。** 现象：嫌 `query(this: Db, sql)` 裸调报 TS2684 麻烦，删掉 this 参数——全项目立即编译通过，运行时 this 指向 undefined 才崩。根因：this 参数是唯一把 this 依赖写进类型的通道，删掉后检查轴消失，风险回到注释层。修复：保留 this 参数并在调用点 bind；确需「剥离 this」的场合用 `OmitThisParameter` 生成显式类型，让「我知道这里没有 this 依赖」成为类型事实而非注释。
+
+## 附录五：排查速查表（错误码均为 tsc 5.9.3 加 `--strict` 实测）
+
+| 错误码 | 报错原文（截取） | 机制归属 | 修复方向 |
+| --- | --- | --- | --- |
+| TS2769 | No overload matches this call.（附每条死因） | 附录一第五步 | 读逐条失败原因，收窄实参或补声明 |
+| TS2554 | Expected 2 arguments, but got 1. | 附录一第二步（数量） | 补实参或改可选/剩余参数 |
+| TS2394 | This overload signature is not compatible with its implementation signature. | 实现侧对称检查 | 放宽实现签名，装下全部声明 |
+| TS2684 | The 'this' context of type 'void' is not assignable to method's 'this' of type 'Db'. | this 上下文轴 | bind / call / 经接收者调用 |
+| TS2322 | Types of parameters 'x' are incompatible. Type 'number' is not assignable to type 'string'. | 参数逆变严格检查（注解位） | 源形参写宽，目标形参写窄 |
+| TS2345 | Argument of type 'string' is not assignable to parameter of type 'number'. | 推断源被圈定后（NoInfer）当场报错 | 修正实参或重划推断源 |
+
+用法与 33 册速查表一致：先按错误码定位机制行，再回对应附录展开。TS2322 与 TS2345 是同一参数比较在「赋值位」与「实参位」的两个入口，修复思路相反——前者改类型声明，后者改调用。
+
+## 附录六：输出预测题（第三、四道，附逐步解析）
+
+**题 3（联合实参的重载失配）**：以下代码能通过编译吗？返回类型是什么？
+
+```ts
+declare function ov(x: string): 's';
+declare function ov(x: number): 'n';
+const flag = Math.random() >= 0;
+const t1 = ov(flag ? 'a' : 1);
+```
+
+**答案**：不能通过，实测 TS2769，两条声明的死因分别是「string 加 number 装不进 string」与「装不进 number」。逐步推演：条件表达式的类型是联合 `string | number`——联合在运行时只取其一，编译器却必须保证**任一情况**都安全；附录一第三步按整体判定，联合可赋给联合、不可赋给成员，两条声明双双失败。常见误答是「返回 `s` 或 `n` 视运行时定」——重载没有运行时之分，解析纯靠编译期类型；要容纳联合实参，必须显式加一条联合形参声明 `ov(x: string | number): 's' | 'n'`（放最后兜底）。这道题是「重载解析只看静态类型」的最短反证。
+
+**题 4（豁免边界矩阵）**：同一个窄构造器与窄函数（形参 string），赋给四种目标形态，哪些通过？
+
+```ts
+class C { constructor(x: string) {} }
+declare const nc: new (x: string) => C;
+declare const wf: (x: string) => C;
+
+const m1: new (x: string | number) => C = nc;
+const m2: typeof C = nc;
+interface ICtor { new (x: string | number): C }
+const m4: ICtor = nc;
+const m3: (x: string | number) => C = wf;
+```
+
+**答案**（tsc 5.9.3 实测收据）：只有 `m2` 通过；`m1`、`m3`、`m4` 全部报 TS2322。逐步解析：`m2` 的目标是类声明静态侧——声明节点 Constructor(177) 在豁免清单（附录二矩阵第二行）；`m1` 的目标是构造器类型注解——ConstructorType(186) 不豁免，参数严格逆变判负；`m4` 的目标是接口里的构造签名声明——同样不在豁免清单（矩阵第三行），这是「构造器豁免」最常被误读的一条边界：接口写出的 `new` 签名并不享受类构造器的宽松待遇；`m3` 是函数注解，向来严格。一句话：**四种「构造器长相」里只有类声明自己双变**——想利用豁免，传类型得写 `typeof C`；想严格，写注解。
+
+## 附录七：泛型声明混入重载列表时，次序规则照旧且代价更隐蔽
+
+声明列表里混入泛型签名时，五步配方不变，但第三步多了一个动作：**每条候选独立做类型参数推断，推断失败或推断结果不满意都会让该候选出局**。次序规则照旧——第一条能「推断加匹配」成功的声明胜出。两个实测推论（tsc 5.9.3 收据）：
+
+```ts
+declare function g<T>(x: T): T;
+declare function g(x: string): 'str';
+const r1 = g('a');      // 第一条（泛型镜像）先命中，T 被推断为字面量 "a"
+const bad: 'str' = g('a'); // 实测 TS2322: Type '"a"' is not assignable to type '"str"'
+```
+
+推论一：第二条 `'str'` 声明成了**永不过案的死代码**——泛型镜像 `T` 能装下任何实参，只要它排在前面，后面所有声明失去存在意义。这与 §2 规则 1 同源，但危害更隐蔽：普通宽签名（联合形参）至少把返回类型写死成联合，泛型签名还会把字面量精度「白送」给调用方，让错误调用（传错内容仍返回看似精确的类型）显得可信。收据里 `bad` 的报错原文恰好是反证：编译器以为返回 `"a"`（精确到字面量），语义上却想要 `'str'`——推断越「聪明」，错误越晚暴露。
+
+推论二：**重载列表里泛型放最后是惯例而非风格**——`createElement(tag: string): HTMLElement` 的兜底形态若换成 `createElement<T extends HTMLElement>(tag: string): T`，会把「任意标签返回任意元素」的谎话写进类型。泛型候选的正确用法是「形参和返回都由 T 说话」的自适应场景（透传、镜像），而不是兜底场景。
+
+手推配方追加一条：看到重载列表里**首条是泛型签名**，先问「它是不是想兜底」——是，整份列表作废重来；否（真镜像），确认后续声明全都「泛型装不下」（比如形参是具体字面量联合）才有存在意义。这一问接住的是重载与泛型混用时最阴的一类静默事故。
+
+## 附录八：方法简写去留的迁移账本（含生产标本）
+
+附录二钉死了豁免边界，工程上的后续问题是：存量代码里方法简写怎么处理。给一张「去留账本」，按场景给结论：
+
+| 场景 | 结论 | 理由 |
+| --- | --- | --- |
+| 新业务接口 | 函数属性写法 | 豁免是漏洞不是福利（§1 结论，附录二给了机制收据） |
+| 描述宿主既有 API 的 `.d.ts` | 保留方法简写 | 宿主本身就是豁免世界（Array、Node 定时器回调），照实描述 |
+| `Array.prototype.sort(comparefn?)` 这类标准库形态 | 不动 | lib 是豁免世界的标本库，改写反而失真 |
+| 团队公共类型的迁移 | 分批，先新后旧 | 一次性改写会引爆大量「以前靠豁免活着」的赋值点 |
+
+生产标本看 lib.dom.d.ts 或 lib.es5.d.ts：`Array` 的方法全走方法简写——这不是历史疏忽，是 strictFunctionTypes 引入时（TS 2.6）为了不破坏海量既有代码的**兼容决定**，豁免本身就是为这个标本库开的口子。读标准库时带着这层滤镜：凡是方法简写，参数检查都是双变的，模仿它写业务代码等于主动关掉逆变防线。
+
+迁移的增量操作只有一步有风险：把接口成员从 `m(x: T): R` 改成 `m: (x: T) => R` 后，原先靠豁免通过的赋值点会**批量冒出 TS2322**——这些正是被豁免吞掉的真错误，属于「编译器还债」，不该顺手用 `as` 压掉；逐个修到类型对齐，豁免残留才算清零。反过来，从函数属性改回方法简写永远是静默的（检查只会变松），所以迁移方向只有一条：**单向驶向严格**。给 code review 立一条可执行的判定：diff 里出现「函数属性改成方法简写」一律问动机，答不出宿主兼容理由就打回。
+
+## 附录九：上下文敏感回调的解析时序——体检查在选定之后
+
+回调参数不带注解（上下文敏感的箭头函数）与重载相遇时，解析时序有一个反直觉的细节：**重载选择不看回调体**。实测收据（tsc 5.9.3）：
+
+```ts
+declare function useThing(cb: (x: string) => void): void;
+declare function useThing(cb: (x: number) => void): void;
+useThing((x) => { const p: number = x; });  // 报错：Type 'string' is not assignable to type 'number'
+useThing((x) => { const q: string = x; });  // 通过
+useThing((x) => { const r: boolean = x; }); // 报错：Type 'string' is not assignable to type 'boolean'
+```
+
+三行调用的实况：哪怕回调体对第一条声明的形参类型不成立（第一、三行的 `number`、`boolean` 断言），**调用仍然锚定第一条声明**——`x` 全部拿到 `string`，没有一条走第二条 `number` 声明；回调体的错误以 TS2322 出现在体位置，是「选定签名之后」的体检查阶段报出来的，从不升级为 TS2769、也从不触发换声明重试。
+
+时序表述：带未注解参数的箭头回调对每条声明都能「装进去」（参数位没有任何承诺），于是第一条声明永远是赢家；选定后，形参按第一声明的类型做上下文标注，体才被检查。次序规则（§2 规则 1）在上下文敏感回调上比普通调用更绝对——普通调用实参带类型承诺，不合适会淘汰声明；回调体没有这层承诺，淘汰机制失灵。
+
+工程含义：用重载给「双形态回调 API」建模（`(x: string) => void` 与 `(x: number) => void` 两条声明）是错误建模——调用方写 number 逻辑时，报错会声称类型是 string（第一条的形参类型），排查方向直接被带偏。正确建模两条路：联合形参 `cb: (x: string | number) => void`（调用方自行收窄），或泛型 `cb: (x: T) => void` 由实参侧决定。一句话：**重载的按形态分叉只对「带类型承诺」的实参有效，回调体永远吃第一条**。
+
+## 附录十：收束——检查单从四问扩到六问
+
+正文以四问检查单收束本册，附录又添两问，合并成最终版六问（review 函数签名时按序过）：
+
+1. **this 依赖标了吗？**（正文问一）
+2. **返回形态入参能定吗？**（正文问二）
+3. **参数位置谁是推断源？**（正文问三）
+4. **回调的返回类型留空还是 void？**（正文问四）
+5. **宽窄的次序与形态对了吗？**——重载窄在前；泛型不兜底（附录七）；「双形态回调」不用重载建模（附录九）；需要构造器豁免传 `typeof C` 不写注解（附录二）。
+6. **这些「宽松」是宿主兼容还是历史包袱？**——方法简写只留在 `.d.ts`（附录八）；每一处豁免都该说得出为谁而开。
+
+新增两问对应的错误形态：问五漏过是「类型静默变宽或锚定错声明」，问六漏过是「逆变防线被逐段拆掉」——两者都不报错，只有 review 能拦。六问各自能索引到附录的具体收据行，检查单因此不是口诀，是收据目录。
+
+
+
+
