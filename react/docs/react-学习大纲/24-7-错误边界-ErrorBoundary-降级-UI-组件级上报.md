@@ -1,5 +1,5 @@
 ---
-title: "7. 错误边界 ErrorBoundary + 降级 UI + 组件级上报"
+title: "24. 7. 错误边界 ErrorBoundary + 降级 UI + 组件级上报"
 ---
 
 > 本文是《阶段 4：高频业务场景 ⭐实战核心（3 周）》按小节拆分后的续篇，上一部分见 [23-6-权限系统-路由级权限-按钮级权限-权限组件-usePermission.md](23-6-权限系统-路由级权限-按钮级权限-权限组件-usePermission.md)。

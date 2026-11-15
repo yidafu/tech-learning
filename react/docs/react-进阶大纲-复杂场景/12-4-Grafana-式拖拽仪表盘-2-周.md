@@ -1,5 +1,5 @@
 ---
-title: "4. Grafana 式拖拽仪表盘（2 周）"
+title: "12. 4. Grafana 式拖拽仪表盘（2 周）"
 ---
 
 ## 4. Grafana 式拖拽仪表盘（2 周）

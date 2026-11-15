@@ -1,5 +1,5 @@
 ---
-title: "阶段 7：TypeScript + React（1 周）"
+title: "29. 阶段 7：TypeScript + React（1 周）"
 ---
 
 ## 阶段 7：TypeScript + React（1 周）

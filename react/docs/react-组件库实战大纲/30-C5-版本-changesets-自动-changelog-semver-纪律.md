@@ -1,5 +1,5 @@
 ---
-title: "C5. 版本：changesets 自动 changelog；semver 纪律；大版本迁移配 codemod（jscodeshift）"
+title: "30. C5. 版本：changesets 自动 changelog；semver 纪律；大版本迁移配 codemod（jscodeshift）"
 ---
 > 本文是《Part C：工程化（从 demo 到可发布）》按小节拆分后的续篇，上一部分见 [29-C4-测试-Vitest-Testing-Library-逐组件-Storybook.md](29-C4-测试-Vitest-Testing-Library-逐组件-Storybook.md)。
 ## C5. 版本：changesets 自动 changelog；semver 纪律；大版本迁移配 codemod（jscodeshift）

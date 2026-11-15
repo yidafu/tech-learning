@@ -1,5 +1,5 @@
 ---
-title: "M5：Reconciliation —— diff 与复用（2 天）⭐核心"
+title: "06. M5：Reconciliation —— diff 与复用（2 天）⭐核心"
 ---
 
 > 本文是《2. 复刻路线：十个里程碑（每步可运行，命名沿用经典 didact）》按小节拆分后的续篇，上一部分见 [05-M4-render-与-commit-分离-1-天.md](05-M4-render-与-commit-分离-1-天.md)。

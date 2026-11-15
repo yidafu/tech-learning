@@ -1,5 +1,5 @@
 ---
-title: "自定义 Hook（从模仿到手写）"
+title: "09. 自定义 Hook（从模仿到手写）"
 ---
 
 > 本文是《阶段 2：状态与副作用 ⭐核心（2 周）》按小节拆分后的续篇，上一部分见 [08-useMemo-useCallback-memo.md](08-useMemo-useCallback-memo.md)。

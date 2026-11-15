@@ -1,5 +1,5 @@
 ---
-title: "3. 验收：用你的 mini React 写真实应用（1 周）"
+title: "15. 3. 验收：用你的 mini React 写真实应用（1 周）"
 ---
 
 ## 3. 验收：用你的 mini React 写真实应用（1 周）

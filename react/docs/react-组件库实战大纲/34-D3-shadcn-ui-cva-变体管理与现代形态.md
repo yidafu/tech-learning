@@ -1,5 +1,5 @@
 ---
-title: "D3. shadcn/ui：cva 变体管理与现代形态"
+title: "34. D3. shadcn/ui：cva 变体管理与现代形态"
 ---
 > 本文是《源码阅读优先级》按小节拆分后的续篇，上一部分见 [33-D2-antd-工程化与细节功力-Wave-波纹-两个汉字空格-Watermark.md](33-D2-antd-工程化与细节功力-Wave-波纹-两个汉字空格-Watermark.md)。
 ## D3. shadcn/ui：cva 变体管理与现代形态

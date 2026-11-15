@@ -1,5 +1,5 @@
 ---
-title: "✅ 产出：TodoMVC（增删改查 + 状态过滤 + localStorage 持久化 + useDebounce 搜索）"
+title: "10. ✅ 产出：TodoMVC（增删改查 + 状态过滤 + localStorage 持久化 + useDebounce 搜索）"
 ---
 
 > 本文是《阶段 2：状态与副作用 ⭐核心（2 周）》按小节拆分后的续篇，上一部分见 [09-自定义-Hook-从模仿到手写.md](09-自定义-Hook-从模仿到手写.md)。

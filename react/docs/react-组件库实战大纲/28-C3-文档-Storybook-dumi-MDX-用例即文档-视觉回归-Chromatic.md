@@ -1,5 +1,5 @@
 ---
-title: "C3. 文档：Storybook/dumi，MDX 用例即文档；视觉回归（Chromatic/Lost Pixel）；a11y 检查（axe 插件）"
+title: "28. C3. 文档：Storybook/dumi，MDX 用例即文档；视觉回归（Chromatic/Lost Pixel）；a11y 检查（axe 插件）"
 ---
 > 本文是《Part C：工程化（从 demo 到可发布）》按小节拆分后的续篇，上一部分见 [27-C2-构建-tsup-father-unbuild-ESM-CJS-双产物-dt.md](27-C2-构建-tsup-father-unbuild-ESM-CJS-双产物-dt.md)。
 ## C3. 文档：Storybook/dumi，MDX 用例即文档；视觉回归（Chromatic/Lost Pixel）；a11y 检查（axe 插件）

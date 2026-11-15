@@ -1,5 +1,5 @@
 ---
-title: "A3. \"退出动画\"难题（visible/mounted 双状态机）"
+title: "04. A3. \"退出动画\"难题（visible/mounted 双状态机）"
 ---
 
 ## A3. "退出动画"难题（visible/mounted 双状态机）

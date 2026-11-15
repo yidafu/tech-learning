@@ -1,5 +1,5 @@
 ---
-title: "C2. 构建：tsup/father/unbuild；ESM+CJS 双产物；dts 类型；sideEffects 精确声明（按需加载的命门）"
+title: "27. C2. 构建：tsup/father/unbuild；ESM+CJS 双产物；dts 类型；sideEffects 精确声明（按需加载的命门）"
 ---
 > 本文是《Part C：工程化（从 demo 到可发布）》按小节拆分后的续篇，上一部分见 [26-C1-仓库-pnpm-monorepo-components-hooks-tokens.md](26-C1-仓库-pnpm-monorepo-components-hooks-tokens.md)。
 ## C2. 构建：tsup/father/unbuild；ESM+CJS 双产物；dts 类型；`sideEffects` 精确声明（按需加载的命门）
