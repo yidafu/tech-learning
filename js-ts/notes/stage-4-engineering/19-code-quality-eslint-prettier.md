@@ -1,3 +1,8 @@
+---
+sources:
+  - stage-4-engineering
+---
+
 # 19 · 代码质量：ESLint（flat config）+ typescript-eslint + Prettier
 
 > 对应大纲：阶段 4 工程化 —— 代码质量：ESLint + Prettier 配置要点

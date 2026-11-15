@@ -5,6 +5,8 @@ references:
   - 09-ts-narrowing
   - 12-ts-utility-types
   - 13-ts-type-theory
+sources:
+  - stage-3-ts-types
 ---
 # 33 · 类与接口的类型系统
 

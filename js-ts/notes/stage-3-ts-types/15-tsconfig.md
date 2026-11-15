@@ -1,6 +1,8 @@
 ---
 mdx:
   format: mdx
+sources:
+  - stage-3-ts-types
 ---
 # 15 · tsconfig 关键项
 

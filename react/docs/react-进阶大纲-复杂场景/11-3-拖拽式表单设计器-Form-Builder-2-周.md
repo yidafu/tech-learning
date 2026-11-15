@@ -1,5 +1,7 @@
 ---
 title: "11. 3. 拖拽式表单设计器 Form Builder（2 周）"
+sources:
+  - react-进阶大纲-复杂场景
 ---
 
 ## 3. 拖拽式表单设计器 Form Builder（2 周）

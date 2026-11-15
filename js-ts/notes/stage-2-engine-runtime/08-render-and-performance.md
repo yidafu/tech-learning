@@ -1,6 +1,8 @@
 ---
 mdx:
   format: mdx
+sources:
+  - stage-2-engine-runtime
 ---
 # 08 · 渲染管线、事件循环与性能专题
 

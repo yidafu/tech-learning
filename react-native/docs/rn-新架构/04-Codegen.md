@@ -1,3 +1,8 @@
+---
+sources:
+  - rn-新架构
+---
+
 # 04. Codegen
 
 > 新架构里最没有"存在感"却最关键的一环：**把 TS/Flow 的接口定义编译成 C++ / Java / ObjC 的绑定代码**。JSI 提供同步通道，TurboModules/Fabric 提供系统结构，而把"JS 想要的接口"与"原生实现的代码"精确对齐的，是 Codegen。

@@ -1,5 +1,7 @@
 ---
 title: "09. F. AI 原生前端（当下最热，且与你的 Schema 线天然衔接）"
+sources:
+  - react-高阶场景全景图
 ---
 
 ## F. AI 原生前端（当下最热，且与你的 Schema 线天然衔接）

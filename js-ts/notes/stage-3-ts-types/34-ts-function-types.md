@@ -6,6 +6,8 @@ references:
   - 12-ts-utility-types
   - 13-ts-type-theory
   - 33-ts-classes-and-interfaces
+sources:
+  - stage-3-ts-types
 ---
 # 34 · 函数类型深入：重载 / void / this / 构造签名
 

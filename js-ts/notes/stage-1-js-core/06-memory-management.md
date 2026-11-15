@@ -1,6 +1,8 @@
 ---
 mdx:
   format: mdx
+sources:
+  - stage-1-js-core
 ---
 # 06 · 内存管理：V8 垃圾回收、泄漏排查与 Weak 家族
 

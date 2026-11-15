@@ -6,6 +6,8 @@ references:
   - 30-internals-vs-mainstream
   - 27-weird-behaviors-by-stage
   - 07-v8-engine
+sources:
+  - stage-1-js-core
 ---
 # 29 · 原型链补充：谱系、槽位规则、instanceof、键序与污染攻防
 

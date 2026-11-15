@@ -1,3 +1,8 @@
+---
+sources:
+  - stage-4-engineering
+---
+
 # 17 · 构建工具：Vite / esbuild / SWC 为什么这样设计
 
 > 对应大纲：阶段 4 工程化 —— 构建工具：Vite/esbuild/SWC 原理浅析，为什么快

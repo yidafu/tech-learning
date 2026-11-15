@@ -1,6 +1,8 @@
 ---
 mdx:
   format: mdx
+sources:
+  - stage-3-ts-types
 ---
 # 11 · TypeScript 类型编程：映射 / 条件 / infer / 模板字面量 / 变长元组
 

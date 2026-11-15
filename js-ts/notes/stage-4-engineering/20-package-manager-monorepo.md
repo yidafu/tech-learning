@@ -1,3 +1,8 @@
+---
+sources:
+  - stage-4-engineering
+---
+
 # 20 · 包管理：npm/pnpm、semver、workspace 与 monorepo
 
 > 对应大纲：阶段 4 工程化 —— 包管理：npm/pnpm、workspace（monorepo）基础

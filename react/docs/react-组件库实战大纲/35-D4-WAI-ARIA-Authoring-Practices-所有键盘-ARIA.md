@@ -1,5 +1,7 @@
 ---
 title: "35. D4. WAI-ARIA Authoring Practices：所有键盘/ARIA 行为的唯一权威"
+sources:
+  - react-组件库实战大纲
 ---
 > 本文是《源码阅读优先级》按小节拆分后的续篇，上一部分见 [34-D3-shadcn-ui-cva-变体管理与现代形态.md](34-D3-shadcn-ui-cva-变体管理与现代形态.md)。
 ## D4. WAI-ARIA Authoring Practices：所有键盘/ARIA 行为的唯一权威

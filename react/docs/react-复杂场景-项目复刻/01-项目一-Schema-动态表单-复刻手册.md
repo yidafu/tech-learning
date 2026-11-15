@@ -1,5 +1,7 @@
 ---
 title: 01. 项目一：Schema 动态表单复刻手册
+sources:
+  - react-复杂场景-项目复刻
 ---
 
 # 01. 项目一：Schema 动态表单复刻手册

@@ -1,5 +1,7 @@
 ---
 title: "15. 4. JSON Schema 编辑器 / 配置可视化编辑器"
+sources:
+  - react-高阶场景-第二辑
 ---
 
 ## 4. JSON Schema 编辑器 / 配置可视化编辑器

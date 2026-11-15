@@ -1,3 +1,8 @@
+---
+sources:
+  - stage-4-engineering
+---
+
 # 16 · 模块化：CommonJS 与 ESM 的机制差异
 
 > 对应大纲：阶段 4 工程化 —— 模块化：ESM 与 CJS 差异、interop、`import()` 动态导入

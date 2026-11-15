@@ -1,3 +1,8 @@
+---
+sources:
+  - rn-原理实战
+---
+
 # 02. 自定义 TurboModule 全流程
 
 > 模块七 03/04 讲了 TurboModules 与 Codegen 的原理，本篇**亲手走一遍**：从 TS spec 到双平台实现再到 JS 调用。样例选一个真实有用的模块——原生侧埋点上报 `NativeAnalytics`：`logEvent(name, params)` 打日志并 Promise 回执，`getConstants` 暴露启动配置。

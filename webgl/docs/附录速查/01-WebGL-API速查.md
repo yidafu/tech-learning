@@ -1,3 +1,8 @@
+---
+sources:
+  - 附录速查
+---
+
 # 01. WebGL API 速查
 
 > [返回：WebGL 与 3D 框架学习大纲](../WebGL与3D框架学习大纲.md)

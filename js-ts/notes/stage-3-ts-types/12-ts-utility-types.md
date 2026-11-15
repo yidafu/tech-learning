@@ -1,6 +1,8 @@
 ---
 mdx:
   format: mdx
+sources:
+  - stage-3-ts-types
 ---
 # 12 · 内置工具类型：源码级理解与手写
 

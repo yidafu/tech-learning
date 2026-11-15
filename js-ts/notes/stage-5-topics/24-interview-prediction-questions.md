@@ -14,6 +14,8 @@ references:
   - 07-v8-engine
   - 20-package-manager-monorepo
   - 17-build-tools
+sources:
+  - stage-5-topics
 ---
 # 24 · 面试高频输出预测题集
 

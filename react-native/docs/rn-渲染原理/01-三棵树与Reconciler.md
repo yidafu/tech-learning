@@ -1,3 +1,8 @@
+---
+sources:
+  - rn-渲染原理
+---
+
 # 01. 三棵树与 Reconciler
 
 > RN 渲染的第一性问题：**React 怎么把组件树翻译成原生视图操作？** 答案是 react-reconciler 的宿主配置（hostConfig）——同一个 React，另一套"DOM API"。源码以 `Libraries/Renderer/` 为根。

@@ -3,6 +3,8 @@ mdx:
   format: mdx
 references:
   - 04-async-programming
+sources:
+  - stage-1-js-core
 ---
 # 31 · 异步补充：Node 事件循环、工程三件套与异步资源管理
 

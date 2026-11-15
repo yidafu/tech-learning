@@ -1,5 +1,7 @@
 ---
 title: "31. C6. 兼容：browserslist 矩阵、SSR hydrate 冒烟测试、React 18/19 双版本跑测"
+sources:
+  - react-组件库实战大纲
 ---
 > 本文是《Part C：工程化（从 demo 到可发布）》按小节拆分后的续篇，上一部分见 [30-C5-版本-changesets-自动-changelog-semver-纪律.md](30-C5-版本-changesets-自动-changelog-semver-纪律.md)。
 ## C6. 兼容：browserslist 矩阵、SSR hydrate 冒烟测试、React 18/19 双版本跑测

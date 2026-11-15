@@ -1,6 +1,8 @@
 ---
 mdx:
   format: mdx
+sources:
+  - stage-1-js-core
 ---
 # 25 · 里程碑笔记：手写 Promise / bind / new / 深拷贝 / EventEmitter
 

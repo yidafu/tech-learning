@@ -6,6 +6,8 @@ references:
   - 11-ts-type-programming
   - 12-ts-utility-types
   - 13-ts-type-theory
+sources:
+  - stage-3-ts-types
 ---
 # 32 · 类型体操实战：14 道递进题
 

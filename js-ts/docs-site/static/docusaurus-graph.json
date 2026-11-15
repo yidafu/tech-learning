@@ -4,14 +4,24 @@
     "title": "00 · 环境准备",
     "linkTo": [],
     "referencedBy": [
+      "stage-0-setup",
       "28-js-ts-history"
     ]
+  },
+  {
+    "id": "stage-0-setup",
+    "title": "stage-0-setup",
+    "linkTo": [
+      "00-environment-setup"
+    ],
+    "referencedBy": []
   },
   {
     "id": "01-types-and-coercion",
     "title": "01 · 类型系统与类型转换：原始值、装箱与四套相等语义",
     "linkTo": [],
     "referencedBy": [
+      "stage-1-js-core",
       "24-interview-prediction-questions",
       "27-weird-behaviors-by-stage",
       "28-js-ts-history",
@@ -19,10 +29,27 @@
     ]
   },
   {
+    "id": "stage-1-js-core",
+    "title": "stage-1-js-core",
+    "linkTo": [
+      "01-types-and-coercion",
+      "02-scope-and-closure",
+      "03-this-and-prototype",
+      "04-async-programming",
+      "05-es2015-plus",
+      "06-memory-management",
+      "25-milestone-implementations",
+      "29-prototype-chain-supplement",
+      "31-async-supplement"
+    ],
+    "referencedBy": []
+  },
+  {
     "id": "02-scope-and-closure",
     "title": "02 · 作用域与闭包",
     "linkTo": [],
     "referencedBy": [
+      "stage-1-js-core",
       "24-interview-prediction-questions",
       "26-compiler-perspective",
       "27-weird-behaviors-by-stage"
@@ -33,6 +60,7 @@
     "title": "03 · this 与原型链",
     "linkTo": [],
     "referencedBy": [
+      "stage-1-js-core",
       "29-prototype-chain-supplement",
       "24-interview-prediction-questions",
       "28-js-ts-history",
@@ -44,6 +72,7 @@
     "title": "04 · 异步编程：事件循环、Promise 状态机与 async/await",
     "linkTo": [],
     "referencedBy": [
+      "stage-1-js-core",
       "31-async-supplement",
       "24-interview-prediction-questions",
       "28-js-ts-history",
@@ -55,6 +84,7 @@
     "title": "05 · ES2015+ 关键特性：解构、展开、迭代器、生成器、Proxy/Reflect",
     "linkTo": [],
     "referencedBy": [
+      "stage-1-js-core",
       "24-interview-prediction-questions"
     ]
   },
@@ -63,6 +93,7 @@
     "title": "06 · 内存管理：V8 垃圾回收、泄漏排查与 Weak 家族",
     "linkTo": [],
     "referencedBy": [
+      "stage-1-js-core",
       "35-node-runtime",
       "36-performance-engineering",
       "30-internals-vs-mainstream"
@@ -72,7 +103,9 @@
     "id": "25-milestone-implementations",
     "title": "25 · 里程碑笔记：手写 Promise / bind / new / 深拷贝 / EventEmitter",
     "linkTo": [],
-    "referencedBy": []
+    "referencedBy": [
+      "stage-1-js-core"
+    ]
   },
   {
     "id": "29-prototype-chain-supplement",
@@ -83,7 +116,9 @@
       "27-weird-behaviors-by-stage",
       "07-v8-engine"
     ],
-    "referencedBy": []
+    "referencedBy": [
+      "stage-1-js-core"
+    ]
   },
   {
     "id": "30-internals-vs-mainstream",
@@ -97,7 +132,8 @@
       "04-async-programming"
     ],
     "referencedBy": [
-      "29-prototype-chain-supplement"
+      "29-prototype-chain-supplement",
+      "stage-5-topics"
     ]
   },
   {
@@ -110,7 +146,8 @@
       "07-v8-engine"
     ],
     "referencedBy": [
-      "29-prototype-chain-supplement"
+      "29-prototype-chain-supplement",
+      "stage-5-topics"
     ]
   },
   {
@@ -119,6 +156,7 @@
     "linkTo": [],
     "referencedBy": [
       "29-prototype-chain-supplement",
+      "stage-2-engine-runtime",
       "36-performance-engineering",
       "24-interview-prediction-questions",
       "26-compiler-perspective",
@@ -134,15 +172,28 @@
       "04-async-programming"
     ],
     "referencedBy": [
+      "stage-1-js-core",
       "35-node-runtime",
       "36-performance-engineering"
     ]
+  },
+  {
+    "id": "stage-2-engine-runtime",
+    "title": "stage-2-engine-runtime",
+    "linkTo": [
+      "07-v8-engine",
+      "08-render-and-performance",
+      "35-node-runtime",
+      "36-performance-engineering"
+    ],
+    "referencedBy": []
   },
   {
     "id": "08-render-and-performance",
     "title": "08 · 渲染管线、事件循环与性能专题",
     "linkTo": [],
     "referencedBy": [
+      "stage-2-engine-runtime",
       "35-node-runtime",
       "36-performance-engineering",
       "24-interview-prediction-questions"
@@ -158,6 +209,7 @@
       "06-memory-management"
     ],
     "referencedBy": [
+      "stage-2-engine-runtime",
       "36-performance-engineering"
     ]
   },
@@ -167,6 +219,7 @@
     "linkTo": [],
     "referencedBy": [
       "35-node-runtime",
+      "stage-4-engineering",
       "24-interview-prediction-questions",
       "26-compiler-perspective",
       "28-js-ts-history"
@@ -182,18 +235,38 @@
       "31-async-supplement",
       "35-node-runtime"
     ],
-    "referencedBy": []
+    "referencedBy": [
+      "stage-2-engine-runtime"
+    ]
   },
   {
     "id": "09-ts-narrowing",
     "title": "09 · TypeScript 类型收窄（Narrowing）",
     "linkTo": [],
     "referencedBy": [
+      "stage-3-ts-types",
       "10-ts-generics",
       "33-ts-classes-and-interfaces",
       "34-ts-function-types",
       "26-compiler-perspective"
     ]
+  },
+  {
+    "id": "stage-3-ts-types",
+    "title": "stage-3-ts-types",
+    "linkTo": [
+      "09-ts-narrowing",
+      "10-ts-generics",
+      "11-ts-type-programming",
+      "12-ts-utility-types",
+      "13-ts-type-theory",
+      "14-ts-declarations-and-modules",
+      "15-tsconfig",
+      "32-ts-type-challenges",
+      "33-ts-classes-and-interfaces",
+      "34-ts-function-types"
+    ],
+    "referencedBy": []
   },
   {
     "id": "10-ts-generics",
@@ -202,6 +275,7 @@
       "09-ts-narrowing"
     ],
     "referencedBy": [
+      "stage-3-ts-types",
       "32-ts-type-challenges",
       "24-interview-prediction-questions"
     ]
@@ -211,6 +285,7 @@
     "title": "11 · TypeScript 类型编程：映射 / 条件 / infer / 模板字面量 / 变长元组",
     "linkTo": [],
     "referencedBy": [
+      "stage-3-ts-types",
       "32-ts-type-challenges",
       "22-design-patterns"
     ]
@@ -220,6 +295,7 @@
     "title": "12 · 内置工具类型：源码级理解与手写",
     "linkTo": [],
     "referencedBy": [
+      "stage-3-ts-types",
       "32-ts-type-challenges",
       "33-ts-classes-and-interfaces",
       "34-ts-function-types"
@@ -230,6 +306,7 @@
     "title": "13 · TypeScript 类型系统理论",
     "linkTo": [],
     "referencedBy": [
+      "stage-3-ts-types",
       "32-ts-type-challenges",
       "33-ts-classes-and-interfaces",
       "34-ts-function-types",
@@ -242,13 +319,17 @@
     "id": "14-ts-declarations-and-modules",
     "title": "14 · 声明文件与模块解析",
     "linkTo": [],
-    "referencedBy": []
+    "referencedBy": [
+      "stage-3-ts-types"
+    ]
   },
   {
     "id": "15-tsconfig",
     "title": "15 · tsconfig 关键项",
     "linkTo": [],
-    "referencedBy": []
+    "referencedBy": [
+      "stage-3-ts-types"
+    ]
   },
   {
     "id": "32-ts-type-challenges",
@@ -259,7 +340,9 @@
       "12-ts-utility-types",
       "13-ts-type-theory"
     ],
-    "referencedBy": []
+    "referencedBy": [
+      "stage-3-ts-types"
+    ]
   },
   {
     "id": "33-ts-classes-and-interfaces",
@@ -270,6 +353,7 @@
       "13-ts-type-theory"
     ],
     "referencedBy": [
+      "stage-3-ts-types",
       "34-ts-function-types"
     ]
   },
@@ -282,6 +366,20 @@
       "13-ts-type-theory",
       "33-ts-classes-and-interfaces"
     ],
+    "referencedBy": [
+      "stage-3-ts-types"
+    ]
+  },
+  {
+    "id": "stage-4-engineering",
+    "title": "stage-4-engineering",
+    "linkTo": [
+      "16-modules-esm-cjs",
+      "17-build-tools",
+      "18-testing-vitest",
+      "19-code-quality-eslint-prettier",
+      "20-package-manager-monorepo"
+    ],
     "referencedBy": []
   },
   {
@@ -289,6 +387,7 @@
     "title": "17 · 构建工具：Vite / esbuild / SWC 为什么这样设计",
     "linkTo": [],
     "referencedBy": [
+      "stage-4-engineering",
       "24-interview-prediction-questions"
     ]
   },
@@ -296,19 +395,24 @@
     "id": "18-testing-vitest",
     "title": "18 · 测试：Vitest 基础与 Mock 机制",
     "linkTo": [],
-    "referencedBy": []
+    "referencedBy": [
+      "stage-4-engineering"
+    ]
   },
   {
     "id": "19-code-quality-eslint-prettier",
     "title": "19 · 代码质量：ESLint（flat config）+ typescript-eslint + Prettier",
     "linkTo": [],
-    "referencedBy": []
+    "referencedBy": [
+      "stage-4-engineering"
+    ]
   },
   {
     "id": "20-package-manager-monorepo",
     "title": "20 · 包管理：npm/pnpm、semver、workspace 与 monorepo",
     "linkTo": [],
     "referencedBy": [
+      "stage-4-engineering",
       "24-interview-prediction-questions"
     ]
   },
@@ -319,6 +423,7 @@
       "24-interview-prediction-questions"
     ],
     "referencedBy": [
+      "stage-5-topics",
       "22-design-patterns"
     ]
   },
@@ -340,8 +445,24 @@
       "17-build-tools"
     ],
     "referencedBy": [
-      "21-functional-programming"
+      "21-functional-programming",
+      "stage-5-topics"
     ]
+  },
+  {
+    "id": "stage-5-topics",
+    "title": "stage-5-topics",
+    "linkTo": [
+      "21-functional-programming",
+      "22-design-patterns",
+      "23-reactivity-source-reading",
+      "24-interview-prediction-questions",
+      "26-compiler-perspective",
+      "27-weird-behaviors-by-stage",
+      "28-js-ts-history",
+      "30-internals-vs-mainstream"
+    ],
+    "referencedBy": []
   },
   {
     "id": "22-design-patterns",
@@ -351,7 +472,9 @@
       "21-functional-programming",
       "11-ts-type-programming"
     ],
-    "referencedBy": []
+    "referencedBy": [
+      "stage-5-topics"
+    ]
   },
   {
     "id": "23-reactivity-source-reading",
@@ -359,6 +482,7 @@
     "linkTo": [],
     "referencedBy": [
       "22-design-patterns",
+      "stage-5-topics",
       "28-js-ts-history"
     ]
   },
@@ -373,6 +497,7 @@
       "13-ts-type-theory"
     ],
     "referencedBy": [
+      "stage-5-topics",
       "27-weird-behaviors-by-stage",
       "28-js-ts-history",
       "30-internals-vs-mainstream"
@@ -392,6 +517,8 @@
       "04-async-programming",
       "01-types-and-coercion"
     ],
-    "referencedBy": []
+    "referencedBy": [
+      "stage-5-topics"
+    ]
   }
 ]

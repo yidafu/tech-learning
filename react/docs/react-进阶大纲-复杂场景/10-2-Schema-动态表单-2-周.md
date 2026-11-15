@@ -1,5 +1,7 @@
 ---
 title: "10. 2. Schema 动态表单（2 周）"
+sources:
+  - react-进阶大纲-复杂场景
 ---
 
 ## 2. Schema 动态表单（2 周）

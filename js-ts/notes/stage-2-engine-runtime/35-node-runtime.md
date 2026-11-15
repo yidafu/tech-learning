@@ -6,6 +6,8 @@ references:
   - 16-modules-esm-cjs
   - 08-render-and-performance
   - 06-memory-management
+sources:
+  - stage-2-engine-runtime
 ---
 # 35 · Node.js 运行时：streams、Buffer、子进程与并行模型
 

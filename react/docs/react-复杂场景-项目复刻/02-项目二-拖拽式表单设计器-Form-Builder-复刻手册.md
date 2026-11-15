@@ -1,5 +1,7 @@
 ---
 title: 02. 项目二：拖拽式表单设计器（Form Builder）复刻手册
+sources:
+  - react-复杂场景-项目复刻
 ---
 
 # 02. 项目二：拖拽式表单设计器（Form Builder）复刻手册

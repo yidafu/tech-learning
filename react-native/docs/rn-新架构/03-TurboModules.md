@@ -1,3 +1,8 @@
+---
+sources:
+  - rn-新架构
+---
+
 # 03. TurboModules
 
 > 模块四的 NativeModules 有三宗罪：**启动全量注册、JSON 动态调用、类型靠约定**。TurboModules 逐条替换：**按需实例化、JSI 同步绑定、Codegen 静态契约**。本篇拆它的加载机制、双平台模块管理器与兼容旧模块的 Interop 层。

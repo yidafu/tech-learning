@@ -1,5 +1,7 @@
 ---
 title: "21. 4. 主题切换（CSS 变量 + data-theme + 持久化）"
+sources:
+  - react-学习大纲
 ---
 
 > 本文是《阶段 4：高频业务场景 ⭐实战核心（3 周）》按小节拆分后的续篇，上一部分见 [20-3-动画-CSS-transition-状态机-framer-motion-进出场.md](20-3-动画-CSS-transition-状态机-framer-motion-进出场.md)。

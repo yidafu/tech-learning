@@ -3,6 +3,8 @@ mdx:
   format: mdx
 references:
   - 09-ts-narrowing
+sources:
+  - stage-3-ts-types
 ---
 # 10 · TypeScript 泛型深入
 

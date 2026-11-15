@@ -1,5 +1,7 @@
 ---
 title: "03. React 相关度过滤视图"
+sources:
+  - react-高阶场景全景图
 ---
 
 ## React 相关度过滤视图

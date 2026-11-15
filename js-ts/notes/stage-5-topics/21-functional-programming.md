@@ -3,6 +3,8 @@ mdx:
   format: mdx
 references:
   - 24-interview-prediction-questions
+sources:
+  - stage-5-topics
 ---
 # 21 · 函数式编程：纯函数、组合与柯里化（TS 视角）
 

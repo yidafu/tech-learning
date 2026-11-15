@@ -7,6 +7,8 @@ references:
   - 08-render-and-performance
   - 31-async-supplement
   - 35-node-runtime
+sources:
+  - stage-2-engine-runtime
 ---
 # 36 · 性能工程：CPU profile、堆快照与事件循环延迟
 

@@ -1,3 +1,8 @@
+---
+sources:
+  - 05-第五阶段
+---
+
 # 05. 粒子系统与 Instancing 实战
 
 > [返回：WebGL 与 3D 框架学习大纲](../WebGL与3D框架学习大纲.md)

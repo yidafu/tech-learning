@@ -11,6 +11,8 @@ references:
   - 00-environment-setup
   - 04-async-programming
   - 01-types-and-coercion
+sources:
+  - stage-5-topics
 ---
 # 28 · JS/TS 发展史：今天的每一个「怪」，都是当年的一次合理决定
 

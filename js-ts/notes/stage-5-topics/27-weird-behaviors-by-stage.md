@@ -6,6 +6,8 @@ references:
   - 01-types-and-coercion
   - 02-scope-and-closure
   - 07-v8-engine
+sources:
+  - stage-5-topics
 ---
 # 27 · 特异行为解码：每个 JS「怪现象」都归属于一个编译阶段
 

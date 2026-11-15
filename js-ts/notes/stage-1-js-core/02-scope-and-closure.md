@@ -1,6 +1,8 @@
 ---
 mdx:
   format: mdx
+sources:
+  - stage-1-js-core
 ---
 # 02 · 作用域与闭包
 

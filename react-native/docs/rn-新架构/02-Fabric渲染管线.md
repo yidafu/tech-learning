@@ -1,3 +1,8 @@
+---
+sources:
+  - rn-新架构
+---
+
 # 02. Fabric 渲染管线
 
 > Fabric 是新架构的渲染器：C++ ShadowTree、同步布局、clone-on-write、带优先级的 commit。本篇沿"render → reconcile → commit → mount"四阶段把新管线走一遍，并与旧管线逐段对照。

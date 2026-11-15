@@ -1,5 +1,7 @@
 ---
 title: "26. C1. 仓库：pnpm monorepo（components / hooks / token / utils 分包），turbo 任务编排"
+sources:
+  - react-组件库实战大纲
 ---
 # Part C：工程化（从 demo 到可发布）
 

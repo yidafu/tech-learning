@@ -1,3 +1,8 @@
+---
+sources:
+  - rn-启动流程原理
+---
+
 # 02. iOS 启动链路与 runApplication
 
 > iOS 侧的同一出戏：AppDelegate → RCTBridge → RCTRootView。重点看 bridge 的启动阶段划分（setup/start/loadSource/executeSource/dispatch）与 JS 侧 `AppRegistry.runApplication` 的收尾。源码以 `React/` 为根。

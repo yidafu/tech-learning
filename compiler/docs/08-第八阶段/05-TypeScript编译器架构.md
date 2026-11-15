@@ -1,3 +1,8 @@
+---
+sources:
+  - 08-第八阶段
+---
+
 # 05. TypeScript 编译器架构：Program / Checker / Transformer / Emitter
 
 > [返回：第八阶段导览](01-导览.md)

@@ -1,5 +1,7 @@
 ---
 title: "20. 3. 动画：CSS transition 状态机、framer-motion 进出场、列表 FLIP（AnimatePresence）"
+sources:
+  - react-学习大纲
 ---
 
 > 本文是《阶段 4：高频业务场景 ⭐实战核心（3 周）》按小节拆分后的续篇，上一部分见 [19-2-拖拽排序-dnd-kit-列表拖拽-多容器移动.md](19-2-拖拽排序-dnd-kit-列表拖拽-多容器移动.md)。

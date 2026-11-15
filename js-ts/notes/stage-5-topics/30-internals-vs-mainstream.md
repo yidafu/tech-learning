@@ -8,6 +8,8 @@ references:
   - 03-this-and-prototype
   - 01-types-and-coercion
   - 04-async-programming
+sources:
+  - stage-5-topics
 ---
 # 30 · JS 特性的底层实现：与主流语言逐项对比
 

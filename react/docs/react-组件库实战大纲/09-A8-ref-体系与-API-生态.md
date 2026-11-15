@@ -1,5 +1,7 @@
 ---
 title: "09. A8. ref 体系与 API 生态"
+sources:
+  - react-组件库实战大纲
 ---
 
 ## A8. ref 体系与 API 生态

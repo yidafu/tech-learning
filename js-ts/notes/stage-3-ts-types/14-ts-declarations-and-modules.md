@@ -1,3 +1,8 @@
+---
+sources:
+  - stage-3-ts-types
+---
+
 # 14 · 声明文件与模块解析
 
 > 对应大纲：阶段 3.6 —— 声明文件与模块解析：`.d.ts` 编写、`moduleResolution`（node10 vs bundler）、`declare`/`declare module`

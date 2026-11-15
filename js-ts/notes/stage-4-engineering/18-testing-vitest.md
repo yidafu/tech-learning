@@ -1,6 +1,8 @@
 ---
 mdx:
   format: mdx
+sources:
+  - stage-4-engineering
 ---
 # 18 · 测试：Vitest 基础与 Mock 机制
 

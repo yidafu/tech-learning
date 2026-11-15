@@ -1,6 +1,8 @@
 ---
 mdx:
   format: mdx
+sources:
+  - stage-5-topics
 ---
 # 23 · 响应式源码阅读：@vue/reactivity 路线图
 

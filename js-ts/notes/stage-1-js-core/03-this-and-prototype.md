@@ -1,6 +1,8 @@
 ---
 mdx:
   format: mdx
+sources:
+  - stage-1-js-core
 ---
 # 03 · this 与原型链
 

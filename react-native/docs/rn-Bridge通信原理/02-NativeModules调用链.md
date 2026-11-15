@@ -1,3 +1,8 @@
+---
+sources:
+  - rn-Bridge通信原理
+---
+
 # 02. Native Modules 调用链
 
 > 从 `NativeModules.Foo.bar()` 这行代码的两端出发：JS 侧的"代理"是怎么凭空出现的，原生侧的方法是怎么被找到并执行的。读完本篇，你能徒手画出双向调用的完整链路。

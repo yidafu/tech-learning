@@ -1,6 +1,8 @@
 ---
 mdx:
   format: mdx
+sources:
+  - stage-2-engine-runtime
 ---
 # 07 · V8 引擎：从源码到机器码
 

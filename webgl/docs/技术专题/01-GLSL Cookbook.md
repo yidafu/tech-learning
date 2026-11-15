@@ -1,3 +1,8 @@
+---
+sources:
+  - 技术专题
+---
+
 # 01. GLSL Cookbook：着色器技法箱
 
 > [返回：WebGL 与 3D 框架学习大纲](../WebGL与3D框架学习大纲.md)

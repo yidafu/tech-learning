@@ -1,5 +1,7 @@
 ---
 title: "12. 4. Grafana 式拖拽仪表盘（2 周）"
+sources:
+  - react-进阶大纲-复杂场景
 ---
 
 ## 4. Grafana 式拖拽仪表盘（2 周）

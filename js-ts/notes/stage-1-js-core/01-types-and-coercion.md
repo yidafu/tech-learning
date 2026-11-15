@@ -1,6 +1,8 @@
 ---
 mdx:
   format: mdx
+sources:
+  - stage-1-js-core
 ---
 # 01 · 类型系统与类型转换：原始值、装箱与四套相等语义
 

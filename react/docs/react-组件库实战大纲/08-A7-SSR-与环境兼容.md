@@ -1,5 +1,7 @@
 ---
 title: "08. A7. SSR 与环境兼容"
+sources:
+  - react-组件库实战大纲
 ---
 
 ## A7. SSR 与环境兼容

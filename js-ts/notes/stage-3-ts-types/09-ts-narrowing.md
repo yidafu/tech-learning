@@ -1,6 +1,8 @@
 ---
 mdx:
   format: mdx
+sources:
+  - stage-3-ts-types
 ---
 # 09 · TypeScript 类型收窄（Narrowing）
 

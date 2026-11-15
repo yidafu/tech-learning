@@ -1,5 +1,7 @@
 ---
 title: "09. 3.5 协议转换层（前后端契约关键）：条件树 ↔ json-logic / Mongo query / ES DSL / SQL WHERE"
+sources:
+  - react-高阶场景-第二辑
 ---
 
 > 本文是《3. 动态查询构建器 / 规则引擎 UI ★全量展开 · 核心技术》按小节拆分后的续篇，上一部分见 [08-3-4-值编辑器体系-Setter-复用-远程-options-懒加载-防抖-取消.md](08-3-4-值编辑器体系-Setter-复用-远程-options-懒加载-防抖-取消.md)。

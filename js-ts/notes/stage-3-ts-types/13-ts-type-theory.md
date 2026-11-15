@@ -1,6 +1,8 @@
 ---
 mdx:
   format: mdx
+sources:
+  - stage-3-ts-types
 ---
 # 13 · TypeScript 类型系统理论
 

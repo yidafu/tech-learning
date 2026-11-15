@@ -7,6 +7,8 @@ references:
   - 09-ts-narrowing
   - 16-modules-esm-cjs
   - 13-ts-type-theory
+sources:
+  - stage-5-topics
 ---
 # 26 · 编译原理视角：把 JS/TS 放回编译器全景
 

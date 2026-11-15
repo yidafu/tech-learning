@@ -1,5 +1,7 @@
 ---
 title: "29. 阶段 7：TypeScript + React（1 周）"
+sources:
+  - react-学习大纲
 ---
 
 ## 阶段 7：TypeScript + React（1 周）

@@ -1,5 +1,7 @@
 ---
 title: "29. C4. 测试：Vitest + Testing Library 逐组件；Storybook play function 交互测试"
+sources:
+  - react-组件库实战大纲
 ---
 > 本文是《Part C：工程化（从 demo 到可发布）》按小节拆分后的续篇，上一部分见 [28-C3-文档-Storybook-dumi-MDX-用例即文档-视觉回归-Chromatic.md](28-C3-文档-Storybook-dumi-MDX-用例即文档-视觉回归-Chromatic.md)。
 ## C4. 测试：Vitest + Testing Library 逐组件；Storybook play function 交互测试

@@ -5,6 +5,8 @@ references:
   - 23-reactivity-source-reading
   - 21-functional-programming
   - 11-ts-type-programming
+sources:
+  - stage-5-topics
 ---
 # 22 · 设计模式的 TS 实现：从 GoF 到「union + 函数表」
 

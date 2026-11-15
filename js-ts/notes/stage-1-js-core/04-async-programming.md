@@ -1,6 +1,8 @@
 ---
 mdx:
   format: mdx
+sources:
+  - stage-1-js-core
 ---
 # 04 · 异步编程：事件循环、Promise 状态机与 async/await
 

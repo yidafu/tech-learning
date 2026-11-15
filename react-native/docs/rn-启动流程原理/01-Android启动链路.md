@@ -1,3 +1,8 @@
+---
+sources:
+  - rn-启动流程原理
+---
+
 # 01. Android 启动链路
 
 > 从用户点击图标到 `runApplication` 执行，Android 侧要穿过 Activity → ReactContext → CatalystInstance 三级火箭。本篇以 0.7x 旧架构为主线（新架构差异处单独标注），源码位置以 `ReactAndroid/` 为根。

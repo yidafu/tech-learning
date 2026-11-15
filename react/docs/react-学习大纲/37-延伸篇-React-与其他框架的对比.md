@@ -1,5 +1,7 @@
 ---
 title: "37. 延伸篇：React 与其他框架的对比"
+sources:
+  - react-学习大纲
 ---
 
 ## 延伸篇：React 与其他框架的对比

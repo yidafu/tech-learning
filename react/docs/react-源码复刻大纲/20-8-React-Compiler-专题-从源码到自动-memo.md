@@ -1,5 +1,7 @@
 ---
 title: "20. 8. React Compiler 专题：从源码到自动 memo（构建期的另一半）"
+sources:
+  - react-源码复刻大纲
 ---
 
 ## 8. React Compiler 专题：从源码到自动 memo（构建期的另一半）

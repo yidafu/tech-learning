@@ -1,5 +1,7 @@
 ---
 title: "03. 项目三：Grafana 式拖拽仪表盘复刻手册"
+sources:
+  - react-复杂场景-项目复刻
 ---
 
 # 03. 项目三：Grafana 式拖拽仪表盘复刻手册

@@ -1,5 +1,7 @@
 ---
 title: "04. A3. \"退出动画\"难题（visible/mounted 双状态机）"
+sources:
+  - react-组件库实战大纲
 ---
 
 ## A3. "退出动画"难题（visible/mounted 双状态机）
