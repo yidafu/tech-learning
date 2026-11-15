@@ -1,6 +1,6 @@
 # tech-learning · 技术学习笔记站群
 
-十个方向的学习笔记站点，各自是独立的 [Docusaurus](https://docusaurus.io/) 站点，统一托管在一个 GitHub Pages 项目站下：
+十一个方向的学习笔记站点，各自是独立的 [Docusaurus](https://docusaurus.io/) 站点，统一托管在一个 GitHub Pages 项目站下：
 
 **https://yidafu.github.io/tech-learning/**
 
@@ -16,6 +16,7 @@
 | [编译原理学习站](https://yidafu.github.io/tech-learning/compiler/) | `compiler/` | 3007 | 八阶段：词法 → 语法 → 语义 → IR 与字节码 VM → GC → 优化 → Babel/tsc/esbuild 对标与毕业项目 |
 | [GUI 框架原理学习站](https://yidafu.github.io/tech-learning/gui/) | `gui/` | 3008 | 八阶段：绘制层 → 文本排版 → 控件树与布局 → 事件 → 渲染调度 → signals 声明式层；TypeScript + raylib（ScriptC 编译为原生窗口程序），目前为大纲与阶段导览 |
 | [浏览器与网络原理学习站](https://yidafu.github.io/tech-learning/browser/) | `browser/` | 3009 | 十阶段沿一次真实请求走完全链路：导航决策 → DNS/TCP/TLS → HTTP 三代协议 → CDN 与服务端 → 缓存调度 → HTML/CSS/JS 解析 → 渲染管线 → 首屏指标与交互 → 毕业项目，目前为大纲与阶段导览 |
+| [后端开发学习站](https://yidafu.github.io/tech-learning/backend/) | `backend/` | 3010 | Kotlin + Spring Boot 十二阶段：十五站请求链路 → 容器原理 → Web 层与契约 → 数据层 → 事务与一致性 → 缓存消息 → 并发模型 → 安全 → 生产化 → 微服务与大型应用 → 毕业项目，85 篇正文全部上线 |
 
 ## 本地开发
 
@@ -32,13 +33,14 @@ cd webgl           && npm install && npm run dev  # http://localhost:3006
 cd compiler        && npm install && npm run dev  # http://localhost:3007
 cd gui             && npm install && npm run dev  # http://localhost:3008
 cd browser         && npm install && npm run dev  # http://localhost:3009
+cd backend         && npm install && npm run dev  # http://localhost:3010
 ```
 
 ## 部署（单 GitHub Pages，多站点子路径）
 
 推送到 `main` 即触发 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)：
 
-1. **build-site**（matrix 并行）：10 个站各自 `npm ci && npm run build`（baseUrl 均为 `/tech-learning/<站名>/`），产物上传为 artifact
+1. **build-site**（matrix 并行）：11 个站各自 `npm ci && npm run build`（baseUrl 均为 `/tech-learning/<站名>/`），产物上传为 artifact
 2. **assemble-deploy**：落地页（`landing/index.html`）放站点根，各站 `build/` 合并到 `<站名>/` 子目录，经 `actions/deploy-pages` 发布
 
 仓库设置（一次性）：Settings → Pages → Source 选 **GitHub Actions**。
@@ -46,6 +48,6 @@ cd browser         && npm install && npm run dev  # http://localhost:3009
 ### 目录约定与注意点
 
 - `architecture/`：笔记正文（`01-第一阶段` ~ `06-第六阶段` 等）在目录根，`docs/` 以**相对符号链接**挂载（配 `resolve.symlinks: false`），构建前 `scripts/copy-samples.mjs` 会把 Kotlin 示例拷入 `static/`（已 gitignore）
-- `react/`、`js-ts/docs-site/`、`react-native/`、`webgl/`、`compiler/`、`gui/`、`browser/`：使用 `docusaurus-graph` 插件，其注入脚本写死 `fetch('/docusaurus-graph.json')`，已通过 `patches/docusaurus-graph+2.0.0.patch`（patch-package）在构建时改写为 baseUrl 绝对路径；**改动 node_modules 后需重新 `npx patch-package docusaurus-graph`**
-- `webgl/`、`compiler/`、`gui/`、`browser/`：阶段式笔记正文在 `docs/`（无 frontmatter，`NN-` 前缀决定顺序、URL 中自动剥离），`static/docusaurus-graph.json` 为构建产物快照（重建后 `cp build/docusaurus-graph.json static/` 更新）
+- `react/`、`js-ts/docs-site/`、`react-native/`、`webgl/`、`compiler/`、`gui/`、`browser/`、`backend/`：使用 `docusaurus-graph` 插件，其注入脚本写死 `fetch('/docusaurus-graph.json')`，已通过 `patches/docusaurus-graph+2.0.0.patch`（patch-package）在构建时改写为 baseUrl 绝对路径；**改动 node_modules 后需重新 `npx patch-package docusaurus-graph`**
+- `webgl/`、`compiler/`、`gui/`、`browser/`、`backend/`：阶段式笔记正文在 `docs/`（无 frontmatter，`NN-` 前缀决定顺序、URL 中自动剥离），`static/docusaurus-graph.json` 为构建产物快照（重建后 `cp build/docusaurus-graph.json static/` 更新）
 - `js-ts/docs-site/`：浏览器内 TS 编译器资源（`static/ts/`，约 11MB）由 `scripts/gen-ts-libs.mjs` 在 `build`/`start` 时自动生成，不入库
