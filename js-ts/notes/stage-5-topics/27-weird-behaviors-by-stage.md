@@ -304,3 +304,125 @@ console.log([] + {}, "5" - 2, "foo" + +"bar");  // ⑤
 - ④ **ReferenceError**。箭头函数体内 `t` 的 binding 在调用时已实例化（存在）但未初始化——豁免不覆盖 TDZ。
 - ⑤ **[object Object] 3 fooNaN**。`[] + {}` 拼接；`"5" - 2` 走 ToNumber；`+"bar" = NaN` 再拼接。
 - 加分题：`[] + {}` → **TS2365**；`"5" - 2` → **TS2362**；`"foo" + +"bar"` **放行**（一元 + 接受 string，结果 number，拼接结果类型静态可判为 string）。判断标准是「结果类型能否静态赋予」，与运行时行为是否「怪」无关。
+
+---
+
+## 怪相补遗：按阶段增补三条
+
+本册总表九条怪相，按站清点——站一（词法）只有 `/` 的双重身份，站三（语义）只有 typeof 与循环闭包，站四（运行时）只有 `+` 一族。单站条目过少，「从怪现象反查阶段」的训练面就不够。这里每站补一条进阶怪相，格式统一为：**现象代码 → 你的预测 → 真实输出 → 机制解释 → 一句话防御**。所有「真实输出」都是 node 实跑（Node 24.10.0）；涉及 sloppy 与严格对照的，同一段代码分别存成 `.cjs` 与 `.mjs`——扩展名一改语义全变，这本身就是格式判定纪律的一部分。选题标准也有讲究：不找「最怪」的，找**主文法与兼容条款的边界上**的——四条里两条直接踩在 Annex B 条款上（HTML 注释、if 体函数），一条踩在严格与非严格的实例化分界上（映射 arguments），一条踩在两个运行时算法的分界上（null 三角）。边界上的怪相训练价值最高，因为它们逼你区分「哪套规则在管」——这正是本册方法论的核心动作。
+
+### 站一增补：HTML 注释——词法层的兼容化石
+
+**现象代码**（存成 `.cjs`，sloppy 脚本）：
+
+```js
+console.log("line 1");
+<!-- a single-line HTML comment
+console.log("line 2");
+let x = 41;
+--> the rest of this line is a comment too
+console.log("line 3, x =", x);
+```
+
+**你的预测**：绝大多数人第一眼判 SyntaxError——这看起来不是任何一种合法的 JS 注释。
+
+**真实输出**（node 实跑）：`line 1`、`line 2`、`line 3, x = 41` 三行全出。同一份文件改存成 `.mjs`：`SyntaxError: HTML comments are not allowed in modules`，进程退出码 1。
+
+**机制解释**：Annex B 的「HTML-like Comments」条款：**非模块代码**里，`<!--` 等价于单行注释的开始；`-->` 在「前面只有空白或换行」的行首位置时，直到行尾都算注释。这是 ES2015 之前为兼容网页内联脚本留下的化石——当年浏览器把不认识的标签整体跳过，脚本里混进 HTML 是常态。模块不受这些 web 兼容条款管辖，所以 `.mjs` 直接判死。归因到站一的理由：注释的识别发生在切 token 的阶段，比 ASI 还早——词法器只有「注释」与「代码」两种归宿，切错了整段就不再是合法输入。顺带注意 `-->` 比 `<!--` 更阴险：它要求行首位置，跟在代码同一行就不算——位置敏感的词法规则最少见也最难查。
+
+**一句话防御**：源码里永远只用 `//` 与块注释；从 HTML 复制代码后先过 lint（禁 HTML 注释的规则可直接拦）；模块代码天然免疫，但要防「老脚本升级成模块」时残留的裸露。
+
+### 站二增补：if 体里的声明——function 能过（Annex B）、let 不能过
+
+**现象代码**（sloppy，存 `.cjs`）：
+
+```js
+if (true) var v = 1;
+console.log('var in if:', typeof v);
+
+try { eval("if (true) let l = 2;"); } catch (e) { console.log('let in if:', e.constructor.name); }
+
+if (true) function g() { return 3; }
+console.log('function in if:', typeof g, g());
+```
+
+**你的预测**：三种写法同属「在 if 体里写声明」，直觉往往给出同一个答案——要么都能过，要么都得炸。
+
+**真实输出**（node 实跑）：`var in if: number`；`let in if: SyntaxError`；`function in if: function 3`。同一组写法放进 `.mjs`（严格模块）：整份文件在**编译期**判死，报错指向 function 那一行——`SyntaxError: In strict mode code, functions can only be declared at top level or inside a block.`，且任何一行都没有执行（模块编译失败连入口语句都轮不到）。
+
+**机制解释**：if 体是 **Statement** 位置，主文法只接受语句、不接受声明。`var` 之所以能过，是因为 `var v = 1` 本身是 VariableStatement——语句的一种；`let l = 2` 是 LexicalDeclaration——声明，Statement 位置没有这个产生式，直接 SyntaxError（这一条与严格与否无关，换任何模式都炸）。`function` 按主文法同样是声明、同样该炸，但 Annex B 的「FunctionDeclarations in IfStatement or LabelledStatement」条款在 sloppy 代码里把它当合法语句重新接住，严格模式不享受这份兼容，所以 `.mjs` 整文件判死。三条写法过与不过，答案全在「Statement 位置的文法产生式清单 + Annex B 例外」这张表里。归因站二的理由：错误发生在解析期，代码一行没跑；本条与站一的 HTML 注释同构——**都是 Annex B 在给主文法打 web 兼容补丁，但各条款的管辖面不同**：词法补丁（注释）模块不享受，语法补丁（if 体函数）模块不享受，语义层的映射 arguments 则是严格模式不享受。把 Annex B 当成一个整体来背必然出错，逐条记边界才是对的姿势。
+
+**一句话防御**：控制流的分支体永远用块（`{}`）包起来，声明只写在顶层或块内——这一个习惯同时消灭本条的全部三个分支。
+
+### 站三增补：参数与 arguments 的映射绑定
+
+**现象代码**（sloppy，存 `.cjs`）：
+
+```js
+function f(x) {
+  console.log('same binding?', x === arguments[0]);
+  x = 2;
+  console.log('after x = 2:   ', x, arguments[0]);
+  arguments[0] = 9;
+  console.log('after args[0]=9:', x);
+}
+f(1);
+```
+
+**你的预测**：如果背过「arguments 是类数组对象」，多半预测两组值各自独立——`2 1` 与 `2`。
+
+**真实输出**（node 实跑）：sloppy 版三行是 `same binding? true`、`after x = 2:    2 2`、`after args[0]=9: 9`；同一文件改存 `.mjs`（严格语义）后，三行变成 `same binding? true`、`after x = 2:    2 1`、`after args[0]=9: 2`。
+
+**机制解释**：sloppy 模式的函数环境在声明实例化时创建的是**映射参数（mapped arguments）对象**——arguments 的索引属性与同名参数绑定共享同一份存储，改谁都等于改同一个格子；严格模式用的是**非映射（unmapped）**的普通对象，两边各自独立。归因到站三：映射与否在函数环境实例化时就已定型（CreateMappedArgumentsObject 只对非严格代码的函数生效），不是运行时比较出来的行为。第一行两边都是 `true` 值得单独说一句：它读的是同一个值，与映射机制无关——别把它当成「有映射」的证据。
+
+**一句话防御**：团队代码一律严格模式（模块天然严格），把「参数与 arguments 联动」当作不存在的特性；可变参数一律用剩余参数 `...args`，它没有映射问题。
+
+### 站四增补：null 的三角比较悖论
+
+**现象代码**：
+
+```js
+console.log('null > 0 :', null > 0);
+console.log('null == 0:', null == 0);
+console.log('null >= 0:', null >= 0);
+console.log('undefined >= 0:', undefined >= 0);
+console.log('null == undefined:', null == undefined);
+```
+
+**你的预测**：按「null 转数字是 0」的常识，五行的答案似乎应该互相一致。
+
+**真实输出**（node 实跑）：`false`、`false`、`true`、`false`、`true`。补一行实测：`null <= 0` 也是 `true`。
+
+**机制解释**：五行走了**三套互不相同的算法**。关系比较（大于、小于及它们的取反）两侧都走 ToNumber，null 转成 0；而 `>=` 的定义不是「大于或等于」，是「**不小于**」——`null >= 0` 求的是「`null < 0` 不成立」，即 `0 < 0` 不成立，得 `true`。抽象相等对 null 有一条专属条款：它与 undefined 相等，与其余任何值都不相等、**不发生转换**，所以 `null == 0` 是 `false`。`undefined >= 0` 为 `false` 则因为 ToNumber(undefined) 是 NaN，而任何与 NaN 的比较都返回 `false`。解开三角的钥匙是那句「`>=` 由关系比较取反而来，不是两个运算的合取」——归因到站四的理由：三个算法全是运行时抽象操作，语法层毫无异常。
+
+**一句话防御**：null 与 undefined 永远不参与大小比较，入口处先显式判空或用 Number() 收敛；写 `>=` 时默念一遍它的取反定义。
+
+## 审计法应用案例：一层层拆 map(parseInt)
+
+正文的三层审计法这里拿一个真实事故样本走全程。现象：`['1', '7', '11'].map(parseInt)` 打出 `[ 1, NaN, 3 ]`（node 实跑）。
+
+**第一遍（词法/语法）**：token 切分无异常，`map(parseInt)` 是把函数当值传的合法表达式——语法层清白，放行。
+
+**第二遍（运行时求值序）**：病灶出现。map 给回调的实参规范规定依次是「元素、索引、数组」三个；parseInt 的签名是（string, radix），数组实参被忽略，但**索引恰好落在 radix 的参数位上**。三次调用实际是 parseInt('1', 0)、parseInt('7', 1)、parseInt('11', 2)。逐个对照 parseInt 算法：radix 为 0 或未提供时按十进制处理（除非 0x 前缀），得 1；radix 小于 2 直接 NaN；radix 为 2 时 `'11'` 是合法二进制串，得 3。单独实跑验证：`parseInt('1', 0)` 得 1、`parseInt('7', 1)` 得 NaN、`parseInt('11', 2)` 得 3——与 map 的结果完全对上。
+
+**第三遍（类型层）**：把这个表达式交给 tsc --strict（5.9.3 实测）——**零报错通过**。原因：map 回调的类型（value、index、array）与 parseInt 的参数类型（string、number 可选）恰好兼容。类型系统只能证明「实参类型对得上」，证明不了「语义位置对得上」——radix 撞上 index 这类语义错位在类型层不可见。
+
+**审计结论**：三层里语法层清白、类型层清白，唯一的病灶在求值序——回调实参的**个数与位置**。顺带一提，第三遍的结论同时解释了为什么静态工具拦不住它：lint 与 tsc 检查的是语法与类型，实参个数与位置是求值期的契约——所以这类问题的防线只能在写法习惯上，不能指望工具。它是审计法教科书样本的原因在迁移性：只背「map 配 parseInt 有坑」，换一个 API 还会翻车；记住「任何把函数直接当回调传的地方，先问回调会收到几个实参、按什么顺序、第二个实参是什么」才是一层走遍天下的检查动作。
+
+**一句话防御**：回调处包一层箭头函数显式收窄实参——`.map((s) => parseInt(s, 10))`，把求值序的知识直接固化成代码形态。
+
+## 增补条目速查（并入总表）
+
+| 怪现象 | 归属站 | 机制锚点 |
+| --- | --- | --- |
+| `<!--` 在 sloppy 脚本是注释、在模块判死 | 站一 · 词法 | Annex B「HTML-like Comments」条款 |
+| `if` 体里 function 能过（sloppy）、let 永远不能过 | 站二 · 语法 | Statement 位置的产生式清单 + Annex B 的 if 体函数条款 |
+| sloppy 下参数与 arguments 联动、严格下断开 | 站三 · 语义 | 映射与非映射 arguments（函数实例化时定型） |
+| `null >= 0` 真而 `null == 0` 假 | 站四 · 运行时 | 关系比较走 ToNumber；抽象相等对 null 的专属条款 |
+| `['1','7','11'].map(parseInt)` 得 `[1, NaN, 3]` | 站四 · 运行时 | 回调实参序 + parseInt 的 radix 算法 |
+
+五条的共同训练价值：都比主表条目多一层「先分清算法再下结论」的动作——HTML 注释要分清 sloppy 与模块两套文法，if 体声明要分清「语句」与「声明」两种产生式身份，arguments 要分清两种实例化形态，null 三角要分清三个算法，map(parseInt) 要分清三层审计各自能管什么。怪相越进阶，「归因到哪个算法」比「归因到哪个站」还要再细一层，但审计的顺序不变：先切 token，再看次序，最后问类型。
+
+## 一句话防御的整理口径
+
+增补条目的一句话防御写法上有共同骨架：**不写「要小心」，只写一个可执行的机械动作**——「只用块注释」「分支体用块」「剩余参数替代 arguments」「入口先判空再比较」「回调包箭头函数」。这不是行文风格偏好，而是防御是否可执行的判定标准：「小心 null 陷阱」这类提醒依赖人在现场回忆机制，而「入口先判空」可以直接写进 lint 规则与代码评审清单。本册治理分寸一节的结论「机制风险要么交给机器、要么收敛到一个边界」，落到条目级就是一句话防御的这两个出口。反过来它也是自查工具：一条防御写不出可执行的动作，说明机制还没吃透——回到现象代码重走一遍三层审计，走通的那一刻，防御句会自己冒出来。下次遇到清单上没有的新怪相，先别急着跑代码，先问一句：它在哪两套规则的分界上？这个问题的答案经常直接给出机制解释，也直接给出防御该放的位置。

@@ -352,3 +352,175 @@ console.log(run());
 - 探索 ESM 双格式包与 `exports` 条件：`notes/stage-4-engineering/20-package-manager-monorepo.md`（阶段 20）
 - Node.js 文档《Dual package hazard》与《Determination of module system》（双实例问题的官方分析与判定流程的一手出处）
 - 回扣：`notes/stage-4-engineering/17-build-tools.md`（ESM 静态性 → tree-shaking / 预打包的 CJS→ESM 转换）、`notes/stage-2-engine-runtime/35-node-runtime.md`（模块缓存在进程模型上的推论）
+
+---
+
+## 深一层实测：require.cache 的单例语义与热移除
+
+正文里说「CJS 模块是单例」，本节把「单」的准确层级钉进实验：缓存值是 Module 对象（不是 exports 本身），`require` 返回的是缓存记录上的 `exports` 属性。两个实验代码与实跑输出（Node 24.10.0）如下：
+
+```js
+// counter.cjs
+module.exports.n = 0;
+```
+
+```js
+// main-cache.cjs
+const path = require.resolve('./counter.cjs');
+const c1 = require('./counter.cjs');
+c1.n += 1;
+const c2 = require('./counter.cjs');
+console.log('c2.n =', c2.n);
+console.log('c1 === c2 :', c1 === c2);
+console.log('cache size:', Object.keys(require.cache).length);
+delete require.cache[path];
+const c3 = require('./counter.cjs');
+console.log('after delete: c3.n =', c3.n, '| c3 === c1 :', c3 === c1);
+console.log('c1.n untouched =', c1.n);
+```
+
+实跑输出逐行是 `1`、`true`、`2`、`0 | false`、`1`。两个细节值得圈出来：其一，cache size 是 **2** 不是 1——`require.cache` 里**入口模块自身也占一条**，排查缓存问题时别被键的数量骗到；其二，删除缓存键重新加载得到的是全新对象，而 c1 手里的旧对象纹丝不动——「热移除」重置的只是缓存的登记，不是对象的世界。单例的「单」是**缓存键层面**的单：同一进程内同一绝对路径只有一条 Module 记录，键一删、世界就可以裂成两半。
+
+## 循环依赖的进阶形态：循环中途重赋值 module.exports
+
+关键概念一节讲过「半成品 exports」；真正的深水区是模块在循环方 require 返回**之后**重赋值 `module.exports`——此时两个世界拿到的不再是同一个对象：
+
+```js
+// m.cjs
+module.exports.v = 'm1';
+const n = require('./n.cjs');
+module.exports.v = 'm2';
+
+// n.cjs
+const m = require('./m.cjs');
+console.log('[n] m.v =', m.v);
+module.exports.v = 'n';
+
+// main.cjs
+const m = require('./m.cjs');
+console.log('[main] m.v =', m.v);
+```
+
+实跑输出：`[n] m.v = m1` → `[main] m.v = m2`。机制：n 在循环点拿到的是 m 当时的 `module.exports` 对象（`v: 'm1'` 那个）；随后 m 重赋值 `module.exports`，包装函数里的 `module` 变量指向了新对象；main 的 `require` 在 m 执行完毕后返回**当前的** `module.exports`——新对象。于是 n 手里是旧对象、main 手里是新对象，同一个模块在同一进程里以两个身份存活。这正是双格式包双实例问题在单格式世界的微缩模型：`instanceof` 失败、模块级状态分裂，五行代码全部可复现。防御：模块一旦可能被循环引用，就不要中途重赋值 `module.exports`；要导出「会成长的接口」，就在初始对象上继续挂属性。
+
+## 动态 import() 的三种失败模式
+
+`import()` 把加载失败从「进程级崩溃」变成「可捕获的 rejection」，但三种失败的行为并不相同（全部 node 实跑，Node 24.10.0）：
+
+**模式一：定位失败（文件不存在）。** 捕获物是普通 Error，`code` 为 `ERR_MODULE_NOT_FOUND`，主流程继续。细节：**错误对象不缓存**——同一缺失文件 import 两次，两次 rejection 是两个不同的 Error 对象（实测 `e1 === e2` 为 `false`），每次都重新走解析。对照静态 `import` 同一个缺失文件：定位失败发生在链接期，任何代码都不会执行，进程直接以退出码 1 崩溃（实测 `never printed` 一行不存在）。
+
+**模式二：语法错误。** 目标模块源码解析不过（比如 `export let x = ;`），`import()` 的 promise 以 `SyntaxError` 拒绝，可捕获——主模块照常运行（实测 `caught: SyntaxError`）。静态导入同样的模块则整张模块图报废。
+
+**模式三：求值期抛错。** 目标模块体执行到一半 throw：模块体的副作用**只发生一次**（实测 `[boom] module evaluating` 只打印一遍），错误对象**被缓存**，此后每次 `import()` 都以**同一个** Error 对象拒绝（实测 `e1 === e2` 为 `true`）。
+
+模式一与模式三的对照是本节最值钱的结论：定位失败可以重试（比如装好依赖之后再 `import()`，第二次会真的成功）；求值失败不能靠重试恢复——Node 记住了失败的求值状态，同一进程内再怎么 import 都是同一个错误，想重新求值只能换子进程或换模块 URL（URL 上加查询参数本质就是换 URL）。把「重试一定有救」写进容错逻辑之前，先分清失败发生在哪个阶段。
+
+## conditions 字段与自定义条件
+
+关键概念一节见过 `import`、`require`、`default` 三个条件；`exports` 条件对象其实是**加载环境与包作者之间的协商通道**——运行时激活哪些条件名，决定包的哪个文件被加载。运行时内置激活的有 `node`（Node 环境专用实现）、`import` 与 `require`（按加载器格式）、兜底的 `default`；打包器会额外激活 `browser`、`module` 等名字；`types` 条件只有 TypeScript 的解析器消费，Node 运行时对它视而不见。
+
+自定义条件用 `--conditions` 旗标激活，实测一组（Node 24.10.0）：包的入口条件对象写成 `night` 指向 `./night.mjs`、`import` 指向 `./esm.mjs`、`default` 指向 `./default.mjs`，主模块从包名导入一个标记导出——不带旗标跑打印 `loaded: esm.mjs`，加 `--conditions=night` 跑打印 `loaded: night.mjs`。这就是「同一份代码在不同环境解析出不同文件」的标准机制：测试环境常用它激活 `development` 或 `test` 条件切出调试入口，而不必改包的源码。读懂条件激活还有一层排查收益：遇到「同一个包在不同环境行为不一致」，第一件事就是列出各环境的条件激活集合——浏览器打包器、Node 服务端、测试运行器各自激活的名字不同，同一份 package.json 自然解析出不同的文件。
+
+它与双格式包隐患的关系要钉牢：条件对象指向的每个不同文件，都是双实例风险的入口。官方缓解思路落在条件上就是——`import` 与 `require` 两个条件**指向同一份实现文件**（或让两者都引一个共享核心），包装层只做格式适配，模块级状态就只会有一份。
+
+## 双格式包的最小安全骨架
+
+关键概念一节给过双格式包的示意配置，但那份配置恰好就是双实例风险的形态——`import` 与 `require` 各指向一个独立文件，各自带完整实现。官方文档《Dual package hazard》给出的最小安全骨架是把「实现」与「格式壳」分开：条件对象让两种格式各自命中一个**薄壳**，薄壳再引同一份核心实现：
+
+```jsonc
+{
+  "name": "some-pkg",
+  "exports": {
+    ".": {
+      "import": "./esm-wrapper.mjs",
+      "require": "./cjs-wrapper.cjs",
+      "default": "./cjs-wrapper.cjs"
+    }
+  }
+}
+```
+
+两个薄壳都只做一件事——引入并转手唯一的核心实现文件，自己不持有任何模块级状态。这样即便应用的两条依赖路径分别以两种格式加载这个包，被复制两次的只是「壳」，所有真正的状态都住在唯一的核心里：`instanceof` 要比对的类、单例、缓存全部只有一份。工程判断顺序再强调一遍：能单格式就单格式；确需双格式，先画一张「哪个文件持有状态」的图——状态文件不在壳上的骨架才是安全骨架，否则条件写得再漂亮也只是把双实例问题推迟到运行期才炸。
+
+## 工程三陷阱
+
+**陷阱一：把「删缓存重 require」当成状态重置。** 本节实测已经给出反例：删掉缓存键后 `c3 === c1` 为 `false`、`c1.n` 仍是 1——旧对象被任何持有者握着就还活着；模块在 exports 上挂的定时器与监听器更不会因此清理。防御：需要「重置」语义的模块自己提供 `reset()` 或 `dispose()` 接口；热重载工具只在开发期玩，这与正文「删缓存热重载天然不完整」的结论互为表里。
+
+**陷阱二：把「动态 import 失败重试」当万能恢复。** 模式三的求值失败被缓存，同一进程内重试只会拿到同一个 Error 对象（实测为证）。容错代码要按失败模式分流：定位失败可退避重试，求值失败只能换进程、换 URL 或直接降级。两者不分的重试逻辑在生产里的表现为「重试十次全红，日志里始终是同一个错误堆栈」。
+
+**陷阱三：把双格式包当纯性能问题。** 双实例的代价不是「多占一点内存」：`instanceof` 跨实例必败、模块级开关（日志只打一次、连接池单例）静默翻倍、缓存命中率腰斩，而且全程没有任何报错。防御次序：优先单格式发布；确需双格式时让两个入口共享同一份实现文件；跨格式必须一致的状态放到不随格式复制的位置（外部存储或全局注册表）。
+
+## 输出预测题（增补）
+
+### 题 4（循环中途重赋值）
+
+题 1 的姊妹版——把「读属性」换成「整个对象被换掉」：
+
+```js
+// m.cjs
+module.exports.v = 'm1';
+const n = require('./n.cjs');
+module.exports.v = 'm2';
+
+// n.cjs
+const m = require('./m.cjs');
+console.log('[n] m.v =', m.v);
+
+// main.cjs
+const m = require('./m.cjs');
+console.log('[main] m.v =', m.v);
+```
+
+`node main.cjs` 输出什么？n 与 main 拿到的是同一个对象吗？
+
+### 题 5（失败模式判别）
+
+两个脚本各输出什么（第二行是 `true` 还是 `false`）？为什么一个缓存错误对象、一个不缓存？
+
+```js
+// a.mjs —— 目标模块 boom.mjs 求值期 throw new Error('boom')
+let e1, e2;
+try { await import('./boom.mjs'); } catch (e) { e1 = e; }
+try { await import('./boom.mjs'); } catch (e) { e2 = e; }
+console.log(e1.message, '| same:', e1 === e2);
+```
+
+```js
+// b.mjs —— 目标模块 ghost.mjs 不存在
+let f1, f2;
+try { await import('./ghost.mjs'); } catch (e) { f1 = e; }
+try { await import('./ghost.mjs'); } catch (e) { f2 = e; }
+console.log(f1.code, '| same:', f1 === f2);
+```
+
+### 题 6（缓存单例）
+
+counter.cjs 只有 `module.exports.n = 0`。main 依次：require 并把 `n` 加到 1；再次 require 得 `c2`，打印 `c2.n`；删除该路径的缓存键后重新 require 得 `c3`，打印 `c3.n` 与 `c3 === c1`。四行输出各是什么？
+
+## 增补题答案
+
+### 题 4 答案
+
+`[n] m.v = m1` → `[main] m.v = m2`（实跑一致）。**不是同一个对象**：n 在循环点拿走的是 m 当时的 exports（`v: 'm1'` 那个），此后 m 重赋值 `module.exports` 换成了新对象，main 要等 m 执行完才拿到当前的 exports——新对象。对照题 1：题 1 里 main 与 y 共享同一个对象（因为 x 从未重赋值），本题恰好踩在「重赋值切断共享」这个开关上。这也补全了「CJS 循环依赖结果不可移植」的另一半：不只时序影响属性值，中途重赋值还能让循环双方各持一个世界。
+
+### 题 5 答案
+
+a 打 `boom | same: true`（boom.mjs 的求值副作用只发生一次），b 打 `ERR_MODULE_NOT_FOUND | same: false`（实跑一致）。差异的机制：求值状态记录在模块图上——模块一旦求值抛错，Node 记住的就是这个失败状态，后续 import 直接重抛同一个错误对象；定位失败发生在**解析阶段**，模块记录根本没建立，每次 import 重新解析、重新构造错误。工程含义即陷阱二：求值失败重试无效，定位失败重试有效。
+
+### 题 6 答案
+
+`1`、`0`、`false`（实跑一致）。第一次与第二次 require 命中同一缓存记录，`c2 === c1`，所以 `c2.n` 是 1；删除缓存键后重新执行模块，`c3.n` 回到 0，且与 c1 不同对象。注意 `require.cache` 的键数量此时是 2 不是 1——入口模块自身也在缓存里，别把「缓存里有一条」当成「只加载了一个模块」。
+
+## 模块排查速查表
+
+| 症状 | 机制根源 | 排查动作 |
+| --- | --- | --- |
+| 命名导入读到旧值 | lexer 快照 + 模块内改写属性 | 改 default 导入 + 属性访问 |
+| instanceof 失败、状态翻倍 | 双格式包双实例 | 给两格式入口打加载标记日志数实例；让入口共享实现文件 |
+| 循环依赖拿到 undefined 或 TDZ | 求值顺序随入口变化 | 画模块图找环；抽公共第三模块切环 |
+| 删缓存后状态没清干净 | 旧对象被其他模块持有 | 搜旧对象的引用持有者；给模块加 dispose |
+| ESM 里用不了 require 与 `__dirname` | ESM 没有包装函数 | `createRequire(import.meta.url)` + `fileURLToPath` |
+| `.js` 改 ESM 写法直接 SyntaxError | 最近一层 package.json 的 type | 确认 type 字段或改扩展名为 `.mjs` |
+| 逻辑上装了一个包、行为像两个 | 条件导出把两种格式解析到不同文件 | 分别解析两种格式的入口路径对照 |
+
+最后一行的排查入口动作：把 `import` 与 `require` 两条路径各自解析出的文件打出来一对照，就知道包是不是被加载成了两份——双实例问题几乎总能在这条命令的输出里现形。
