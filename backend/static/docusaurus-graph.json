@@ -1,0 +1,777 @@
+[
+  {
+    "id": "01-第一阶段",
+    "title": "第一阶段导览：后端全景与工程地基",
+    "linkTo": [
+      "02-一次请求的十五站主时间线与账本",
+      "03-技术基线与本地环境",
+      "04-工程骨架与分层约定",
+      "05-度量地基-JFR-JMH与Actuator"
+    ],
+    "referencedBy": [
+      "后端开发学习大纲"
+    ]
+  },
+  {
+    "id": "02-一次请求的十五站主时间线与账本",
+    "title": "02. 一次请求的十五站主时间线与账本",
+    "linkTo": [],
+    "referencedBy": [
+      "01-第一阶段"
+    ]
+  },
+  {
+    "id": "03-技术基线与本地环境",
+    "title": "03. 技术基线与本地环境",
+    "linkTo": [],
+    "referencedBy": [
+      "01-第一阶段"
+    ]
+  },
+  {
+    "id": "04-工程骨架与分层约定",
+    "title": "04. 工程骨架与分层约定",
+    "linkTo": [],
+    "referencedBy": [
+      "01-第一阶段"
+    ]
+  },
+  {
+    "id": "05-度量地基-JFR-JMH与Actuator",
+    "title": "05. 度量地基：JFR、JMH 与 Actuator",
+    "linkTo": [],
+    "referencedBy": [
+      "01-第一阶段"
+    ]
+  },
+  {
+    "id": "02-第二阶段",
+    "title": "第二阶段导览：Kotlin 服务端工程化",
+    "linkTo": [
+      "02-空安全与不可变数据建模",
+      "03-类型系统进阶",
+      "04-扩展-委托与DSL的边界",
+      "05-协程基础-suspend与结构化并发",
+      "06-Kotlin与Spring的接缝-allopen-noarg与DSL配置",
+      "07-Gradle构建-version-catalog与多模块"
+    ],
+    "referencedBy": [
+      "后端开发学习大纲"
+    ]
+  },
+  {
+    "id": "02-空安全与不可变数据建模",
+    "title": "02. 空安全与不可变数据建模",
+    "linkTo": [],
+    "referencedBy": [
+      "02-第二阶段"
+    ]
+  },
+  {
+    "id": "03-类型系统进阶",
+    "title": "03. 类型系统进阶",
+    "linkTo": [],
+    "referencedBy": [
+      "02-第二阶段"
+    ]
+  },
+  {
+    "id": "04-扩展-委托与DSL的边界",
+    "title": "04. 扩展、委托与 DSL 的边界",
+    "linkTo": [],
+    "referencedBy": [
+      "02-第二阶段"
+    ]
+  },
+  {
+    "id": "05-协程基础-suspend与结构化并发",
+    "title": "05. 协程基础：suspend 与结构化并发",
+    "linkTo": [],
+    "referencedBy": [
+      "02-第二阶段"
+    ]
+  },
+  {
+    "id": "06-Kotlin与Spring的接缝-allopen-noarg与DSL配置",
+    "title": "06. Kotlin 与 Spring 的接缝：allopen、noarg 与 DSL 配置",
+    "linkTo": [],
+    "referencedBy": [
+      "02-第二阶段"
+    ]
+  },
+  {
+    "id": "07-Gradle构建-version-catalog与多模块",
+    "title": "07. Gradle 构建：version catalog 与多模块",
+    "linkTo": [],
+    "referencedBy": [
+      "02-第二阶段"
+    ]
+  },
+  {
+    "id": "03-第三阶段",
+    "title": "第三阶段导览：Spring 容器与启动原理",
+    "linkTo": [
+      "02-IoC容器与BeanDefinition注册",
+      "03-Bean生命周期与十二个扩展点",
+      "04-AOP与代理-自调用的真相",
+      "05-自动配置与条件装配",
+      "06-启动流程refresh与内嵌容器",
+      "07-手写一个迷你容器"
+    ],
+    "referencedBy": [
+      "后端开发学习大纲"
+    ]
+  },
+  {
+    "id": "02-IoC容器与BeanDefinition注册",
+    "title": "02. IoC 容器与 BeanDefinition 注册",
+    "linkTo": [],
+    "referencedBy": [
+      "03-第三阶段"
+    ]
+  },
+  {
+    "id": "03-Bean生命周期与十二个扩展点",
+    "title": "03. Bean 生命周期与十二个扩展点",
+    "linkTo": [],
+    "referencedBy": [
+      "03-第三阶段"
+    ]
+  },
+  {
+    "id": "04-AOP与代理-自调用的真相",
+    "title": "04. AOP 与代理：自调用的真相",
+    "linkTo": [],
+    "referencedBy": [
+      "03-第三阶段"
+    ]
+  },
+  {
+    "id": "05-自动配置与条件装配",
+    "title": "05. 自动配置与条件装配",
+    "linkTo": [],
+    "referencedBy": [
+      "03-第三阶段"
+    ]
+  },
+  {
+    "id": "06-启动流程refresh与内嵌容器",
+    "title": "06. 启动流程 refresh 与内嵌容器",
+    "linkTo": [],
+    "referencedBy": [
+      "03-第三阶段"
+    ]
+  },
+  {
+    "id": "07-手写一个迷你容器",
+    "title": "07. 手写一个迷你容器",
+    "linkTo": [],
+    "referencedBy": [
+      "03-第三阶段"
+    ]
+  },
+  {
+    "id": "04-第四阶段",
+    "title": "第四阶段导览：Web 层与接口契约",
+    "linkTo": [
+      "02-Tomcat线程模型与Servlet6",
+      "03-Filter-Interceptor-AOP的执行顺序",
+      "04-DispatcherServlet分发与参数解析",
+      "05-校验体系与Kotlin陷阱",
+      "06-错误模型-ProblemDetail与错误码",
+      "07-Jackson3序列化",
+      "08-REST契约-幂等-分页-版本化与OpenAPI"
+    ],
+    "referencedBy": [
+      "后端开发学习大纲"
+    ]
+  },
+  {
+    "id": "02-Tomcat线程模型与Servlet6",
+    "title": "02. Tomcat 线程模型与 Servlet 6.1",
+    "linkTo": [],
+    "referencedBy": [
+      "04-第四阶段"
+    ]
+  },
+  {
+    "id": "03-Filter-Interceptor-AOP的执行顺序",
+    "title": "03. Filter、Interceptor 与 AOP 的执行顺序",
+    "linkTo": [],
+    "referencedBy": [
+      "04-第四阶段"
+    ]
+  },
+  {
+    "id": "04-DispatcherServlet分发与参数解析",
+    "title": "04. DispatcherServlet 分发与参数解析",
+    "linkTo": [],
+    "referencedBy": [
+      "04-第四阶段"
+    ]
+  },
+  {
+    "id": "05-校验体系与Kotlin陷阱",
+    "title": "05. 校验体系与 Kotlin 陷阱",
+    "linkTo": [],
+    "referencedBy": [
+      "04-第四阶段"
+    ]
+  },
+  {
+    "id": "06-错误模型-ProblemDetail与错误码",
+    "title": "06. 错误模型：ProblemDetail 与错误码",
+    "linkTo": [],
+    "referencedBy": [
+      "04-第四阶段"
+    ]
+  },
+  {
+    "id": "07-Jackson3序列化",
+    "title": "07. Jackson 3 序列化",
+    "linkTo": [],
+    "referencedBy": [
+      "04-第四阶段"
+    ]
+  },
+  {
+    "id": "08-REST契约-幂等-分页-版本化与OpenAPI",
+    "title": "08. REST 契约：幂等、分页、版本化与 OpenAPI",
+    "linkTo": [],
+    "referencedBy": [
+      "04-第四阶段"
+    ]
+  },
+  {
+    "id": "05-第五阶段",
+    "title": "第五阶段导览：数据层——SQL、连接池与持久化",
+    "linkTo": [
+      "02-连接池与JDBC真相",
+      "03-SQL与索引-执行计划与慢查询",
+      "04-事务与隔离级别的实证",
+      "05-持久化选型-JPA-MyBatis-JdbcClient",
+      "06-JPA实战-映射-脏检查-N+1与批量",
+      "07-Schema演进与零停机迁移"
+    ],
+    "referencedBy": [
+      "后端开发学习大纲"
+    ]
+  },
+  {
+    "id": "02-连接池与JDBC真相",
+    "title": "02. 连接池与 JDBC 真相",
+    "linkTo": [],
+    "referencedBy": [
+      "05-第五阶段"
+    ]
+  },
+  {
+    "id": "03-SQL与索引-执行计划与慢查询",
+    "title": "03. SQL 与索引：执行计划与慢查询",
+    "linkTo": [],
+    "referencedBy": [
+      "05-第五阶段"
+    ]
+  },
+  {
+    "id": "04-事务与隔离级别的实证",
+    "title": "04. 事务与隔离级别的实证",
+    "linkTo": [],
+    "referencedBy": [
+      "05-第五阶段"
+    ]
+  },
+  {
+    "id": "05-持久化选型-JPA-MyBatis-JdbcClient",
+    "title": "05. 持久化选型：JPA、MyBatis 与 JdbcClient",
+    "linkTo": [],
+    "referencedBy": [
+      "05-第五阶段"
+    ]
+  },
+  {
+    "id": "06-JPA实战-映射-脏检查-N+1与批量",
+    "title": "06. JPA 实战：映射、脏检查、N+1 与批量",
+    "linkTo": [],
+    "referencedBy": [
+      "05-第五阶段"
+    ]
+  },
+  {
+    "id": "07-Schema演进与零停机迁移",
+    "title": "07. Schema 演进与零停机迁移",
+    "linkTo": [],
+    "referencedBy": [
+      "05-第五阶段"
+    ]
+  },
+  {
+    "id": "06-第六阶段",
+    "title": "第六阶段导览：事务、锁与一致性",
+    "linkTo": [
+      "02-Transactional全解与六种失效现场",
+      "03-编程式事务与事务边界设计",
+      "04-并发控制-乐观锁-悲观锁与唯一约束",
+      "05-幂等-幂等键-去重表与状态机",
+      "06-跨服务一致性-Outbox-Saga-TCC与分布式锁"
+    ],
+    "referencedBy": [
+      "后端开发学习大纲"
+    ]
+  },
+  {
+    "id": "02-Transactional全解与六种失效现场",
+    "title": "02. @Transactional 全解与六种失效现场",
+    "linkTo": [],
+    "referencedBy": [
+      "06-第六阶段"
+    ]
+  },
+  {
+    "id": "03-编程式事务与事务边界设计",
+    "title": "03. 编程式事务与事务边界设计",
+    "linkTo": [],
+    "referencedBy": [
+      "06-第六阶段"
+    ]
+  },
+  {
+    "id": "04-并发控制-乐观锁-悲观锁与唯一约束",
+    "title": "04. 并发控制：乐观锁、悲观锁与唯一约束",
+    "linkTo": [],
+    "referencedBy": [
+      "06-第六阶段"
+    ]
+  },
+  {
+    "id": "05-幂等-幂等键-去重表与状态机",
+    "title": "05. 幂等：幂等键、去重表与状态机",
+    "linkTo": [],
+    "referencedBy": [
+      "06-第六阶段"
+    ]
+  },
+  {
+    "id": "06-跨服务一致性-Outbox-Saga-TCC与分布式锁",
+    "title": "06. 跨服务一致性：Outbox、Saga、TCC 与分布式锁",
+    "linkTo": [],
+    "referencedBy": [
+      "06-第六阶段"
+    ]
+  },
+  {
+    "id": "07-第七阶段",
+    "title": "第七阶段导览：缓存与异步消息",
+    "linkTo": [
+      "02-Redis数据模型与原子性",
+      "03-缓存模式与一致性取舍",
+      "04-穿透击穿雪崩与多级缓存",
+      "05-消息中间件-Kafka与RabbitMQ模型",
+      "06-Spring消息集成-幂等消费-重试死信与积压",
+      "07-定时任务与调度"
+    ],
+    "referencedBy": [
+      "后端开发学习大纲"
+    ]
+  },
+  {
+    "id": "02-Redis数据模型与原子性",
+    "title": "02. Redis 数据模型与原子性",
+    "linkTo": [],
+    "referencedBy": [
+      "07-第七阶段"
+    ]
+  },
+  {
+    "id": "03-缓存模式与一致性取舍",
+    "title": "03. 缓存模式与一致性取舍",
+    "linkTo": [],
+    "referencedBy": [
+      "07-第七阶段"
+    ]
+  },
+  {
+    "id": "04-穿透击穿雪崩与多级缓存",
+    "title": "04. 穿透、击穿、雪崩与多级缓存",
+    "linkTo": [],
+    "referencedBy": [
+      "07-第七阶段"
+    ]
+  },
+  {
+    "id": "05-消息中间件-Kafka与RabbitMQ模型",
+    "title": "05. 消息中间件的 Kafka 与 RabbitMQ 模型",
+    "linkTo": [],
+    "referencedBy": [
+      "07-第七阶段"
+    ]
+  },
+  {
+    "id": "06-Spring消息集成-幂等消费-重试死信与积压",
+    "title": "06. Spring 消息集成：幂等消费、重试死信与积压",
+    "linkTo": [],
+    "referencedBy": [
+      "07-第七阶段"
+    ]
+  },
+  {
+    "id": "07-定时任务与调度",
+    "title": "07. 定时任务与调度",
+    "linkTo": [],
+    "referencedBy": [
+      "07-第七阶段"
+    ]
+  },
+  {
+    "id": "08-第八阶段",
+    "title": "第八阶段导览：并发模型深潜",
+    "linkTo": [
+      "02-线程池参数-池隔离与上下文传递",
+      "03-虚拟线程-pinning与适用边界",
+      "04-Kotlin协程在服务端",
+      "05-Reactor与WebFlux-背压与取舍",
+      "06-弹性-超时-重试-熔断-舱壁与限流",
+      "07-三种并发模型压测对比"
+    ],
+    "referencedBy": [
+      "后端开发学习大纲"
+    ]
+  },
+  {
+    "id": "02-线程池参数-池隔离与上下文传递",
+    "title": "02. 线程池参数：池隔离与上下文传递",
+    "linkTo": [],
+    "referencedBy": [
+      "08-第八阶段"
+    ]
+  },
+  {
+    "id": "03-虚拟线程-pinning与适用边界",
+    "title": "03. 虚拟线程：pinning 与适用边界",
+    "linkTo": [],
+    "referencedBy": [
+      "08-第八阶段"
+    ]
+  },
+  {
+    "id": "04-Kotlin协程在服务端",
+    "title": "04. Kotlin 协程在服务端",
+    "linkTo": [],
+    "referencedBy": [
+      "08-第八阶段"
+    ]
+  },
+  {
+    "id": "05-Reactor与WebFlux-背压与取舍",
+    "title": "05. Reactor 与 WebFlux：背压与取舍",
+    "linkTo": [],
+    "referencedBy": [
+      "08-第八阶段"
+    ]
+  },
+  {
+    "id": "06-弹性-超时-重试-熔断-舱壁与限流",
+    "title": "06. 弹性：超时、重试、熔断、舱壁与限流",
+    "linkTo": [],
+    "referencedBy": [
+      "08-第八阶段"
+    ]
+  },
+  {
+    "id": "07-三种并发模型压测对比",
+    "title": "07. 三种并发模型压测对比",
+    "linkTo": [],
+    "referencedBy": [
+      "08-第八阶段"
+    ]
+  },
+  {
+    "id": "09-第九阶段",
+    "title": "第九阶段导览：安全与鉴权",
+    "linkTo": [
+      "02-SpringSecurity过滤器链与认证授权时序",
+      "03-会话-JWT与OAuth2-OIDC",
+      "04-授权模型与多租户数据隔离",
+      "05-Spring侧的Web攻击面防线",
+      "06-口令哈希-密钥管理与字段加密",
+      "07-审计-依赖漏洞与安全响应头"
+    ],
+    "referencedBy": [
+      "后端开发学习大纲"
+    ]
+  },
+  {
+    "id": "02-SpringSecurity过滤器链与认证授权时序",
+    "title": "02. Spring Security 过滤器链与认证授权时序",
+    "linkTo": [],
+    "referencedBy": [
+      "09-第九阶段"
+    ]
+  },
+  {
+    "id": "03-会话-JWT与OAuth2-OIDC",
+    "title": "03. 会话、JWT 与 OAuth2/OIDC",
+    "linkTo": [],
+    "referencedBy": [
+      "09-第九阶段"
+    ]
+  },
+  {
+    "id": "04-授权模型与多租户数据隔离",
+    "title": "04. 授权模型与多租户数据隔离",
+    "linkTo": [],
+    "referencedBy": [
+      "09-第九阶段"
+    ]
+  },
+  {
+    "id": "05-Spring侧的Web攻击面防线",
+    "title": "05. Spring 侧的 Web 攻击面防线",
+    "linkTo": [],
+    "referencedBy": [
+      "09-第九阶段"
+    ]
+  },
+  {
+    "id": "06-口令哈希-密钥管理与字段加密",
+    "title": "06. 口令哈希、密钥管理与字段加密",
+    "linkTo": [],
+    "referencedBy": [
+      "09-第九阶段"
+    ]
+  },
+  {
+    "id": "07-审计-依赖漏洞与安全响应头",
+    "title": "07. 审计、依赖漏洞与安全响应头",
+    "linkTo": [],
+    "referencedBy": [
+      "09-第九阶段"
+    ]
+  },
+  {
+    "id": "10-第十阶段",
+    "title": "第十阶段导览：质量、可观测性与单服务生产化",
+    "linkTo": [
+      "02-测试金字塔与切片测试",
+      "03-Testcontainers与契约测试",
+      "04-并发-幂等与故障注入测试",
+      "05-可观测性落地-指标-日志与链路",
+      "06-配置分层与密钥外置",
+      "07-交付-分层镜像-探针与优雅停机",
+      "08-压测与调优方法论"
+    ],
+    "referencedBy": [
+      "后端开发学习大纲"
+    ]
+  },
+  {
+    "id": "02-测试金字塔与切片测试",
+    "title": "02. 测试金字塔与切片测试",
+    "linkTo": [],
+    "referencedBy": [
+      "10-第十阶段"
+    ]
+  },
+  {
+    "id": "03-Testcontainers与契约测试",
+    "title": "03. Testcontainers与契约测试",
+    "linkTo": [],
+    "referencedBy": [
+      "10-第十阶段"
+    ]
+  },
+  {
+    "id": "04-并发-幂等与故障注入测试",
+    "title": "04. 并发、幂等与故障注入测试",
+    "linkTo": [],
+    "referencedBy": [
+      "10-第十阶段"
+    ]
+  },
+  {
+    "id": "05-可观测性落地-指标-日志与链路",
+    "title": "05. 可观测性落地：指标、日志与链路",
+    "linkTo": [],
+    "referencedBy": [
+      "10-第十阶段"
+    ]
+  },
+  {
+    "id": "06-配置分层与密钥外置",
+    "title": "06. 配置分层与密钥外置",
+    "linkTo": [],
+    "referencedBy": [
+      "10-第十阶段"
+    ]
+  },
+  {
+    "id": "07-交付-分层镜像-探针与优雅停机",
+    "title": "07. 交付：分层镜像、探针与优雅停机",
+    "linkTo": [],
+    "referencedBy": [
+      "10-第十阶段"
+    ]
+  },
+  {
+    "id": "08-压测与调优方法论",
+    "title": "08. 压测与调优方法论",
+    "linkTo": [],
+    "referencedBy": [
+      "10-第十阶段"
+    ]
+  },
+  {
+    "id": "11-第十一阶段",
+    "title": "第十一阶段导览：微服务与大型应用",
+    "linkTo": [
+      "02-该不该拆-单体-模块化单体与微服务判据",
+      "03-服务边界-DDD限界上下文与数据所有权",
+      "04-服务间通信-同步与异步",
+      "05-网关与BFF",
+      "06-服务发现与配置中心",
+      "07-分布式事务与Saga编排",
+      "08-多服务可观测性与契约治理",
+      "09-大型应用工程化-联调-灰度与容量"
+    ],
+    "referencedBy": [
+      "后端开发学习大纲"
+    ]
+  },
+  {
+    "id": "02-该不该拆-单体-模块化单体与微服务判据",
+    "title": "02. 该不该拆：单体、模块化单体与微服务判据",
+    "linkTo": [],
+    "referencedBy": [
+      "11-第十一阶段"
+    ]
+  },
+  {
+    "id": "03-服务边界-DDD限界上下文与数据所有权",
+    "title": "03. 服务边界：DDD 限界上下文与数据所有权",
+    "linkTo": [],
+    "referencedBy": [
+      "11-第十一阶段"
+    ]
+  },
+  {
+    "id": "04-服务间通信-同步与异步",
+    "title": "04. 服务间通信：同步与异步",
+    "linkTo": [],
+    "referencedBy": [
+      "11-第十一阶段"
+    ]
+  },
+  {
+    "id": "05-网关与BFF",
+    "title": "05. 网关与 BFF",
+    "linkTo": [],
+    "referencedBy": [
+      "11-第十一阶段"
+    ]
+  },
+  {
+    "id": "06-服务发现与配置中心",
+    "title": "06. 服务发现与配置中心",
+    "linkTo": [],
+    "referencedBy": [
+      "11-第十一阶段"
+    ]
+  },
+  {
+    "id": "07-分布式事务与Saga编排",
+    "title": "07. 分布式事务与 Saga 编排",
+    "linkTo": [],
+    "referencedBy": [
+      "11-第十一阶段"
+    ]
+  },
+  {
+    "id": "08-多服务可观测性与契约治理",
+    "title": "08. 多服务可观测性与契约治理",
+    "linkTo": [],
+    "referencedBy": [
+      "11-第十一阶段"
+    ]
+  },
+  {
+    "id": "09-大型应用工程化-联调-灰度与容量",
+    "title": "09. 大型应用工程化：联调、灰度与容量",
+    "linkTo": [],
+    "referencedBy": [
+      "11-第十一阶段"
+    ]
+  },
+  {
+    "id": "12-第十二阶段",
+    "title": "第十二阶段导览：毕业项目——从单体到微服务",
+    "linkTo": [
+      "02-选题与需求拆解",
+      "03-模块化单体与压测基线",
+      "04-拆出两个服务-边界-通信与数据迁移",
+      "05-生产化收尾与故障演练",
+      "06-复盘报告与验收清单"
+    ],
+    "referencedBy": [
+      "后端开发学习大纲"
+    ]
+  },
+  {
+    "id": "02-选题与需求拆解",
+    "title": "02. 选题与需求拆解：把「做什么」写成可测的数字",
+    "linkTo": [],
+    "referencedBy": [
+      "12-第十二阶段"
+    ]
+  },
+  {
+    "id": "03-模块化单体与压测基线",
+    "title": "03. 模块化单体与压测基线：先有对照组，再谈拆分",
+    "linkTo": [],
+    "referencedBy": [
+      "12-第十二阶段"
+    ]
+  },
+  {
+    "id": "04-拆出两个服务-边界-通信与数据迁移",
+    "title": "04. 拆出两个服务：边界、通信与数据迁移",
+    "linkTo": [],
+    "referencedBy": [
+      "12-第十二阶段"
+    ]
+  },
+  {
+    "id": "05-生产化收尾与故障演练",
+    "title": "05. 生产化收尾与故障演练：让系统「降级但不崩」",
+    "linkTo": [],
+    "referencedBy": [
+      "12-第十二阶段"
+    ]
+  },
+  {
+    "id": "06-复盘报告与验收清单",
+    "title": "06. 复盘报告与验收清单：能交接才算毕业",
+    "linkTo": [],
+    "referencedBy": [
+      "12-第十二阶段"
+    ]
+  },
+  {
+    "id": "后端开发学习大纲",
+    "title": "后端开发学习大纲",
+    "linkTo": [
+      "01-第一阶段",
+      "02-第二阶段",
+      "03-第三阶段",
+      "04-第四阶段",
+      "05-第五阶段",
+      "06-第六阶段",
+      "07-第七阶段",
+      "08-第八阶段",
+      "09-第九阶段",
+      "10-第十阶段",
+      "11-第十一阶段",
+      "12-第十二阶段"
+    ],
+    "referencedBy": []
+  }
+]
