@@ -12,3 +12,6 @@ js-ts/docs-site/static/ts/
 
 # ZCode 会话内部状态（计划文件等）
 .zcode/
+
+# WorkBuddy 工作区状态（记忆日志、本地会话产物）
+.workbuddy/
