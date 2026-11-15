@@ -15,7 +15,7 @@ references:
 1. 能画出 libuv 的六个阶段并说明 `setTimeout`（timers）与 `setImmediate`（check）各自归属哪个阶段；能解释 nextTick 队列与微任务队列「在每个阶段之间、nextTick 优先」的清空规则
 2. 能解释**同一份顶层代码在 ESM 与 CJS 里 nextTick/微任务次序相反**的原因（ESM 模块求值运行在 Promise/微任务上下文中），并能实测复现——这是「nextTick 恒最优先」这条流行结论的致命例外
 3. 能说清 `setImmediate` vs `setTimeout(0)` 在主模块（顺序不定）与 I/O 回调内（immediate 恒先）的两种表现及其阶段依据；能用递归 `nextTick` 饿死事件循环并解释为什么递归 `setImmediate` 不会
-4. 能白板手写 `limit`（并发限制）、`withTimeout`（带取消的超时）、`retry`（指数退避）并说出各自的坑：失败也要释放槽位、race 输家的 rejection 要有人接、确定性错误不值得重试、退避等待必须可取消
+4. 能白板手写 `limit`（并发限制）、`withTimeout`（带取消的超时）、`retry`（指数退避）并说出各自的坑：失败也要释放槽位、游离 promise 的 rejection 要有人接（race 候选由 race 兜底，见 §增补 A.1）、确定性错误不值得重试、退避等待必须可取消
 5. 能用 `Promise.withResolvers()` 替换「resolver 外提」旧模式，用 `await using` + `Symbol.asyncDispose` 替换手写 try/finally 清理（栈式逆序、抛错也清理），并理解 top-level await 对模块图的阻塞效应
 
 ## 关键概念
@@ -85,11 +85,11 @@ function limit(concurrency: number) {
 
 三个设计点：**限的是「同时进行数」不是「总数」**（排队者存的是「启动函数」而非结果）；**失败也必须释放槽位**（否则一个 reject 堵死整条等待队列）；外层 Promise 与任务 Promise 分离（排队者还没启动，但调用方已经拿到了「 eventual 结果」的凭据）。
 
-**`withTimeout` —— 带取消的超时**。单纯 `Promise.race([task, timeoutPromise])` 有两个坑：race 赢家定了之后**输家照常跑**（笔记 04「短路 ≠ 取消」）；输家若随后 reject 而 race 已定，没人接 → **unhandledRejection**（Node 15+ 默认崩进程）。正确形态三件事缺一不可：
+**`withTimeout` —— 带取消的超时**。单纯 `Promise.race([task, timeoutPromise])` 有两个坑：race 赢家定了之后**输家照常跑**（笔记 04「短路 ≠ 取消」）；timeout promise 若被创建却没进 race（比如条件分支漏传）、或会 reject 的 promise 根本没参与 race，就成了零 handler 的**游离 promise**，迟到 reject → **unhandledRejection**（Node 15+ 默认崩进程；race 的候选本身不会——`PerformPromiseRace` 给每个候选都挂了内部 reaction，实测见 §增补 A.1）。正确形态三件事缺一不可：
 
 1. **`AbortController` 传进任务**：超时 = abort 信号，通知任务自己清理副作用（clearTimeout / 断开请求）——真正的取消发生在任务内部；
 2. **race 兜底**：保证调用方在期限内拿到确定的结局（abort 后 reject `TimeoutError`）；
-3. **给输家挂 `.catch(() => {})`**：接管它迟到的 rejection。
+3. **给游离 promise 挂 `.catch(() => {})`**：race 候选由 race 的内部 reaction 兜底，`.catch` 真正要服务的是没进任何组合器的游离 promise（对照实测见 §增补 A.1 与增补 D 题 2）。
 
 **`retry` —— 指数退避重试**。三个关键决策都影响正确性：
 
@@ -163,7 +163,7 @@ CJS 输出：7 1 2 5 6     （nextTick 队列先清：1；微任务 2 5；5 里�
 3. **「setImmediate ≈ setTimeout(0)」**——不同阶段（check vs timers）。主模块次序不定；I/O 回调内 immediate 恒先。输出题答「不确定」才是对的。
 4. **「递归 nextTick 可以做调度」**——饿死事件循环（队列永不见底）；「尽快但不阻塞」的正解是 setImmediate。
 5. **「withTimeout 超时后慢任务停了」**——race 从不取消输家；必须把 AbortSignal 传进任务，取消发生在任务内部（副作用清理），race 只负责给调用方一个结局。
-6. **「race 输家的 rejection 无所谓」**——无人接管的迟到 rejection 是 unhandledRejection，Node 15+ 默认崩进程；给输家挂 `.catch(() => {})`。
+6. **「游离的 rejection 无所谓」**——零 handler 且会 reject 的游离 promise 会触发 unhandledRejection，Node 15+ 默认崩进程；给它挂 `.catch(() => {})`。race 候选不受此困扰（race 为每个候选挂了内部 reaction，迟到 rejection 被吸收，实测见 §增补 A.1）。
 7. **「retry 就是无脑重试三次」**——确定性错误（4xx）重试无意义，shouldRetry 分类；退避等待要挂 signal，否则取消不能立刻生效。
 8. **「limit 的任务失败了会自动让位」**——不会，失败路径必须显式释放槽位；忘了它，一个 reject 堵死整条队列。
 9. **「await using 只是语法糖没必要学」**——它把「清理的正确性」（顺序、抛错路径）交给语言保证；AsyncDisposableStack 处理数量不定的资源，是 try/finally 写不干净的场景。
@@ -222,7 +222,7 @@ slow 完成
 ```
 
 - `end` 同步；race 的两个候选中 fast 已 fulfilled，回调作为微任务执行 → `race: fast`；20ms 后 slow 的回调照样跑 → `slow 完成`——**race 只裁决结果，从不取消输家**，它的定时器/副作用照常发生。
-- 若 slow 20ms 后 **reject**：race 已被 fast 定局，这个迟到的 rejection 没有任何 handler 接管 → Node 15+ 默认策略下进程以 unhandledRejection **非 0 退出**（除非挂了 `process.on('unhandledRejection')`）。修法即 31.3 的第 3 件事：包装函数里给输家挂 `.catch(() => {})`。
+- 若 slow 20ms 后 **reject**：race 已被 fast 定局，但这个迟到的 rejection **不会**触发 unhandledRejection——`PerformPromiseRace` 给每个候选都挂了内部 reaction，迟到 rejection 被它吸收（实测复验见 §增补 A.1；本册旧版此处写反，已按实测校准）。真正会崩的是零 handler 的游离 promise——修法即 31.3 的第 3 件事：给**游离 promise**挂 `.catch(() => {})`。
 
 ## 延伸阅读
 
@@ -298,3 +298,291 @@ slow 完成
 复习一轮后做最后的动手验收：把练习 07 的并发池在 30 秒内默写出骨架（信号量 + finally 释放）——写不出说明速查表还没长进手指，回到练习重跑。
 
 那道默写题的标准答案锚点：池子的本质是"一个计数器 + 一个等待队列"——计数器管并发上限，队列管公平，finally 管回收。三个部件各自对应一节正文，默写即检验三层是否都通了。
+
+## 增补 A：机制深一层——失败语义矩阵、cancelable promise 与 async 惰性求值
+
+### A.1 四个组合器的失败语义：一张带时序的账本（实跑）
+
+§复习自测第 1 问的完整版答案，用一段可复跑的脚本立起来：`all` 混合快慢任务、`all` 含拒绝、`allSettled` 成败混合、`any` 有赢家、`any` 全败、`race` 最快者拒绝，六个观测点一次跑完（node v24.10.0，总时长约 1 秒）：
+
+```js
+const later = (v, ms) => { const t0 = Date.now(); return new Promise((r) =>
+  setTimeout(() => { console.log("  settled:", v, "at", Date.now() - t0, "ms"); r(v); }, ms)); };
+const failLater = (m, ms) => { const t0 = Date.now(); return new Promise((_, rej) =>
+  setTimeout(() => { console.log("  settled(rej):", m, "at", Date.now() - t0, "ms"); rej(new Error(m)); }, ms)); };
+
+const r1 = await Promise.all([later("slow-300", 300), later("fast-50", 50)]);
+console.log("all:", r1, "resolved at 302 ms");
+
+try {
+  await Promise.all([later("slow", 300), failLater("boom", 50)]);
+} catch (e) {
+  console.log("all rejected:", e.message, "at 52 ms（短路时机）");
+}
+
+const r2 = await Promise.allSettled([later("ok", 40), failLater("no", 20)]);
+console.log("allSettled:", r2.map((x) => x.status), "at 41 ms");
+
+const r3 = await Promise.any([failLater("f1", 80), failLater("f2", 40), later("winner", 120)]);
+console.log("any:", r3, "at 122 ms");
+
+try {
+  await Promise.any([failLater("first-fail", 80), failLater("second-fail", 40)]);
+} catch (e) {
+  console.log("any(all-failed):", e.constructor.name, e.errors.map((x) => x.message));
+}
+
+try {
+  await Promise.race([later("slow", 200), failLater("fast-reject", 40)]);
+} catch (e) {
+  console.log("race rejected:", e.message, "at 41 ms");
+}
+```
+
+实跑输出（`settled` 行是各任务自己的落地日志）：
+
+```
+  settled: fast-50 at 51 ms
+  settled: slow-300 at 302 ms
+all: [ 'slow-300', 'fast-50' ] resolved at 302 ms
+  settled(rej): boom at 51 ms
+all rejected: boom at 52 ms（短路时机；slow 之后仍会自己跑完）
+  settled(rej): no at 21 ms
+  settled: ok at 41 ms
+allSettled: [ 'fulfilled', 'rejected' ] at 41 ms
+  settled(rej): f2 at 42 ms
+  settled(rej): f1 at 82 ms
+  settled: winner at 122 ms
+any: winner at 122 ms
+  settled(rej): second-fail at 40 ms
+  settled(rej): first-fail at 81 ms
+any(all-failed): AggregateError errors = [ 'first-fail', 'second-fail' ] at 81 ms
+  settled: slow at 301 ms
+  settled(rej): fast-reject at 41 ms
+race rejected: fast-reject at 41 ms
+  settled: slow at 201 ms
+```
+
+五条规范级事实逐条对上账本：
+
+- **`all` 的结果数组按输入顺序**：`fast-50` 在 51ms 先落定、`slow-300` 在 302ms 后落定，结果却是 `['slow-300', 'fast-50']`。规范依据是 `PerformPromiseAll` 给每个元素发一个**捕获了下标**的回调，终值写入 `results[index]`——位置在构造时定死，与完成顺序无关。
+- **`all` 的短路时机 = 首个 rejection**：`boom` 在 51ms 落定，`all` 在 52ms 就向外 reject，完全不等 `slow`。而账本里紧跟 `all rejected` 的下一行是 `settled: slow at 301 ms`——**短路不等于取消的实跑铁证**：被抛弃的成员照常跑完了自己的一生。
+- **`allSettled` 永不 reject**：成败混装 `['fulfilled', 'rejected']`，它等的是「全员落定」而不是「首个意外」。
+- **`any` 的错误收集按输入顺序**：全败时 `errors = ['first-fail', 'second-fail']`，但实际落定顺序是反的（second-fail 在 40ms、first-fail 在 81ms）——`errors` 数组沿用与 `all` 相同的下标回调机制，装的是输入位次，不是失败先后。
+- **`race` 首个 settle 定局**：最快的成员是 reject 它就 reject（`fast-reject` 在 41ms 定局），「race 一定成功」的说法不攻自破。
+
+这里要对一条流行口诀（含本册 §31.3 的简写版）做一次**精度升级**：「race 输家的迟到 rejection 无人接管会触发 unhandledRejection」——实测不成立。把一个 60ms 后 reject 的 loser 放进 `race`，胜者是已完成的 fast，loser 迟到的 rejection **不会**触发 unhandledRejection：规范在 `PerformPromiseRace` 里对**每个候选**都调用了 `PerformPromiseThen`，race 早已替它们全部挂好了内部 reaction，迟到的 rejection 被这个内部 handler 吸收（race 自身已定局，reaction 执行但无事可做）。真正触发 unhandledRejection 的模式是**游离 promise**：一个会 reject 的 Promise 被创建出来，却从未进入任何组合器、没人给它挂过 handler——增补 D 第 2 题给出了危险模式与正确模式的对照实测。`.catch(() => {})` 的正确服务对象是游离 promise，不是 race 的候选者。
+
+### A.2 cancelable promise 模式：withResolvers 加 AbortController 的最小闭环
+
+把「取消」织进异步工具的固定三步——订阅 abort 信号、清理自己的副作用、用 `signal.reason` 拒绝自己返回的 Promise。`Promise.withResolvers()` 让这个模式收敛成一段无外提变量的干净代码：
+
+```js
+function cancellableDelay(ms, signal) {
+  const { promise, resolve, reject } = Promise.withResolvers();
+  const t = setTimeout(() => resolve(), ms);
+  signal.addEventListener("abort", () => {
+    clearTimeout(t);          // 第一步：副作用清理——定时器从时钟上摘除
+    reject(signal.reason);    // 第二步：被包装的 Promise 自己 reject 自己
+  }, { once: true });
+  return promise;
+}
+const ac = new AbortController();
+const t0 = Date.now();
+setTimeout(() => ac.abort(new Error("user cancel")), 30);
+try {
+  await cancellableDelay(2000, ac.signal);
+} catch (e) {
+  console.log("caught:", e.message, "at", Date.now() - t0, "ms");
+}
+```
+
+实跑输出：`caught: user cancel at 32 ms`，进程在约 30ms 退出而不是等满 2000ms——abort 之后定时器已被摘除，没有任何东西挂着等。这个模式是 §31.3 `withTimeout` 与练习 05 `cancellableDelay` 的共同骨架，也是 04 册 §4.6「取消的是副作用，不是 Promise」的代码化：`reject(signal.reason)` 那一行永远发生在包装器自己身上，外界从来没有触碰过 Promise 的状态。
+
+### A.3 async 惰性求值：Promise 创建即启动，函数才是「尚未启动」
+
+同一个异步工作，「直接创建 Promise」和「返回 Promise 的函数」差一个启动时机：
+
+```js
+const t0 = Date.now();
+function job(tag) {
+  console.log("start", tag, "at", Date.now() - t0, "ms");
+  return new Promise((r) => setTimeout(() => { console.log("end", tag, "at", Date.now() - t0, "ms"); r(tag); }, 50));
+}
+const eager = job("eager");        // 创建即启动
+const lazy = () => job("lazy");    // 调用才启动
+console.log("both declared at", Date.now() - t0, "ms");
+setTimeout(() => { console.log("-- calling lazy at", Date.now() - t0, "ms"); lazy(); }, 80);
+await eager;
+```
+
+实跑输出：
+
+```
+start eager at 0 ms
+both declared at 2 ms
+end eager at 53 ms
+eager awaited
+-- calling lazy at 83 ms
+start lazy at 83 ms
+end lazy at 135 ms
+```
+
+机制就是两条最基础的规则：async 函数体在**调用时**同步执行到第一个 `await`；Promise 构造器的 executor 在**构造时**同步执行。所以「创建一个 Promise」就是「启动一份异步工作」——把 Promise 传来传去，传的是**已启动**的工作；把函数传来传去，传的才是**可再决定启动**的工作。三个工程推论：其一，组合器天然 eager（它们收的是 Promise 数组，数组构建完成的那一刻所有成员都已启动）；其二，§31.3 并发限制器的签名是 `task: () => Promise<T>` 而**不是** Promise——收函数是唯一能让限制器掌控「何时启动」的形态，这也解释了那份手写代码为什么排队的是启动函数；其三，`Promise.all(tasks.map((t) => t()))` 与 `Promise.all(tasks)` 的差别不在结果在时机——前者由你控制启动节奏，后者在 map/数组字面量执行时就全员开跑。
+
+## 增补 B：手推配方——组合器混用执行序推演
+
+「then 链里 return 一个 Promise，外加两个探针」是拍数题的标准配置。先闭卷推，再对账。
+
+```js
+Promise.resolve()
+  .then(() => { console.log("t1"); return Promise.resolve("A"); })
+  .then((v) => console.log("t2", v));
+Promise.resolve().then(() => console.log("probe1"));
+Promise.resolve().then(() => console.log("probe2"));
+```
+
+逐步推演（M 编号 = 微任务入队顺序）：同步段构建三条链，第一链的 `t1` 回调入队（M1）、两个探针入队（M2、M3）——注意 `t2` 的回调此刻**还没有**入队，它挂在第一链第二环的 Promise 上，而那个 Promise 还没定局。清空队列：M1 打印 `t1` 并 `return Promise.resolve("A")`——返回 thenable，触发 `NewPromiseResolveThenableJob` 入队（M4，排在两个探针之后）；M2 打印 `probe1`；M3 打印 `probe2`；M4 是 thenable 中转 Job，它调内层 Promise 的 `then`，内层已 fulfilled，其 reaction 入队（M5）；M5 把外层第二环 resolve 为 `"A"`，`t2` 的回调这才入队（M6）；M6 打印 `t2 A`。adoption 的两拍，恰好把 `t2` 挤到了两个「书写顺序更晚」的探针后面。
+
+node 实跑输出，与推演一致：
+
+```
+t1
+probe1
+probe2
+t2 A
+```
+
+把这个配方与 04 册附录 B 的「双程 adoption」放在一起记：一处是 then 链里 return thenable（+2 拍），一处是 async 链上跨函数 return thenable（两程各 +2 拍）——组合器的拍数题无论怎么变形，拆到底都是这两件套。
+
+## 增补 C：工程三陷阱（增补）
+
+**陷阱一：`Promise.all` 与不限并发**。`all` 只管「等齐」，不管「同时在跑几个」——`all(ids.map(fetch))` 会把 100 个请求同时打出去。量小（个位数）且对端无压力时 `all` 够用；批处理、爬取、批量调用第三方 API 时必须先进限制器：`all(ids.map((id) => run(() => fetch(id))))`，`run` 是 §31.3 的 `limit(n)` 返回的包装器。判据一句话：**对端是你的依赖，不是你的靶子**——「能不能发」由限流器决定，「等多久」才归 `all` 管。
+
+**陷阱二：`allSettled` 之后忘记检查 status**。`allSettled` 永不 reject 是双刃剑：错误不会炸出来，但也**不会被任何人看见**——把结果数组一路透传、只在成功分支取 `value`，失败项就静默消失了，页面表现成「数据少了几个」而不是报错。正确姿势是对每个结果显式分派：`fulfilled` 分支取 `value`，`rejected` 分支收集 `reason`；如果业务语义是「失败率超阈值就整体报错」，收集完后主动 throw。对照 §速查表的那行底账：选 `allSettled` 的前提是「我确实要逐项处置成败」，不是「我不想处理失败」。
+
+**陷阱三：顶层 await 拖住整张模块图**。§31.4 说过「任何导入本模块的代码都要等顶层 await 落定」，这里把它当陷阱展开：一个 `config = await loadConfig()` 写在基础模块顶层，意味着**所有**间接依赖它的模块——哪怕只 import 了一个无关的纯工具函数——都要排队等配置加载完。修法按需求两选一：初始化真的是全局前置条件（没有它一切无法工作）→ 保留阻塞，但把它集中到唯一的入口模块，让等待**显式**；只是某个函数要用 → 把 `await` 下沉到函数体内，或改成调用方 `dynamic import()` 按需加载。判据：**顶层 await 是「整张图的公共前置」，配得上这个地位的前置一年碰不到几回**。
+
+## 增补 D：输出预测题（实跑验证，三题）
+
+**第 1 题**：写出输出顺序，并解释 `t2` 为什么落在两个探针之后。
+
+```js
+Promise.resolve()
+  .then(() => { console.log("t1"); return Promise.resolve("A"); })
+  .then((v) => console.log("t2", v));
+Promise.resolve().then(() => console.log("probe1"));
+Promise.resolve().then(() => console.log("probe2"));
+```
+
+**第 2 题**：两段代码同跑，写出输出；追问——为什么只有一段触发 UNHANDLED？
+
+```js
+process.on("unhandledRejection", (e) => console.log("UNHANDLED:", e.message));
+// 危险模式：timeout promise 被创建，但没进 race，游离在外
+function badTimeout(task, ms) {
+  const t = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout fired")), ms));
+  return task.then((v) => v);   // 忘了 race：t 没有任何 handler
+}
+badTimeout(Promise.resolve("fast"), 60);
+// 对照：timeout 进了 race，race 给每个候选挂内部 reaction
+function goodTimeout(task, ms) {
+  const t = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout fired")), ms));
+  return Promise.race([task, t]);
+}
+goodTimeout(Promise.resolve("fast"), 60).catch(() => console.log("good: won by task anyway"));
+setTimeout(() => console.log("t+150ms: alive"), 150);
+```
+
+**第 3 题**：写出输出顺序；`lazy` 的 start 为什么在 83ms 而不是 0ms？
+
+```js
+const t0 = Date.now();
+function job(tag) {
+  console.log("start", tag, "at", Date.now() - t0, "ms");
+  return new Promise((r) => setTimeout(() => { console.log("end", tag, "at", Date.now() - t0, "ms"); r(tag); }, 50));
+}
+const p1 = job("eager");
+const f = () => job("lazy");
+setTimeout(() => { console.log("calling lazy at", Date.now() - t0, "ms"); f(); }, 80);
+await p1;
+console.log("await done at", Date.now() - t0, "ms");
+```
+
+### 第 1 题答案
+
+```
+t1
+probe1
+probe2
+t2 A
+```
+
+推演见增补 B：`return Promise.resolve("A")` 的 adoption 花 2 拍，`t2` 的入队时刻被推到两个探针之后。把返回值改成 `"A"` 字符串，`t2` 会立刻排到 probe1 前面——一字符之差，位置全变。
+
+### 第 2 题答案
+
+```
+UNHANDLED: timeout fired
+good: won by task anyway
+t+150ms: alive
+```
+
+只有 `badTimeout` 里那个游离的 `t` 触发 UNHANDLED：它被创建、会在 60ms reject，但全程没人给它挂 handler。`goodTimeout` 里同样会 reject 的 `t` 进了 `race`——`PerformPromiseRace` 为每个候选注册了内部 reaction，60ms 的迟到 rejection 被这个内部 handler 吸收，进程安然无恙（t+150ms 仍在）。这是对「race 输家没人接会崩」这条流行说法的实测校准：**崩的触发条件是「零 handler 的游离 rejection」，不是「race 已定局」**。
+
+### 第 3 题答案
+
+```
+start eager at 0 ms
+end eager at 53 ms
+await done at 53 ms
+calling lazy at 83 ms
+start lazy at 83 ms
+end lazy at 134 ms
+```
+
+`job("eager")` 是调用表达式，函数体在 0ms 同步执行（start eager）；`f` 只是被定义，函数体一行未跑；83ms 定时器回调里 `f()` 被调用，`start lazy` 才出现。中间的 `await done at 53 ms` 还顺带演示了 top-level await：模块求值在 `await p1` 处挂起约 53ms，期间已注册的 80ms 定时器照常计时——挂起的只是这个模块的求值，不是事件循环。
+
+## 增补 E：与 04 册的分工说明
+
+两册同属异步主题，分工按「语言规范层 / 宿主工程层」切开，查问题时按层取册：
+
+- **04 册（语言规范层）**：ECMA-262 的 Promise 状态机与 Jobs（二次 resolve、值穿透、adoption 拍数）、WHATWG 事件循环一轮的处理模型（task/microtask 归属与清空规则）、四个组合器的语义定义、AbortController 的规范语义。**输出顺序题在浏览器语境下查 04 册**——它的模型与浏览器实现一一对应。
+- **31 册（宿主工程层）**：libuv 六阶段与 Node 的两个微队列（nextTick 的位置、ESM/CJS 顶层求值差异、setImmediate 与 setTimeout 的阶段归属）、工程三件套（limit/withTimeout/retry）、资源管理语法（withResolvers、await using、top-level await）。**输出顺序题在 Node 语境下查 31 册**——nextTick 队列与阶段规则只有这里有。
+- **交叉地带**：并发工程先看 31 册 §31.3 的三件套（限制器/超时/重试），机制细节回查 04 册附录 A.3 的最小信号量；取消语义看 04 册 §4.6，取消的工程化封装看 31 册 §31.3 与增补 A.2；拍数与执行序的推演配方，04 册附录 B（单链 + 宏微任务交错）与 31 册增补 B（组合器 + adoption）互补。
+- **复习路径建议**：第一轮只走 04 册（规范模型立起来），第二轮走 31 册（Node 差异与工程件挂上去）；最后用两册的预测题混合抽测——凡是「同一份代码浏览器与 Node 输出不同」的题，都是两册交界处的考点（如 nextTick 与 ESM 顶层求值）。
+
+## 增补 F：组合器语义速查矩阵、cancelable 变体与自查卡
+
+### F.1 失败语义速查矩阵（增补 A.1 六个观测点的压缩版）
+
+把实测账本折成一张可贴工位的表，每格标注规范机制名，复习时按「行 = 场景，列 = 我要什么」反查：
+
+| 我要什么 | 用什么 | 输出形态 | 失败语义的规范机制 |
+| --- | --- | --- | --- |
+| 一票否决：全成才成 | `Promise.all` | 结果数组，按输入顺序 | 首个 rejection 即 reject；下标回调写槽（`PerformPromiseAll`） |
+| 全都要：成败记账 | `Promise.allSettled` | 结局数组，按输入顺序 | 永不 reject；每项记 status/value 或 status/reason |
+| 一个就够：首个赢家 | `Promise.any` | 首个 fulfilled 的值 | 忽略中途 rejection；全败抛 `AggregateError`，`errors` 按输入顺序 |
+| 谁快用谁：首个结局 | `Promise.race` | 首个 settle 者的结局 | 首个 settle 无论成败即定局；内部为每个候选挂 reaction |
+| 超时裁决 + 真取消 | `race` + AbortController | 胜者结局，败者被掐副作用 | race 只裁决；取消发生在任务内部对 signal 的响应 |
+
+表的用法是反查「失败语义」这一列：业务说「一个环节挂了全批作废」，落到 `all`；说「失败的那几个单独标记」，落到 `allSettled` 加显式分派；说「多路冗余谁能用谁」，落到 `any`。选型错误不报错、只造成语义漂移，所以这张表的首要用途是 code review 时裁决「这里该用哪个」。
+
+### F.2 cancelable 模式的两个变体与边界
+
+增补 A.2 给的是单任务最小闭环，工程里还有两个常见变体：
+
+- **批量取消**：一个页面/一次部署会同时启动 N 个可取消任务，退出时要一锅端。两个姿势：给所有任务传**同一个 signal**（`AbortController` 一次 abort 全体生效，监听器各清各的副作用——信号是广播，清理是各扫门前雪）；或用 `AbortSignal.any([用户信号, 超时信号])` 把「用户取消」与「超时取消」合并成一条信号源，任一源触发即触发，`signal.reason` 取先触发者——这样调用方只需维护一个 signal 通道。
+- **幂等取消**：`abort()` 的重复调用是无操作（状态定格、事件不重发），但自己包装层里的清理逻辑要扛住重复执行——`clearTimeout` 天然幂等，自定义清理（关闭连接、归还资源）要用「已清理」旗标守卫，否则取消路径二次进入会把资源收两次。检验方法：给清理函数加一行计数日志，跑「abort 两次 + 任务自然结束」三条路径，计数必须为 1。
+
+边界重申一次（04 册 §4.6 与本册 §31.3 已立的规矩）：这套模式的取消边界止于「你写的那段异步代码」——包装器内部的定时器、循环、请求可以真正做到「不再继续」；但 fetch 已经发出的 HTTP 报文、已经写入的字节，取消只能尽力中止传输，不能撤回已发生的副作用。设计取消接口时，把「取消后世界是什么状态」写进文档，比多写三层防御性代码更值钱。
+
+### F.3 组合器输出题自查三问
+
+拍数题推完答案后过一遍这三问（与 04 册附录 F 的自查三问配套，那边管「队列与时刻」，这边管「组合器与 handler」）：
+
+1. **每个成员的 rejection 都有 handler 吗？** 组合器内部会替候选挂 reaction，但组合器自身的结果（尤其 `race`/`any` 的结局）必须有人接——`all` 的 catch 只接第一个炸出来的，接不了后面成员各自的余波之外的事。
+2. **数组构建那一刻谁已经启动了？** eager 陷阱自查：`map` 里返回 Promise 的调用表达式在 map 执行时就全员开跑；想把启动权留给限制器，数组元素必须是函数（增补 A.3 第三推论）。
+3. **`errors`/结果的位次是输入序还是完成序？** `all` 的结果、`any` 的 `errors` 都是输入序；`race` 谈位次无意义（只认最快）。凡答题涉及「顺序」，先声明用的是哪个序。
+
+三问分别卡住 handler 缺失、eager 启动、序位混淆——组合器题的三大失分点。它们加进 review 清单的成本为零，拦住的却是「测试环境没炸、生产环境语义漂移」的那一类问题。

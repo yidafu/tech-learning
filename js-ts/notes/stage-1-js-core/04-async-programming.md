@@ -322,3 +322,301 @@ t6 recovered
 - MDN《Event loop》与微任务指南：[https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop)
 - TypeScript Playground（把 target 切 ES2015 观察 async 函数降级为状态机 + Promise 驱动）：[https://www.typescriptlang.org/play](https://www.typescriptlang.org/play)
 
+## 附录 A：机制深一层——返回值包装时机、await 续体排队与并发限制器
+
+### A.1 async 函数的返回值：包装发生在调用时，不是返回时
+
+一句话结论先行：**调用 async 函数的那一刻，它自己的 Promise 就已经创建好了**——不是等函数体跑完才包装。规范把 async 函数建模为「函数体 + 一个随之创建的 Promise」：函数体正常返回也好、抛错也好（哪怕抛在第一个 `await` 之前的同步段），结果都汇入这个早已存在的 Promise。调用方拿到的永远是它，而不是函数体 `return` 的那个值本身。
+
+由此推出两个常被答错的细节：
+
+- **「async 函数返回的永远是自己的新 Promise」**。即使函数体写 `return 某个现成的 Promise p`，调用方拿到的也不是 p，而是 async 函数自己的 Promise；p 只是作为「决议值」交付给它——并且因为 p 是 thenable，这次交付要走一遍 `NewPromiseResolveThenableJob`（adoption，多两拍）。附录 D 第 3 题实测了这个现象：内层 `return Promise.resolve(...)` 让外层续体比「更晚注册的探针回调」还晚执行。
+- **「永不抛同步异常」与「调用即拿到 pending Promise」是同一机制的两面**。Promise 在函数体执行前就存在，异常没有别的地方可去，只能落进它的 rejected 状态；如果 Promise 是「返回时才创建」，同步段抛错就会真的抛到调用栈上——两种说法互相锁死，一起记才记得牢。
+
+一手依据：ECMA-262 对 async 函数体求值的算法——函数体的 completion（正常返回值或异常）都经过 resolve/reject 步骤收敛到函数自身的 Promise；`await` 的处理定义在同一条求值算法里（按名称检索 async function evaluation 与 Await）。
+
+### A.2 await 的续体排在微任务队列的哪个位置
+
+`await` 的续体不是「插队」，是「入队」：它作为被 await 的那个 Promise 的 reaction 注册，等 Promise 落定后由 `HostEnqueuePromiseJob` 排进**微任务队列的当前末尾**。两条工程上立得住的推论：
+
+- **续体永远不越过更早入队的微任务**。await 续体与 `then`、`queueMicrotask` 的回调在同一个 FIFO 队列里比先后，唯一变量是入队时刻——「写在后面的代码先输出」的所有怪象，都是在入队时刻上做文章。
+- **续体不会在本拍同步恢复**。即使被 await 的对象早已 fulfilled（如 `await null`），也至少让出一拍。这保证 async 函数的执行被切成可调度的片段，事件循环有机会插进任何两个片段之间——「await 阻塞事件循环」的流行误读恰好把这件事说反了：不是 await 阻塞循环，而是循环靠 await 让出才转得动。
+
+### A.3 手写并发限制器：信号量 + 等待队列（实跑验证）
+
+p-limit 的核心可以压到十几行：外层返回新 Promise（调用方立刻拿到凭据），队列里存的是「启动函数」而不是结果，任务成功或失败都必须释放槽位再唤醒队首。
+
+```js
+function limit(concurrency) {
+  let active = 0;
+  const waiting = [];
+  const release = () => {
+    active--;
+    const next = waiting.shift();
+    if (next) next();
+  };
+  return function run(task) {
+    return new Promise((resolve, reject) => {
+      const start = () => {
+        active++;
+        task().then(
+          (v) => { release(); resolve(v); },
+          (e) => { release(); reject(e); },
+        );
+      };
+      active < concurrency ? start() : waiting.push(start);
+    });
+  };
+}
+```
+
+三个设计点对应三行代码：`waiting.push(start)` 说明限的是「同时进行数」而非总数（排队者存启动函数，轮到它才真正开工）；`then` 的两个分支都调 `release()`，失败路径漏掉它就会一个 reject 堵死整条队列；`run` 内部再包一层 Promise，让排队中的调用方也能提前拿到「终有一天落定」的凭据。实跑验证（4 个各 100ms 的任务、并发上限 2，全程统计同时在跑的任务数）：
+
+```
+results: [ 1, 2, 3, 4 ]
+maxActive: 2
+elapsed: 204 ms
+```
+
+上限从未被突破（maxActive 恒为 2），总耗时约等于「批次数 × 单任务时长」（两批 ≈ 200ms）——这就是限流器的性能签名。需要生产级功能（按队列聚合异常、主动 abort 排队任务）时在此骨架上加，不要重写调度核心。工程化加强版（`limit`/`withTimeout`/`retry` 三件套）见 31 册 §31.3，两处实现同一原理、角度互补。
+
+## 附录 B：手推配方——一段混合代码的执行序逐步推演
+
+把 §4.1 的推演清单走一遍真代码。先闭卷推，再对照下面的逐拍账本，最后用 node 对账。
+
+```js
+console.log("1 sync-start");
+setTimeout(() => console.log("9 timeout"), 0);
+const p = Promise.resolve("P");
+p.then((v) => {
+  console.log("4 then1", v);
+  return new Promise((res) => setTimeout(() => res("Q"), 50));
+})
+  .then((v) => { console.log("7 then2", v); return "R"; })
+  .then((v) => console.log("8 then3", v));
+async function main() {
+  console.log("2 async-sync-seg");
+  const v = await p;
+  console.log("3 after-await", v);
+  const w = await Promise.resolve().then(() => "W");
+  console.log("5 after-await2", w);
+}
+main();
+Promise.resolve().then(() => console.log("6 microtask-check"));
+console.log("0 sync-end");
+```
+
+逐拍账本（微任务按入队顺序编号 M1、M2……）：
+
+1. **同步段**：打印 `1`；注册 0ms 定时器（宏任务甲）；`p.then` 的回调入队（M1）；调用 `main()`——同步执行到第一个 `await`，打印 `2`，续体入队（M2），`main` 挂起返回 pending Promise；`await Promise.resolve().then(...)` 右侧的回调入队（M3）；探针回调入队（M4）；打印 `0`。同步段顺序：1 → 2 → 0。
+2. **清空微任务（第一遍）**：M1 打印 `4 then1 P`，返回的 Promise 要等 50ms 的定时器——它是 pending thenable，触发 `NewPromiseResolveThenableJob` 入队（M5）；M2 打印 `3`；M3 返回 `"W"`，把 `main` 的第二个续体推入队尾（M6）；M4 打印 `6`；M5 是 thenable 中转 Job，把外层链与那个 pending Promise 挂上钩（什么都不打印）；M6 打印 `5`。**注意 `9 timeout` 还没跑**——它排在 task 队列里，微任务不清空完轮不到它。
+3. **宏任务甲**：0ms 定时器触发，打印 `9`。它明明「最后注册却先跑」，因为它不需要等任何异步操作，而 `7 then2` 要等 50ms 定时器落定——输出顺序只认「谁的依赖先就绪」，不认书写顺序。
+4. **50ms 定时器落定**：`res("Q")` 让链恢复前进，`7 then2 Q` 与 `8 then3 R` 作为新微任务先后执行。返回 `"R"` 是普通值，不再 adoption，两环之间只差一拍。
+
+node（v24.10.0）实跑输出，与账本逐行一致：
+
+```
+1 sync-start
+2 async-sync-seg
+0 sync-end
+4 then1 P
+3 after-await P
+6 microtask-check
+5 after-await2 W
+9 timeout
+7 then2 Q
+8 then3 R
+```
+
+这道配方里埋了四个分叉点：同步段包含 async 函数体开头（1 → 2 → 0 的次序）、adoption 让主链让出两拍（M5 中转）、宏任务与「等待异步落定的微任务」赛跑（9 抢在 7 前面）、续体按入队时刻排队（6 与 5 的先后）。四点都能独立答对，§4.1 的清单就算长在脑子里了。
+
+## 附录 C：工程三陷阱——未捕获 rejection、forEach 加 async、循环 await 串行化
+
+### C.1 陷阱一：一条没有 catch 的链，可以让整个进程退出
+
+Node 15+ 的默认策略（§4.3 的 `HostPromiseRejectionTracker` 落地）：微任务清空后仍无人接管的 rejection 触发 `unhandledRejection`，并**直接抛错让进程非 0 退出**。最小的复现只要三行：
+
+```js
+async function boom() {
+  throw new Error("no one catches me");
+}
+boom();
+setTimeout(() => console.log("still alive?"), 50);
+```
+
+node 实跑（v24.10.0）：进程立刻打印这个 Error 并退出，退出码 1——**50ms 后的定时器回调 `still alive?` 从未执行**。崩溃发生在「本轮微任务清空完毕」的时刻，之后注册的任何任务都没机会跑。这就是「未捕获 rejection 是进程级事故」的可观察含义：一条被遗忘的链能带崩整个服务，而不是「那一个请求失败」。三层防线按顺序上：每条链末端显式 `catch`（第一道，也是唯一一道该写进代码的）；顶层挂 `process.on('unhandledRejection', 上报)`（兜底监控，同时阻止崩溃——但要清楚它只是把事故降级成日志）；CI 里对「静默吞错」的空 `catch` 做 lint。
+
+### C.2 陷阱二：forEach 加 async——循环假结束，异常没人接
+
+`forEach` 对回调的返回值视而不见（§4.5），用 async 回调时表现为「循环瞬间返回 + 全部任务失控并发 + 异常变成 unhandled rejection」。实测：
+
+```js
+process.on("unhandledRejection", (e) => console.log("UNHANDLED:", e.message));
+const t0 = Date.now();
+const work = (name) => new Promise((_, rej) => setTimeout(() => rej(new Error(name + " failed")), 100));
+["a", "b", "c"].forEach(async (name) => {
+  await work(name);
+  console.log(name, "done");
+});
+console.log("forEach returned at", Date.now() - t0, "ms");
+setTimeout(() => console.log("t+150ms: elapsed", Date.now() - t0, "ms, no done logs"), 150);
+```
+
+node 实跑输出：
+
+```
+forEach returned at 0 ms
+UNHANDLED: a failed
+UNHANDLED: b failed
+UNHANDLED: c failed
+t+150ms: elapsed 154 ms, no done logs
+```
+
+三个症状同框：`forEach` 同步返回（0ms），调用方以为「安排好了」其实既不知道成功也不知道失败；三个 rejection 各自为政，若没有第一行的兜底监听，进程在这里直接崩；`done` 一行都没打印——await 到的失败走不到 `console.log`。修法两选一：要串行用 `for...of` + `await`，要并发先 `map` 出 Promise 数组再 `Promise.all`（或 `allSettled`）——两者都把「循环结束」的语义修对了。
+
+### C.3 陷阱三：循环 await 把独立任务悄悄串行化
+
+`for...of` 里的 `await` 不是 bug，是**并发数等于 1 的调度决策**——错在用它跑互相独立的任务。同一组 3 个 100ms 任务，两种写法的实测对比：
+
+```
+serial for-await: 306 ms
+concurrent Promise.all: 102 ms
+```
+
+耗时结构完全不同（各任务之和 vs 最慢者），而**结果完全相同**——所以这个坑不会报错，只会在监控里表现为「接口越来越慢」。决策标准只有一条：后一步需要前一步的结果（或有明确的限流要求），才值得串行；独立任务一律先收集再并发。任务量大到会打爆下游时，用附录 A.3 的限制器卡上限——串行只是「并发数为 1」的特例，限流器把它泛化了。
+
+## 附录 D：输出预测题增补（四题，node 实跑验证）
+
+先闭卷推演，再对照答案。四题全部在 node v24.10.0 实跑验证，代码即实跑脚本。
+
+**第 1 题**：混合 async 与显式微任务 API，写输出顺序。
+
+```js
+Promise.resolve().then(() => console.log("a"));
+(async () => {
+  console.log("b");
+  await null;
+  console.log("c");
+})();
+queueMicrotask(() => console.log("d"));
+setTimeout(() => console.log("e"), 0);
+```
+
+**第 2 题**：await 一个自定义 thenable，写输出顺序，并指出「then called」为什么出现在那个位置。
+
+```js
+const thenable = { then(res) { console.log("then called"); res("T"); } };
+(async () => {
+  console.log("1");
+  const v = await thenable;
+  console.log("2", v);
+})();
+Promise.resolve().then(() => console.log("3"));
+Promise.resolve().then(() => console.log("4"));
+```
+
+**第 3 题**：async 函数链上 return 一个 Promise（双 adoption），写输出顺序；`probe` 为什么能插到 `outer-end` 前面？
+
+```js
+async function inner() { console.log("inner"); return Promise.resolve("I"); }
+async function outer() { console.log("outer-start"); const v = await inner(); console.log("outer-end", v); return v; }
+outer().then((v) => console.log("then", v));
+Promise.resolve().then(() => console.log("probe"));
+```
+
+**第 4 题**：宏任务回调里再排微任务，写输出顺序，并说明「micro-in-timer」的落点依据。
+
+```js
+setTimeout(() => {
+  console.log("timer1");
+  Promise.resolve().then(() => console.log("micro-in-timer"));
+}, 0);
+queueMicrotask(() => {
+  console.log("micro1");
+  queueMicrotask(() => console.log("micro2-nested"));
+});
+console.log("sync");
+```
+
+### 第 1 题答案
+
+```
+b
+a
+c
+d
+e
+```
+
+同步段只有 `b`；微任务按入队顺序：`a`（then）、`c`（await 续体）、`d`（queueMicrotask）；`e` 在 task 队列，等微任务见底。三种「排微任务」的写法在同一个队列里完全平权，只比入队时刻。
+
+### 第 2 题答案
+
+```
+1
+then called
+3
+4
+2 T
+```
+
+`await thenable` 走的是 adoption 路径（快速路径只对原生 Promise 生效，§4.2）：先排一个 `NewPromiseResolveThenableJob`，它执行时才调用 thenable 的 `then` 并打印「then called」，`res("T")` 落定后再过一拍才轮到续体打印 `2 T`。于是「更早书写的 await 续体」反而排在两个后注册的探针（3、4）之后——自定义 thenable 的两拍代价是输出题里最常埋的雷。
+
+### 第 3 题答案
+
+```
+outer-start
+inner
+probe
+outer-end I
+then I
+```
+
+`probe` 插队成功的原因是一条**双程 adoption 链**：`inner` 的 `return Promise.resolve("I")` 先触发一次 `NewPromiseResolveThenableJob`（inner 自己的 Promise 要等这个决议值）；`outer` 里 `await inner()` 等的又是这个还 pending 的 Promise。探针回调在同步段末尾入队，赶在了「决议值到账 → 续体入队」之前。把 `inner` 的返回值改成普通字符串 `"I"`，两个 async 函数之间没有 thenable 转手，`probe` 就会被挤到 `outer-end` 之后——一道题同时检验「包装时机」（附录 A.1）与「adoption 拍数」。
+
+### 第 4 题答案
+
+```
+sync
+micro1
+micro2-nested
+timer1
+micro-in-timer
+```
+
+微任务递归入队也在本轮清空（`micro2-nested` 跟在 `micro1` 后面、仍在 task 之前）；`timer1` 是下一个宏任务，它的回调体本身开启新一轮「同步段 + 微任务清空」，所以 `micro-in-timer` 紧跟其后、且不会漏到下一轮。**「每个宏任务跑完后清空全部微任务」在宏任务内部同样成立**——这条规则是自相似的。
+
+## 附录 E：排查速查表
+
+生产与 code review 里按「症状」反查，每行都能回指本册某一节的机制：
+
+| 症状 | 第一步检查 | 机制根源 | 本册出处 |
+| --- | --- | --- | --- |
+| 进程突然退出，日志只有一条孤零零的 Error | 谁的 Promise 链没有末端 catch | unhandledRejection 默认非 0 退出 | §4.3 / 附录 C.1 |
+| 一批请求「比预期慢 N 倍」但不报错 | 循环体内是否有 `await` | for 循环 await 把并发压成 1 | §4.5 / 附录 C.3 |
+| 脚本瞬间结束，异步结果全没等到 | 是否用了 forEach 跑 async 回调 | forEach 无视返回的 Promise | §4.5 / 附录 C.2 |
+| 输出顺序与预期不符 | 先归类 task/微任务，再看入队时刻 | 队列 FIFO 是唯一裁判 | §4.1 / 附录 B |
+| then 链「断」了，后面的环节没执行 | 链上哪一环返回了 rejected Promise | 错误沿链跳过无 onRejected 的环节 | §4.3 |
+| abort 之后请求还在跑、日志还在打 | 任务内部是否订阅了 signal 并清理副作用 | 短路不等于取消 | §4.6 |
+| 页面偶发卡死、CPU 空转 | 是否有递归 queueMicrotask / nextTick | 微任务风暴把队列清到永远不见底 | §4.1 |
+
+排查心法一句话：**先问「谁排在哪个队列、什么时候入的队」，再问「谁持有一条没人接的 rejection」**——异步事故十有八九落在这两问里。
+
+## 附录 F：输出题的三类命题套路与自查清单
+
+市面上几乎所有 Promise/事件循环输出题，拆开看只有三种命题基因；做题时先判断题目考哪一类，再套对应的判据，比硬背题库可靠得多。
+
+**套路一：队列归属题**——考「宏任务与微任务谁先」。特征是代码里同时出现 `setTimeout` 和 `then`/`await`/`queueMicrotask`，问最后一行输出在哪。判据只有一条：**微任务队列不清空见底，task 队列一个都不轮**。所以无论定时器写 0 还是写 1，只要它的对手是微任务，它必输；判断题里凡出现「setTimeout 0 毫秒所以先跑」的说法，直接判错。第 1 题与第 4 题的骨架就是它，外加一个变体：宏任务回调体内部又是一个「同步段 + 清空微任务」的完整循环（第 4 题 `micro-in-timer` 的落点依据）。
+
+**套路二：入队时刻题**——考「同一个队列内谁先」。微任务之间不比类型、不比书写位置，只比**入队时刻**，而入队时刻由同步代码执行到哪一行决定。典型陷阱是把 `queueMicrotask` 写在 `await` 前面或后面，考察你能不能沿着同步段的实际执行顺序数出入队次序（正文可运行示例里「4、5、6 可随书写顺序调换」就是这类题的裸形态）。判据：**沿同步段从头走一遍，每遇到一个「注册动作」就记一笔账；async 函数调用要走进函数体、停在第一个 await**。
+
+**套路三：拍数题**——考「adoption 与快速路径」。特征是链上有 `return 一个 Promise` 或 `await 一个自定义 thenable`，问某一环比另一环早还是晚。三个判据精确对应三种情况：`then` 链里 `return thenable` 多两拍（`NewPromiseResolveThenableJob` + 内层 reaction）；`await 原生 Promise` 恰好一拍（快速路径，性能优化不改语义）；`await 自定义 thenable` 多两拍（无快速路径，附录 D 第 2 题实测）。第 2、3 题都靠这三条判据逐拍推出来。命题者最爱把「await 原生 Promise」与「await thenable」并排放，两拍差就是分叉点。
+
+**答题自查三问**（推出答案后过一遍，能抓住绝大多数手滑）：
+
+1. 同步段是否走进了每个 async 函数体、每个 Promise executor？（executor 在构造时同步执行）
+2. 微任务清空过程中新入队的，是否仍然记在本轮？（递归微任务不清空见底不罢休）
+3. 每个「return Promise」的地方，是否都数了 adoption 的两拍？
+
+把三问做成 review 习惯，输出题从「背题」变成「走流程」——这也是本册从 §4.1 到附录 B 一以贯之的主张：事件循环没有玄学，只有队列与时刻。
+

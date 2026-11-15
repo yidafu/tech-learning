@@ -341,3 +341,129 @@ it('100ms 内取消则不触发', () => {
 - Vitest 官方文档《Mocking → doMock》与《Vi Utility》（setSystemTime/getTimerCount 的完整清单）
 - 呼应：`notes/stage-4-engineering/16-modules-esm-cjs.md`（ESM 只读绑定 → spyOn 无法替换模块导出的机制根源）
 
+## 附录 A：机制深一层——hoisting 的可观测证据、fake timers 语义、并发模型与快照边界
+
+### A.1 vi.mock hoisting：从文档说法到可复跑证据
+
+正文 §6 给了 hoisting 的结论，这里把它变成两条**任何人都能复跑**的证据（环境与脚本见附录 B）：
+
+- **证据一：mock 拦截发生在模块加载层，被 mock 的模块根本不会被求值。** 给 `api.ts` 模块体加一行 `console.log("REAL api.ts MODULE BODY EXECUTED")`：带 `vi.mock('./api.ts', factory)` 的测试文件跑完后这行日志**从未出现**，import 到的名字是工厂返回值；去掉 `vi.mock` 的对照文件则打印日志。这说明 `vi.mock` 不是「加载真模块后再替换属性」，而是在模块请求路径上直接改道——真模块的求值从未发生。这也是它与 `vi.spyOn`（运行时改写对象属性）的本质分野。
+- **证据二：TDZ 报错本身就是 hoisting 的直接观测。** factory 引用文件顶层的 `const fake`，实测报错为 `Caused by: ReferenceError: Cannot access 'fake' before initialization`，且 Vitest 自己的错误提示里写着「this call is hoisted to top of the file」。能触发 TDZ，说明 factory 的执行早于测试模块体里那条 `const` 初始化——「提升先于 import」从一个报错信息里同时读出了两个事实。
+
+推论：需要跨 factory 与测试体共享的值，必须走同样被提升且先于 `vi.mock` 执行的 `vi.hoisted`（正文题 2 的修复一）；factory 的书写位置无论放在文件哪里都无效——提升是编译期变换，与书写顺序无关。
+
+### A.2 fake timers 语义：虚拟时钟只在被接管的 API 上流动
+
+`vi.useFakeTimers()` 做的事是把一批计时 API（`setTimeout`/`setInterval`/`Date`/`performance.now` 等）整体替换为「读同一个虚拟时钟」的实现：时间不再随真实流逝而走，只随推进调用走（`advanceTimersByTime`、`advanceTimersToNextTimer`、`runAllTimers`）。四个语义要点：
+
+- **同步版与 async 版的本质差别是「冲不冲微任务」**。同步版只拨时钟、只跑定时器回调；回调里若 `await` 了 Promise，续体属于微任务，同步版不会 flush 它——测试就停在半路。`advanceTimersByTimeAsync` 在每个时间步之间清一遍微任务，链上的 `await` 全部落定后才返回。正文 §7 的结论（测异步防抖必须 async 版）机制就在这里；配合 04 册的模型说：**推进调用是宏任务，async 版每步之后做一次「清空微任务队列」**。
+- **`setSystemTime` 只改时钟读数，不推定时器**。它锚定 `Date` 系列的返回值，适合「按时间分支」的代码（缓存过期、token 有效期）；要触发定时器回调必须用 `advance` 系。反过来，`advance` 推进时虚拟时钟读数同步前移——两个 API 各管一半「时间」。
+- **`toFake` 白名单决定「哪些 API 被冻结」**。官方文档口径：默认接管除 `nextTick` 与 `queueMicrotask` 之外的全部计时 API——微任务默认保持真实，所以 fake timers 与 Promise 微任务的交错仍然遵循 04 册的事件循环模型；用白名单缩小接管面，可以让无关机制（如 `performance.now` 计时）保持真实。
+- **fake timers 是文件级全局替换，不是用例级**。这是附录 B 证据三的直接推论：一个用例开启后不恢复，同文件后续用例全部活在冻结时钟里——「泄漏」不是比喻，是替换物还挂着。
+
+### A.3 并发与串行控制：默认串行，显式并发要付出隔离代价
+
+同文件内用例**默认严格串行**（上一个 await 完成才跑下一个），文件之间默认并行（worker 池）。显式开关有两个：`describe.concurrent`/`test.concurrent` 让同组用例并发跑（配 `maxConcurrency` 上限）；`describe.sequential` 强制组内串行（用于在 concurrent 父级里划出串行区）。两个必须知道的交互：
+
+- **concurrent 与 fake timers 组合是官方明确警告的雷区**：并发用例共享同一个虚拟时钟，A 用例的 `advanceTimersByTimeAsync` 会触发 B 用例挂在时钟上的定时器——时序互相污染。需要时间虚拟化的用例保持串行。
+- **concurrent 不创造隔离**：JS 单线程（04 册的模型不变），并发用例只是把「多个 async 函数的 await 交叠」搬进测试进程——共享的可变状态（模块级计数器、同一个 `vi.fn` 的调用记录）会在 await 两侧交错读写，这正是陷阱三的机制根源。
+
+### A.4 快照测试的适用边界
+
+`toMatchSnapshot` 的机制：首跑把值序列化写入 `.snap` 文件，之后每次对比，`-u` 更新基线；`toMatchInlineSnapshot` 把基线写进测试文件本身（review 时 diff 直接可见，适合小快照）。适用判据一句话：**输出「大、结构稳定、且你愿意在 review 里逐字读 diff」时用快照；输出小、关键字段明确时用显式断言**。反模式是把 API 全量响应直接快照：时间戳、随机 ID 这类噪声字段让快照天天红，团队最后人人 `-u`，快照退化成橡皮图章——「整体没变」是最弱的断言，无关字段漂移它一律放行。噪声字段的正规处理是在断言前把不可预测字段归一（替换为常量或直接剔除），而不是放宽到快照。
+
+## 附录 B：实跑取证（Vitest 5.1.0，node v24.10.0）
+
+四个探针的最小工程放在 /tmp 自建（`package.json` 声明 ESM，依赖目录指向 npx 缓存解析出的 Vitest 5.1.0——与工作区 `npx vitest run` 同源；本仓测试配置零改动）。每组都是秒级出结果。
+
+**证据一（TDZ）**：测试文件顶层写 `const fake = vi.fn()`、其下 `vi.mock('./api.ts', () => ({ default: fake }))`，运行报：
+
+```
+Error: [vitest] There was an error when mocking a module. If you are using "vi.mock" factory,
+make sure there are no top level variables inside, since this call is hoisted to top of the file.
+Caused by: ReferenceError: Cannot access 'fake' before initialization
+```
+
+**证据二（mock 在加载层拦截）**：`api.ts` 模块体首行打印 `REAL api.ts MODULE BODY EXECUTED`。带 factory 的 `vi.mock` 文件：日志不出现、导入名是工厂值，1 passed；无 mock 的对照文件：日志出现、拿到真实现——同一段模块体两种命运，改道发生在求值之前。
+
+**证据三（fake timers 跨用例泄漏）**：同文件两个用例——A 开启 `useFakeTimers` 并 `setSystemTime(2024-01-01)`，不恢复；B 断言 `Date.now()` 等于那个冻结时刻。实测 3 passed（含证据四的用例）——B 通过即泄漏实锤：A 的虚拟时钟原封不动带进了 B，若时间真实流逝，`Date.now()` 早就不等于 2024 年元旦。
+
+**证据四（mockReset 的 Vitest 语义）**：`const fn = vi.fn((x) => x + 1)`，`mockImplementation(() => 999)` 后 `fn(1)` 得 999；`fn.mockReset()` 后 `fn(1)` **回到 2**（原始实现）。jest 语义下 reset 后是无实现（返回 undefined）——迁移时最容易踩的语义差异，与本册 §6 清理三兄弟的表格互相印证。
+
+## 附录 C：工程三陷阱（增补）
+
+**陷阱一：vi.mock 的 specifier 与 import 的 specifier 解析到不同模块**。`vi.mock` 按「解析后的模块 ID」匹配：测试文件里 `import x from './api.ts'`、mock 注册写 `vi.mock('../src/api.ts', ...)`，或者 `resolve.alias` 只配在一侧、扩展名一边有一边无——两处解析结果不同，mock 注册了一个「没人 import 的假模块」，测试跑的是真实现，网络请求照发。这类 bug 的表现是「mock 写了像没写」，排查链见附录 D。
+
+**陷阱二：fake timers 泄漏进同文件后续用例**。附录 B 证据三就是现场：`useFakeTimers` 是文件级替换，不 `useRealTimers` 则后续用例的 `setTimeout` 永不触发、`Date` 永远冻结——症状往往是「单跑这个用例绿、整个文件跑红」（与本册「隔离模型」一节的论断互为因果）。纪律：`afterEach(() => { vi.useRealTimers(); })` 成对出现；外加 `expect(vi.getTimerCount()).toBe(0)` 守门。注意配置里的 `clearMocks`/`restoreMocks`/`mockReset` 三个自动清理开关**只管 mock，不管虚拟时钟**——别指望配置兜底 timers。
+
+**陷阱三：describe.concurrent 里共享可变 mock 状态**。多个 concurrent 用例共用一个 `vi.fn`（断言 `mock.calls` 的顺序、排 `mockResolvedValueOnce` 的队列）时，「第几次调用」不再确定：交叠点在每个用例的 `await` 处（A.3 的机制）。修法两选一：每个并发用例自建自己的 `vi.fn`（天然隔离），或该组改回串行。**共享不可变配置没问题，共享可变记录必炸**——判断标准与生产并发代码一致。
+
+## 附录 D：排查速查表——mock 不生效与 timer 泄漏
+
+**「mock 不生效」按序排查链**（绝大多数命中前两条）：
+
+1. specifier 是否解析到同一模块：相对路径基准、扩展名、`resolve.alias` 两侧是否一致；
+2. `vi.mock` 是否写在文件**模块作用域**：塞进 `beforeAll` 或 `it` 里的静态 `vi.mock` 不参与提升（doMock 变体才允许按书写顺序生效，且必须配动态 `import()`）；
+3. factory 是否覆盖了被用到的全部导出面：缺的导出是 undefined，调用即 TypeError；
+4. 动态 `import()` 是否发生在 mock 注册之前（doMock 场景按顺序，写反了就是真模块）；
+5. 想替换的目标是不是模块导出本身：ESM 只读绑定挂不上 spy（正文 §6 深入），模块级只能走 `vi.mock`。
+
+**「timer 泄漏到别的用例」排查链**：
+
+1. 全文搜 `useFakeTimers`，逐个确认存在成对的 `useRealTimers`（afterEach 是标准位置）；
+2. 在用例尾部断言 `vi.getTimerCount()` 归零——挂起的定时器数是泄漏的定量证据；
+3. 失败用例是否死在 `advance` 之前：断言先炸，已注册的定时器滞留时钟（正文题 3 ③ 的场景）；
+4. 是否 concurrent 用例共享虚拟时钟（附录 A.3 的雷区）；
+5. 确认没把希望寄托在 `clearMocks`/`restoreMocks` 上——它们不碰 timers（附录 C 陷阱二）。
+
+## 附录 E：code review 检查单（测试文件专项）
+
+review 别人的测试时按这张单过，每条都能对应本册某一节的机制：
+
+1. 用例名描述**行为**而非实现细节（「防抖：过点触发」优于「调用两次 debounce」）；
+2. 匹配器精度：对象断言不用 `toBe`；API 契约用 `toStrictEqual`；不对称匹配器没当完整断言用；
+3. mock 边界画在「外部世界」，模块路径级 mock 有必要性理由（重构脆弱性信号）；
+4. `beforeEach`/`afterEach` 清理成对且层级选对（`mockClear`/`mockReset`/`mockRestore` 语义不同）；
+5. `useFakeTimers` 与 `useRealTimers` 成对，`getTimerCount` 守门断言在收尾；
+6. 异步用例显式 `await`/返回 Promise，Promise 终值断言走 `resolves`/`rejects`；
+7. 无 `it.only`/`describe.only`/空 `todo` 残留提交；
+8. concurrent 用例不共享可变状态与同一虚拟时钟；
+9. 快照「大而稳定」才用，小而关键的字段转显式断言；
+10. 时间类「不会触发」断言用结构性证据（时钟推过、计数归零），不用「此刻没被调用」。
+
+十条里 1、3、5 是高价值三条：用例名决定测试的可维护性，mock 边界决定测试的保护力，timers 纪律决定整个文件是否 flaky。
+
+## 附录 F：从 jest 迁移的要点配方
+
+按改动量从小到大列，迁移时照序走：
+
+1. **配置**：`jest.config.ts` 换成 `vitest.config.ts`（可复用项目的 `vite.config`，插件与 `resolve.alias` 直接继承）；`test.environment` 需要的 `jsdom`/`happy-dom` 单独安装（不在 vitest 包内）。
+2. **导入**：全局 API 改为显式导入 `import { describe, it, expect, vi, beforeEach } from 'vitest'`；想保留 jest 的全局风格就配 `globals: true`。
+3. **API 改名对照**：`jest.fn` → `vi.fn`、`jest.spyOn` → `vi.spyOn`、`jest.mock` → `vi.mock`（两者都会提升到 import 之前，hoisting 语义同源）、`jest.useFakeTimers('modern')` → `vi.useFakeTimers()`、`jest.advanceTimersByTime` → `vi.advanceTimersByTime`（回调含 await 的场景换 `...Async` 版）、`jest.setTimeout(ms)` → `vi.setConfig({ testTimeout: ms })`。
+4. **语义差异（重点核对）**：`mockReset` 在 Vitest 恢复 `vi.fn(impl)` 原始实现、在 jest 改为无实现（附录 B 证据四实测）；依赖这一差异的旧用例要逐个改断言。
+5. **快照**：序列化器实现不同，**不要拷贝旧 `.snap` 文件**，首跑 `--update` 重新生成基线并人工 diff 一遍。
+6. **模块 mock 的边界**：jest 的 `automock` 全局开关在 Vitest 没有对应物——逐模块显式 `vi.mock`（可读性反而更好）；`__mocks__` 目录约定两边都有。
+7. **ESM 收益**：ts-jest/babel 转译链删除，ESM-only 依赖与动态 `import()` 原生可用；反过来 jest 的 `require.mock`/`jest.requireActual` 在 ESM 下无直接对应——前者换 `vi.doMock` + 动态 import，后者换 `importOriginal`（partial mock）。
+
+迁移的心法：**API 名字的变化是机械劳动，语义差异才是风险**——第 4 条的 mockReset 与第 5 条的快照基线，是迁移后「表面全绿、行为已偏」的两个高发点，迁移 PR 里值得单独写一段说明。
+
+## 附录 G：flaky 用例的复现与治理
+
+「单跑绿、全跑红」「这台机器绿、CI 红」的用例是测试套件里最贵的问题——它消耗的信任比它保护的多。治理分三步：归因、复现、修复，每步都有本册机制背书。
+
+**第一步：按三大机制来源归因。** flaky 几乎全部落在这三类：① **泄漏状态**——上个用例没清干净的东西（spy 残留、虚拟时钟、模块级缓存）改变了下个用例的起点（机制：本册「隔离模型」——文件间有墙、用例间靠人）；② **时序依赖**——用例依赖真实时钟的快慢或别的用例恰好跑完（机制：附录 A.2/A.3 的虚拟时钟共享与 await 交叠）；③ **共享可变状态**——并发用例读写同一份记录（机制：陷阱三）。归因的意义在于方向感：三类对应的修法完全不同，先分类再动手。
+
+**第二步：用工具把随机性变确定性。** Vitest 内置了两个复现器（本机实跑验证可用）：`vitest run --sequence.shuffle` 打乱文件与用例的执行顺序——顺序依赖的用例会在某些排列下红，一次 shuffle 相当于几十次「人肉换序重跑」；`--retry <times>`（CLI 帮助原文：Retry the test specific number of times if it fails）让失败用例自动重跑。用法建议：shuffle 在 CI 常态化开，把「顺序敏感」从偶发事故变成必然暴露；retry 只用于**量化**不稳定率（红 1 次绿 3 次 ≈ 不稳定率 25%），它是止痛药不是治病方——定位到根因后必须删掉，否则等于给 flaky 上户口。
+
+**第三步：修复配方对照表。**
+
+| 归因 | 修复 | 本册机制出处 |
+| --- | --- | --- |
+| 泄漏状态 | afterEach 成对清理 + getTimerCount 归零守门 | 附录 C 陷阱二 / 附录 D 排查链 |
+| 时序依赖 | 确定性等待三档（正文 §4 深入）+ fake timers 白名单化 | 深入 §4 / 附录 A.2 |
+| 共享可变状态 | concurrent 改串行或每用例自建 vi.fn | 附录 C 陷阱三 |
+
+**验收判据**：shuffle 模式下连续多轮全绿才算修好——「这一次跑绿了」只说明运气好，与测试保护的代码一样，测试本身的正确性也要回归验证。一个反直觉的收尾提醒：修复 flaky 时最诱惑人的手段是加大超时、多加 retry、删掉「不稳定」的断言——三者都在**降低测试的检出能力**来换取表面稳定；真正的修复从来是让被测行为变得确定，而不是让测试学会闭眼。
+
+**附：失败输出阅读法（四类报告先看哪一行）。** 治理的前提是会读失败报告，Vitest 的输出分四类信号，每类指向不同的第一步：① 断言差异块（expected / actual 与 diff）——先判断是「实现真的错了」还是「断言精度选错了」（`toEqual` 忽略 undefined 键导致漏检、部分匹配器放行过多，回查本册 §3）；② `Timed out` ——用例超时挂死，多数是等待方式错了（fake timers 没推进、同步推进卡住 async 轮询，回查深入 §4 的三档精度表），先确认是「没等到」还是「永远等不到」，后者多半是附录 D 的 timer 泄漏；③ `Unhandled Errors` 区——用例全绿但进程退出码非 0 的元凶，游离 Promise 的 rejection 在测试结束后才炸（04 册附录 C.1 的机制在测试进程里的投影），顺着 rejection 原因找那个没人接的链；④ mock 相关的 `[vitest]` 前缀提示——Vitest 的 mock 报错自带修复建议（附录 B 证据一的提示文本就是例证），先读完提示再动手，能省一次盲改。四类信号的共同心法：**报告的最下面一行是汇总，上面第一段才是根因**——从汇总行开始读报告，是新手在失败面前原地打转的主因。
+
