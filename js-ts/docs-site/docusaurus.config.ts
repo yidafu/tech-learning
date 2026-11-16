@@ -11,8 +11,32 @@ import type * as Preset from '@docusaurus/preset-classic';
 //   注意它可能让整个目录被漏扫（构建后核对 build/docusaurus-graph.json 节点数 = 笔记数）。
 // - rsdoctor：构建产物分析。绝非常开——实测会把构建从 ~80s 拖到 15+ 分钟且进程挂住不退出，
 //   必须用环境变量门控，配合 npm run build:analyze 使用。
+
+// PWA / 离线阅读：Service Worker 预缓存整站，iPad 添加到主屏幕后断网可读（同 backend 站配置）。
+// BASE_PATH 供 manifest 的 scope/start_url 与 pwaHead 内路径共用；离线模式显式用 'always'，
+// 因为 iOS 上 appInstalled / standalone 探测不可靠，判定失败就不会预缓存，表现为「装了却离线打不开」。
+// 单文件上限抬到 12MiB：Workbox 默认 2MiB 会静默跳过超大资源（architecture 分阶段搜索索引、js-ts 的 typescript.js）。
+const BASE_PATH = '/tech-learning/js-ts/';
+const PWA_PLUGIN = [
+  '@docusaurus/plugin-pwa',
+  {
+    debug: false,
+    offlineModeActivationStrategies: ['always'],
+    injectManifestConfig: {maximumFileSizeToCacheInBytes: 12 * 1024 * 1024},
+    pwaHead: [
+      {tagName: 'link', rel: 'manifest', href: `${BASE_PATH}manifest.json`},
+      {tagName: 'link', rel: 'apple-touch-icon', href: `${BASE_PATH}img/apple-touch-icon.png`},
+      {tagName: 'meta', name: 'theme-color', content: '#967f05'},
+      {tagName: 'meta', name: 'mobile-web-app-capable', content: 'yes'},
+      {tagName: 'meta', name: 'apple-mobile-web-app-capable', content: 'yes'},
+      {tagName: 'meta', name: 'apple-mobile-web-app-status-bar-style', content: 'default'},
+      {tagName: 'meta', name: 'apple-mobile-web-app-title', content: 'JS/TS 笔记'},
+    ],
+  },
+];
 const sitePlugins: Config['plugins'] = [
   ['docusaurus-graph', {docsDir: '../notes'}],
+  PWA_PLUGIN,
 ];
 if (process.env.RSDOCTOR === 'true') {
   sitePlugins.push(['@docusaurus/plugin-rsdoctor', {rsdoctorOptions: {mode: 'lite'}}]);
@@ -25,7 +49,7 @@ const config: Config = {
 
   // 部署到 GitHub Pages 项目站：https://yidafu.github.io/tech-learning/js-ts/
   url: 'https://yidafu.github.io',
-  baseUrl: '/tech-learning/js-ts/',
+  baseUrl: BASE_PATH,
 
   // 中文内容站点：默认语言即中文（影响 <html lang> 与无障碍）
   i18n: { defaultLocale: 'zh-Hans', locales: ['zh-Hans'] },

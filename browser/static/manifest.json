@@ -1,0 +1,26 @@
+{
+  "name": "浏览器与网络原理学习站 · tech-learning",
+  "short_name": "浏览器网络",
+  "description": "从敲下 URL 到像素上屏：沿一次真实请求走完 DNS、TCP/TLS、HTTP、CDN、缓存、解析、渲染管线全程，吃透浏览器与网络的每一层",
+  "lang": "zh-Hans",
+  "start_url": "/tech-learning/browser/",
+  "scope": "/tech-learning/browser/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#bc6d03",
+  "icons": [
+    {
+      "src": "/tech-learning/browser/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/tech-learning/browser/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "编译原理学习站 · tech-learning",
+  "short_name": "编译原理",
+  "description": "从词法到字节码：用 TypeScript 造一门 mini 语言，吃透 Babel / TypeScript / esbuild 背后的编译原理",
+  "lang": "zh-Hans",
+  "start_url": "/tech-learning/compiler/",
+  "scope": "/tech-learning/compiler/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#618d04",
+  "icons": [
+    {
+      "src": "/tech-learning/compiler/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/tech-learning/compiler/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

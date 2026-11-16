@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@docusaurus/core": "^3.10.2",
+    "@docusaurus/plugin-pwa": "^3.10.2",
     "@docusaurus/plugin-rsdoctor": "^3.10.2",
     "@docusaurus/preset-classic": "^3.10.2",
     "@docusaurus/theme-live-codeblock": "^3.10.2",

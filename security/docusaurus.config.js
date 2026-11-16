@@ -1,6 +1,28 @@
 // @ts-check
 
-const sitePlugins = [];
+// PWA / 离线阅读：Service Worker 预缓存整站，iPad 添加到主屏幕后断网可读（同 backend 站配置）。
+// BASE_PATH 供 manifest 的 scope/start_url 与 pwaHead 内路径共用；离线模式显式用 'always'，
+// 因为 iOS 上 appInstalled / standalone 探测不可靠，判定失败就不会预缓存，表现为「装了却离线打不开」。
+// 单文件上限抬到 12MiB：Workbox 默认 2MiB 会静默跳过超大资源（architecture 分阶段搜索索引、js-ts 的 typescript.js）。
+const BASE_PATH = '/tech-learning/security/';
+const PWA_PLUGIN = [
+  '@docusaurus/plugin-pwa',
+  {
+    debug: false,
+    offlineModeActivationStrategies: ['always'],
+    injectManifestConfig: {maximumFileSizeToCacheInBytes: 12 * 1024 * 1024},
+    pwaHead: [
+      {tagName: 'link', rel: 'manifest', href: `${BASE_PATH}manifest.json`},
+      {tagName: 'link', rel: 'apple-touch-icon', href: `${BASE_PATH}img/apple-touch-icon.png`},
+      {tagName: 'meta', name: 'theme-color', content: '#e64835'},
+      {tagName: 'meta', name: 'mobile-web-app-capable', content: 'yes'},
+      {tagName: 'meta', name: 'apple-mobile-web-app-capable', content: 'yes'},
+      {tagName: 'meta', name: 'apple-mobile-web-app-status-bar-style', content: 'default'},
+      {tagName: 'meta', name: 'apple-mobile-web-app-title', content: '安全笔记'},
+    ],
+  },
+];
+const sitePlugins = [PWA_PLUGIN];
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -9,7 +31,7 @@ const config = {
   favicon: 'img/favicon.svg',
   // 部署到 GitHub Pages 项目站：https://yidafu.github.io/tech-learning/security/
   url: 'https://yidafu.github.io',
-  baseUrl: '/tech-learning/security/',
+  baseUrl: BASE_PATH,
 
   // 中文内容站点：默认语言即中文，无需 i18n 目录
   i18n: { defaultLocale: 'zh-Hans', locales: ['zh-Hans'] },

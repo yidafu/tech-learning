@@ -7,4 +7,5 @@
 /.docusaurus/
 /static/*
 !/static/img/
+!/static/manifest.json
 .DS_Store

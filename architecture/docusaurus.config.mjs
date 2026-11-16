@@ -45,6 +45,29 @@ const stages = [
   ['第六阶段', '实战与案例分析'],
 ]
 
+// PWA / 离线阅读：Service Worker 预缓存整站，iPad 添加到主屏幕后断网可读（同 backend 站配置）。
+// BASE_PATH 供 manifest 的 scope/start_url 与 pwaHead 内路径共用；离线模式显式用 'always'，
+// 因为 iOS 上 appInstalled / standalone 探测不可靠，判定失败就不会预缓存，表现为「装了却离线打不开」。
+// 单文件上限抬到 12MiB：Workbox 默认 2MiB 会静默跳过超大资源（architecture 分阶段搜索索引、js-ts 的 typescript.js）。
+const BASE_PATH = '/tech-learning/architecture/';
+const PWA_PLUGIN = [
+  '@docusaurus/plugin-pwa',
+  {
+    debug: false,
+    offlineModeActivationStrategies: ['always'],
+    injectManifestConfig: {maximumFileSizeToCacheInBytes: 12 * 1024 * 1024},
+    pwaHead: [
+      {tagName: 'link', rel: 'manifest', href: `${BASE_PATH}manifest.json`},
+      {tagName: 'link', rel: 'apple-touch-icon', href: `${BASE_PATH}img/apple-touch-icon.png`},
+      {tagName: 'meta', name: 'theme-color', content: '#2e7cf6'},
+      {tagName: 'meta', name: 'mobile-web-app-capable', content: 'yes'},
+      {tagName: 'meta', name: 'apple-mobile-web-app-capable', content: 'yes'},
+      {tagName: 'meta', name: 'apple-mobile-web-app-status-bar-style', content: 'default'},
+      {tagName: 'meta', name: 'apple-mobile-web-app-title', content: '架构笔记'},
+    ],
+  },
+];
+
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: '软件架构学习笔记',
@@ -52,7 +75,7 @@ const config = {
   favicon: 'img/favicon.svg',
   // 部署到 GitHub Pages 项目站：https://yidafu.github.io/tech-learning/architecture/
   url: 'https://yidafu.github.io',
-  baseUrl: '/tech-learning/architecture/',
+  baseUrl: BASE_PATH,
   onBrokenLinks: 'warn',
   onDuplicateRoutes: 'warn',
   i18n: {
@@ -92,6 +115,8 @@ const config = {
     }),
     // 见上方关键点 ⑧
     linkGraph,
+    // 同 backend 站：Service Worker 预缓存整站，iPad 添加到主屏幕后断网可读
+    PWA_PLUGIN,
   ],
   themes: [
     '@docusaurus/theme-mermaid',
@@ -104,6 +129,18 @@ const config = {
         indexBlog: false,
         indexPages: false,
         docsRouteBasePath: '/',
+        // 索引按一级目录分片：整站单文件索引 14MB（gzip 3.95MB）每次搜索全量下载，
+        // 分片后每个上下文 0.2~0.7MB，只取当前所在部分。总量不变，单次传输降一个量级。
+        searchContextByPaths: [
+          '第一阶段',
+          '第二阶段',
+          '第三阶段',
+          '第四阶段',
+          '第五阶段',
+          '第六阶段',
+          '数据系统内核专题',
+          '示例项目场景',
+        ],
       },
     ],
   ],

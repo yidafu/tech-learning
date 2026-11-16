@@ -1,0 +1,26 @@
+{
+  "name": "ReactNative 原理学习站 · tech-learning",
+  "short_name": "RN 原理",
+  "description": "从启动、通信、渲染到新架构：拆解 ReactNative 的底层工作原理",
+  "lang": "zh-Hans",
+  "start_url": "/tech-learning/react-native/",
+  "scope": "/tech-learning/react-native/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#61dafb",
+  "icons": [
+    {
+      "src": "/tech-learning/react-native/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/tech-learning/react-native/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

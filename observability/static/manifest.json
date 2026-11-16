@@ -1,0 +1,26 @@
+{
+  "name": "可观测性学习站 · tech-learning",
+  "short_name": "可观测性",
+  "description": "Metrics · Logging · Tracing —— 面向开发者的可观测性系统学习笔记与动手实验",
+  "lang": "zh-Hans",
+  "start_url": "/tech-learning/observability/",
+  "scope": "/tech-learning/observability/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#079262",
+  "icons": [
+    {
+      "src": "/tech-learning/observability/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/tech-learning/observability/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

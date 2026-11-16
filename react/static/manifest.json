@@ -1,0 +1,26 @@
+{
+  "name": "React 高阶学习课程 · tech-learning",
+  "short_name": "React 课程",
+  "description": "场景驱动的实战大纲：从基础编码到源码复刻",
+  "lang": "zh-Hans",
+  "start_url": "/tech-learning/react/",
+  "scope": "/tech-learning/react/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#087EA4",
+  "icons": [
+    {
+      "src": "/tech-learning/react/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/tech-learning/react/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

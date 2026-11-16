@@ -1,0 +1,26 @@
+{
+  "name": "WebGL 与 3D 框架学习站 · tech-learning",
+  "short_name": "WebGL 3D",
+  "description": "从零吃透 WebGL 渲染原理，自研一个迷你 3D 框架：数学库、场景图、渲染器到 Three.js 对标",
+  "lang": "zh-Hans",
+  "start_url": "/tech-learning/webgl/",
+  "scope": "/tech-learning/webgl/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#c053c8",
+  "icons": [
+    {
+      "src": "/tech-learning/webgl/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/tech-learning/webgl/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

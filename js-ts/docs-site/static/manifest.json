@@ -1,0 +1,26 @@
+{
+  "name": "JS/TS 深度学习笔记 · tech-learning",
+  "short_name": "JS/TS 笔记",
+  "description": "从「会用」到「深度理解」",
+  "lang": "zh-Hans",
+  "start_url": "/tech-learning/js-ts/",
+  "scope": "/tech-learning/js-ts/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#967f05",
+  "icons": [
+    {
+      "src": "/tech-learning/js-ts/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/tech-learning/js-ts/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

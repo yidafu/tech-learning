@@ -1,0 +1,26 @@
+{
+  "name": "GUI 框架原理学习站 · tech-learning",
+  "short_name": "GUI 框架",
+  "description": "从像素到组件：用 TypeScript 驱动 raylib，造一个自绘 GUI 框架，吃透窗口、绘制、布局、事件与响应式背后的核心概念",
+  "lang": "zh-Hans",
+  "start_url": "/tech-learning/gui/",
+  "scope": "/tech-learning/gui/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#8d67f1",
+  "icons": [
+    {
+      "src": "/tech-learning/gui/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/tech-learning/gui/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

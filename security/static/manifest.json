@@ -1,0 +1,26 @@
+{
+  "name": "安全学习笔记 · tech-learning",
+  "short_name": "安全笔记",
+  "description": "计算机安全学习工作区 · 防御导向 · 从基础到 CTF 实战",
+  "lang": "zh-Hans",
+  "start_url": "/tech-learning/security/",
+  "scope": "/tech-learning/security/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#e64835",
+  "icons": [
+    {
+      "src": "/tech-learning/security/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/tech-learning/security/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

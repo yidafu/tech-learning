@@ -2,7 +2,29 @@
 // Docusaurus 配置：编译原理学习站，docs/ 下为学习大纲与八个阶段。
 
 // docusaurus-graph：构建后生成文档关系图（build/docusaurus-graph.json，站点右上角入口）
-const sitePlugins = ['docusaurus-graph'];
+// PWA / 离线阅读：Service Worker 预缓存整站，iPad 添加到主屏幕后断网可读（同 backend 站配置）。
+// BASE_PATH 供 manifest 的 scope/start_url 与 pwaHead 内路径共用；离线模式显式用 'always'，
+// 因为 iOS 上 appInstalled / standalone 探测不可靠，判定失败就不会预缓存，表现为「装了却离线打不开」。
+// 单文件上限抬到 12MiB：Workbox 默认 2MiB 会静默跳过超大资源（architecture 分阶段搜索索引、js-ts 的 typescript.js）。
+const BASE_PATH = '/tech-learning/compiler/';
+const PWA_PLUGIN = [
+  '@docusaurus/plugin-pwa',
+  {
+    debug: false,
+    offlineModeActivationStrategies: ['always'],
+    injectManifestConfig: {maximumFileSizeToCacheInBytes: 12 * 1024 * 1024},
+    pwaHead: [
+      {tagName: 'link', rel: 'manifest', href: `${BASE_PATH}manifest.json`},
+      {tagName: 'link', rel: 'apple-touch-icon', href: `${BASE_PATH}img/apple-touch-icon.png`},
+      {tagName: 'meta', name: 'theme-color', content: '#618d04'},
+      {tagName: 'meta', name: 'mobile-web-app-capable', content: 'yes'},
+      {tagName: 'meta', name: 'apple-mobile-web-app-capable', content: 'yes'},
+      {tagName: 'meta', name: 'apple-mobile-web-app-status-bar-style', content: 'default'},
+      {tagName: 'meta', name: 'apple-mobile-web-app-title', content: '编译原理'},
+    ],
+  },
+];
+const sitePlugins = ['docusaurus-graph', PWA_PLUGIN];
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -12,7 +34,7 @@ const config = {
 
   // 部署到 GitHub Pages 项目站：https://yidafu.github.io/tech-learning/compiler/
   url: 'https://yidafu.github.io',
-  baseUrl: '/tech-learning/compiler/',
+  baseUrl: BASE_PATH,
 
   // 内容为中文，站点默认语言即中文，无需 i18n 目录
   i18n: {
