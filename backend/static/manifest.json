@@ -1,0 +1,26 @@
+{
+  "name": "后端开发学习站 · tech-learning",
+  "short_name": "后端学习",
+  "description": "Kotlin + Spring Boot 十二阶段学习笔记：从一次 HTTP 请求进容器，到单服务生产化，再到微服务与大型应用",
+  "lang": "zh-Hans",
+  "start_url": "/tech-learning/backend/",
+  "scope": "/tech-learning/backend/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#df4588",
+  "icons": [
+    {
+      "src": "/tech-learning/backend/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/tech-learning/backend/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

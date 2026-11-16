@@ -13,6 +13,15 @@ npm run serve  # 本地预览构建产物
 
 > 本站不谈架构方法论（归 `architecture/` 站）、不重复可观测性原理（归 `observability/` 站）、不做攻防演练（归 `security/` 站）：站的定位是「这些东西在 Spring Boot 里到底怎么写、怎么测、怎么量」。
 
+## 离线阅读（PWA）
+
+`@docusaurus/plugin-pwa` 在构建时生成 `build/sw.js`，把整站 265 个资源（86 篇文档 HTML + JS chunk + CSS + 图谱 json，约 17.6 MB）写进 Workbox 预缓存清单，因此断网可读、站内搜索可用。
+
+- **iPad 用法**：联网用 Safari 打开站点 → 分享 → 添加到主屏幕 → **从图标启动时保持联网**（主屏 Web App 有独立存储，Safari 里缓存的不会继承，首启必须在线等预缓存下完）→ 之后飞行模式可读
+- **更新**：推送到 `main` 后 `sw.js` 内容变化，App 下次**联网启动**时下的新 Service Worker 会进入 waiting 状态并弹出刷新提示，**点了刷新才生效**；要强制更新就联网后上滑杀掉 App 重开。离线期间不会检查新版本，读到的一直是旧快照
+- **配置要点**：`offlineModeActivationStrategies` 用 `['always']`（iOS 上 `standalone` 探测不可靠）；`manifest.json` 的 `scope` / `start_url` 与 `pwaHead` 里的路径都必须带 `/tech-learning/backend/` 前缀，直接照抄别的站会装成空壳
+- **图标**：`static/img/app-icon.svg`（满幅、与 `shared/brand` 同标记）是源，`apple-touch-icon.png` / `icon-192` / `icon-512` 必须从**它**导出，不能从 `logo.svg` 导——`logo.svg` 圆角外是透明，iOS 主屏不做不透明化，透明角会渲染成黑边；`theme_color` 取品牌色 `#df4588`，换品牌时与 `shared/brand/brand-spec.json` 的 `tile` 一起改
+
 ## 技术基线
 
 | 层次 | 选型 |

@@ -1,8 +1,33 @@
 // @ts-check
 // Docusaurus 配置：后端开发学习站（Kotlin + Spring Boot），docs/ 下为学习大纲与十二个阶段。
 
+// 部署路径：GitHub Pages 项目站子目录，PWA 的 manifest scope / start_url / 图标都必须带这段前缀
+const BASE_PATH = '/tech-learning/backend/';
+
 // docusaurus-graph：构建后生成文档关系图（build/docusaurus-graph.json，站点右上角入口）
-const sitePlugins = ['docusaurus-graph'];
+// plugin-pwa：Service Worker 预缓存整站，供 iPad「添加到主屏幕」后离线阅读。
+// offlineModeActivationStrategies 显式用 'always'：iOS 上 appInstalled / standalone 探测并不可靠，
+// 一旦某次启动没判定为独立模式，就不会触发预缓存，表现为「装了却离线打不开」。
+const sitePlugins = [
+  'docusaurus-graph',
+  [
+    '@docusaurus/plugin-pwa',
+    {
+      debug: false,
+      offlineModeActivationStrategies: ['always'],
+      pwaHead: [
+        { tagName: 'link', rel: 'manifest', href: `${BASE_PATH}manifest.json` },
+        { tagName: 'link', rel: 'icon', href: `${BASE_PATH}img/favicon.svg` },
+        { tagName: 'link', rel: 'apple-touch-icon', href: `${BASE_PATH}img/apple-touch-icon.png` },
+        { tagName: 'meta', name: 'theme-color', content: '#df4588' },
+        { tagName: 'meta', name: 'mobile-web-app-capable', content: 'yes' },
+        { tagName: 'meta', name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { tagName: 'meta', name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
+        { tagName: 'meta', name: 'apple-mobile-web-app-title', content: '后端学习' },
+      ],
+    },
+  ],
+];
 
 const SITE_BASE = 'https://yidafu.github.io/tech-learning';
 
@@ -29,7 +54,7 @@ const config = {
 
   // 部署到 GitHub Pages 项目站：https://yidafu.github.io/tech-learning/backend/
   url: 'https://yidafu.github.io',
-  baseUrl: '/tech-learning/backend/',
+  baseUrl: BASE_PATH,
 
   // 内容为中文，站点默认语言即中文，无需 i18n 目录
   i18n: {
