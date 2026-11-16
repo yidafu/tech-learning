@@ -235,7 +235,7 @@ flowchart TB
     SRC[源码文本] --> TK[tokenize<br>剥注释 + 正则切词]
     TK --> MAIN[interpret 主循环]
     MAIN -->|数字| PUSH[入栈]
-    MAIN -->|."字符串"| OUT[直接输出]
+    MAIN -->|打印 .&quot;…&quot;| OUT[直接输出]
     MAIN -->|控制流关键字| CF[if/else/then<br>do/loop<br>begin/until]
     MAIN -->|其余| DICT{查字典}
     DICT -->|JS 函数| BUILTIN[内建单词执行<br>直接操作 stack/cells]

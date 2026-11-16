@@ -199,10 +199,10 @@ mermaid 直观版：
 
 ```mermaid
 flowchart LR
-  subgraph 盒树（结构）
+  subgraph BOX["盒树（结构）"]
     B1[div 盒] --> B2[文本盒]
   end
-  subgraph fragment 树（某次布局的结果）
+  subgraph FRAG["fragment 树（某次布局的结果）"]
     F1[行 fragment 1] --> F2[行 fragment 2] --> F3[行 fragment 3]
   end
   B2 -. 产生 .-> F1

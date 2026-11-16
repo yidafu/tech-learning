@@ -66,7 +66,7 @@ export interface TextLayout {
 ```mermaid
 graph LR
   A[spans 序列] -->|拼接| B[full 全文<br/>+ owner 每字符归属]
-  B -->|breakLinesIndexed| C[BrokenLine[]<br/>text + srcIndices]
+  B -->|breakLinesIndexed| C["BrokenLine[]<br/>text + srcIndices"]
   C -->|maxLines / ellipsis| D[行文本 + owners]
   D -->|逐行 run-length 分组| E[pieces: spanIndex/x/width]
   E -->|对齐平移| F[TextLayout]

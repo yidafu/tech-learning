@@ -214,7 +214,7 @@ keep-alive 串行下，一根连接上「前面的请求慢，后面的全部排
 
 ```mermaid
 flowchart LR
-  subgraph 一根 keep-alive 连接（串行）
+  subgraph KA["一根 keep-alive 连接（串行）"]
     A["请求 A<br>（慢接口 2s）"] --> B["请求 B<br>（10ms 就绪）"] --> C["请求 C<br>（10ms 就绪）"]
   end
   B -.->|"被 A 堵 2s"| X["队头阻塞"]
