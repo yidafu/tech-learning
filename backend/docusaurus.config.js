@@ -46,6 +46,21 @@ const SITES = [
   { label: '浏览器与网络原理学习站', href: `${SITE_BASE}/browser/` },
 ];
 
+// 页脚：站群导航按主题拆成三列（单列 11 条在宽屏上又长又偏，见 shared/theme/custom.css）。
+// 条目仍取自 SITES，这里只决定分组与列序；新站加进 SITES 后再把 label 补进对应分组。
+const FOOTER_GROUPS = [
+  { title: '前端与框架', labels: ['站群首页', 'React 高阶学习课程', 'RN 原理学习站', 'JS/TS 深度学习笔记'] },
+  { title: '架构与服务', labels: ['软件架构学习笔记', '后端开发学习站', '可观测性学习站', '安全学习笔记'] },
+  { title: '底层与图形', labels: ['浏览器与网络原理学习站', '编译原理学习站', 'GUI 框架原理学习站', 'WebGL 与 3D 框架学习站'] },
+];
+
+const SITE_BY_LABEL = new Map(SITES.map((site) => [site.label, site]));
+
+const FOOTER_LINKS = FOOTER_GROUPS.map(({ title, labels }) => ({
+  title,
+  items: labels.map((label) => SITE_BY_LABEL.get(label)).filter(Boolean),
+})).filter((column) => column.items.length > 0);
+
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: '后端开发学习站',
@@ -131,12 +146,7 @@ const config = {
       },
       footer: {
         style: 'dark',
-        links: [
-          {
-            title: '站群导航',
-            items: SITES,
-          },
-        ],
+        links: FOOTER_LINKS,
         copyright: `© ${new Date().getFullYear()} yidafu · 后端开发学习站 · 用 Docusaurus 构建`,
       },
     }),

@@ -134,19 +134,29 @@ const config = {
         style: 'dark',
         links: [
           {
-            title: '站群导航',
+            title: '前端与框架',
             items: [
               { label: '站群首页', href: 'https://yidafu.github.io/tech-learning/' },
-              { label: '软件架构学习笔记', href: 'https://yidafu.github.io/tech-learning/architecture/' },
+              { label: 'RN 原理学习站', href: 'https://yidafu.github.io/tech-learning/react-native/' },
               { label: 'JS/TS 深度学习笔记', href: 'https://yidafu.github.io/tech-learning/js-ts/' },
+            ],
+          },
+          {
+            title: '架构与服务',
+            items: [
+              { label: '软件架构学习笔记', href: 'https://yidafu.github.io/tech-learning/architecture/' },
+              { label: '后端开发学习站', href: 'https://yidafu.github.io/tech-learning/backend/' },
               { label: '可观测性学习站', href: 'https://yidafu.github.io/tech-learning/observability/' },
               { label: '安全学习笔记', href: 'https://yidafu.github.io/tech-learning/security/' },
-              { label: 'RN 原理学习站', href: 'https://yidafu.github.io/tech-learning/react-native/' },
-              { label: 'WebGL 与 3D 框架学习站', href: 'https://yidafu.github.io/tech-learning/webgl/' },
+            ],
+          },
+          {
+            title: '底层与图形',
+            items: [
+              { label: '浏览器与网络原理学习站', href: 'https://yidafu.github.io/tech-learning/browser/' },
               { label: '编译原理学习站', href: 'https://yidafu.github.io/tech-learning/compiler/' },
               { label: 'GUI 框架原理学习站', href: 'https://yidafu.github.io/tech-learning/gui/' },
-              { label: '后端开发学习站', href: 'https://yidafu.github.io/tech-learning/backend/' },
-              { label: '浏览器与网络原理学习站', href: 'https://yidafu.github.io/tech-learning/browser/' },
+              { label: 'WebGL 与 3D 框架学习站', href: 'https://yidafu.github.io/tech-learning/webgl/' },
             ],
           },
         ],
