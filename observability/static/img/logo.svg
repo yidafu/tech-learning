@@ -1,12 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="tech-learning">
-  <defs>
-    <linearGradient id="tl-bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#2e7cf6"/>
-      <stop offset="1" stop-color="#1754b5"/>
-    </linearGradient>
-  </defs>
-  <rect x="4" y="6" width="56" height="52" rx="13" fill="url(#tl-bg)"/>
-  <path d="M32 20c-2.6-2.6-6.2-4-10.5-4H17v28h4.5c4.3 0 7.9 1.4 10.5 4 2.6-2.6 6.2-4 10.5-4H47V16h-4.5c-4.3 0-7.9 1.4-10.5 4z" fill="#ffffff"/>
-  <path d="M32 20v28" stroke="#2e7cf6" stroke-width="2.5" stroke-linecap="round"/>
-  <path d="M23 26h5M23 31h5M36 26h5M36 31h5" stroke="#9dc2fb" stroke-width="2" stroke-linecap="round"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="可观测性学习站"><title>可观测性学习站</title><rect width="64" height="64" rx="14" fill="#079262"/><path d="M24.3 43.5 L46.5 25.3 L39.5 17.7 L19.7 38.5 Z" fill="#ffffff"/><path d="M39.7 32.8 L48.2 25.5 L39.8 15.7 L31.3 23 Z" fill="#ffffff"/><path d="M31 33 L21 51" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/><path d="M31 33 L41 51" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/><path d="M31 33 L31.5 50" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/></svg>

@@ -1,0 +1,572 @@
+{
+  "name": "tech-learning 站群 Logo 系统",
+  "version": "1.1.0",
+  "source": "shared/brand/build.py 为唯一源头；调色板由该脚本生成，勿手改各站副本",
+  "direction": "A 模块方块 + 每站一色（OKLCH 同 L 同 C，色相等距 32.7°）",
+  "geometry": {
+    "grid": 64,
+    "tile": {
+      "x": 0,
+      "y": 0,
+      "w": 64,
+      "h": 64,
+      "rx": 14
+    },
+    "artSafeArea": [
+      11,
+      11,
+      53,
+      53
+    ],
+    "minStroke": 4,
+    "strokeLinecap": "round"
+  },
+  "colorRules": {
+    "markOnTile": "#ffffff",
+    "monoVariant": "currentColor，无底板",
+    "lightTileLuminance": 0.2165,
+    "darkTileLuminance": 0.255,
+    "note": "每站色相不同但亮度/彩度一致，保证深浅底上重量相同；形状承担主要识别，颜色为辅助"
+  },
+  "clearSpace": "四周留白 ≥ 16/64 底板宽（即底板的 1/4），任何场合不得小于此值",
+  "minSize": {
+    "logo.svg": "32px",
+    "logo-small.svg": "16px",
+    "favicon.svg": "16px",
+    "logo-mono.svg": "20px"
+  },
+  "sizes": [
+    16,
+    32,
+    64,
+    128
+  ],
+  "fonts": "无。所有标记为几何路径，不依赖任何字体，无字体授权风险",
+  "rights": "9 个母题为原创几何；react / react-native 按站主要求直接使用官方标志（原样引用，见 thirdParty）",
+  "thirdParty": {
+    "react": {
+      "owner": "Meta Platforms, Inc.",
+      "source": "https://github.com/reactjs/react.dev/tree/main/public/images/brand",
+      "usage": "指代 React 本身的教学站点标识，非官方背书，未改动几何与配色",
+      "sha256": {
+        "react-logo-light.svg": "ebdfad4916a4c4b5ec0bdf80fe9c8476a7cb8b7e925e502f78260098cd65a543",
+        "react-logo-dark.svg": "e5278257e728c9527af74185f73f0715ffde03d713512aded478d832665e8f24"
+      }
+    },
+    "react-native": {
+      "owner": "Meta Platforms, Inc.",
+      "source": "https://github.com/facebook/react-native-website/tree/main/website/static/img/header_logo.svg",
+      "usage": "指代 React Native 的教学站点标识，非官方背书，未改动几何与配色",
+      "sha256": {
+        "react-native-logo.svg": "69c5c70c9e616159b8a56a451881df40bf54eb93a258843ba62c5dff90c70817"
+      }
+    }
+  },
+  "themeColor": {
+    "source": "各站 Logo 底板色（第三方站取其官方标志主色）",
+    "rule": "保留 OKLCH 色相与彩度，只把亮度解到白底 4.55:1；深色模式另一档解到 #1b1b1d 上 4.55:1",
+    "why": "Logo 底板是白字压底的用法（约 3.9:1），当正文链接色不达 AA；同一色相压暗一档即可过线，观感仍是该站颜色",
+    "perSite": "见 palette[].theme，产物 shared/brand/theme/<站>.css",
+    "steps": {
+      "dark": -0.044,
+      "darker": -0.069,
+      "darkest": -0.139,
+      "light": 0.042,
+      "lighter": 0.066,
+      "lightest": 0.134
+    }
+  },
+  "palette": [
+    {
+      "site": "architecture",
+      "name": "软件架构学习笔记",
+      "dir": "architecture",
+      "thirdParty": false,
+      "hueDeg": 259.4,
+      "tile": "#2e7cf6",
+      "tileDark": "#4188f8",
+      "mark": "#ffffff",
+      "contrastTileVsPage": 3.94,
+      "contrastWhiteOnTile": 3.94,
+      "contrastTileDarkVsDarkPage": 5.0,
+      "contrastMarkVsTileDark": 3.44,
+      "theme": {
+        "seed": "#2e7cf6",
+        "hue": 259.4,
+        "chroma": 0.1981,
+        "primary": "#2271ea",
+        "primaryDark": "#317ff9",
+        "light": {
+          "dark": "#1063db",
+          "darker": "#015bd2",
+          "darkest": "#0049ad",
+          "light": "#307ef9",
+          "lighter": "#3b86ff",
+          "lightest": "#649fff"
+        },
+        "dark": {
+          "dark": "#2271ea",
+          "darker": "#1869e1",
+          "darkest": "#0054c5",
+          "light": "#478eff",
+          "lighter": "#5697ff",
+          "lightest": "#7caeff"
+        },
+        "heroFrom": "#0049ad",
+        "heroMid": "#015bd2",
+        "heroTo": "#2271ea",
+        "contrastOnWhite": 4.56,
+        "contrastOnDark": 4.53,
+        "hueShift": 0.01,
+        "lumFromLogo": -0.0349
+      }
+    },
+    {
+      "site": "react",
+      "name": "React 高阶学习课程",
+      "dir": "react",
+      "thirdParty": true,
+      "hueDeg": null,
+      "tile": null,
+      "tileDark": null,
+      "mark": "#087ea4 · 暗版 #61dafb",
+      "owner": "Meta Platforms, Inc.",
+      "source": "https://github.com/reactjs/react.dev/tree/main/public/images/brand",
+      "usage": "指代 React 本身的教学站点标识，非官方背书，未改动几何与配色",
+      "sha256": {
+        "react-logo-light.svg": "ebdfad4916a4c4b5ec0bdf80fe9c8476a7cb8b7e925e502f78260098cd65a543",
+        "react-logo-dark.svg": "e5278257e728c9527af74185f73f0715ffde03d713512aded478d832665e8f24"
+      },
+      "monoVariant": "not-produced",
+      "theme": {
+        "seed": "#087ea4",
+        "hue": 228.4,
+        "chroma": 0.1069,
+        "primary": "#087ea4",
+        "primaryDark": "#268db4",
+        "light": {
+          "dark": "#047093",
+          "darker": "#016989",
+          "darkest": "#01546e",
+          "light": "#228bb1",
+          "lighter": "#2d92b9",
+          "lightest": "#46a7cf"
+        },
+        "dark": {
+          "dark": "#0d80a6",
+          "darker": "#00789d",
+          "darkest": "#016281",
+          "light": "#379ac1",
+          "lighter": "#40a2c9",
+          "lightest": "#58b7df"
+        },
+        "heroFrom": "#01546e",
+        "heroMid": "#016989",
+        "heroTo": "#087ea4",
+        "contrastOnWhite": 4.64,
+        "contrastOnDark": 4.55,
+        "hueShift": 0.0,
+        "lumFromLogo": 0.0
+      }
+    },
+    {
+      "site": "react-native",
+      "name": "ReactNative 原理学习站",
+      "dir": "react-native",
+      "thirdParty": true,
+      "hueDeg": null,
+      "tile": null,
+      "tileDark": null,
+      "mark": "#61dafb",
+      "owner": "Meta Platforms, Inc.",
+      "source": "https://github.com/facebook/react-native-website/tree/main/website/static/img/header_logo.svg",
+      "usage": "指代 React Native 的教学站点标识，非官方背书，未改动几何与配色",
+      "sha256": {
+        "react-native-logo.svg": "69c5c70c9e616159b8a56a451881df40bf54eb93a258843ba62c5dff90c70817"
+      },
+      "monoVariant": "not-produced",
+      "theme": {
+        "seed": "#61dafb",
+        "hue": 218.7,
+        "chroma": 0.1007,
+        "primary": "#00819b",
+        "primaryDark": "#61dafb",
+        "light": {
+          "dark": "#00738b",
+          "darker": "#066b81",
+          "darkest": "#035668",
+          "light": "#1f8ea9",
+          "lighter": "#2b95b0",
+          "lightest": "#45abc6"
+        },
+        "dark": {
+          "dark": "#51ccec",
+          "darker": "#47c3e4",
+          "darkest": "#27adcd",
+          "light": "#8ce5ff",
+          "lighter": "#a5eaff",
+          "lightest": "#e4f8fe"
+        },
+        "heroFrom": "#035668",
+        "heroMid": "#066b81",
+        "heroTo": "#00819b",
+        "contrastOnWhite": 4.54,
+        "contrastOnDark": 10.59,
+        "hueShift": 0.15,
+        "lumFromLogo": -0.274
+      }
+    },
+    {
+      "site": "observability",
+      "name": "可观测性学习站",
+      "dir": "observability",
+      "thirdParty": false,
+      "hueDeg": 161.3,
+      "tile": "#079262",
+      "tileDark": "#049e6a",
+      "mark": "#ffffff",
+      "contrastTileVsPage": 3.96,
+      "contrastWhiteOnTile": 3.96,
+      "contrastTileDarkVsDarkPage": 5.0,
+      "contrastMarkVsTileDark": 3.44,
+      "theme": {
+        "seed": "#079262",
+        "hue": 161.1,
+        "chroma": 0.1222,
+        "primary": "#00875a",
+        "primaryDark": "#139666",
+        "light": {
+          "dark": "#017850",
+          "darker": "#02704a",
+          "darkest": "#03593a",
+          "light": "#1f9466",
+          "lighter": "#2b9b6d",
+          "lightest": "#45b181"
+        },
+        "dark": {
+          "dark": "#02875a",
+          "darker": "#047f55",
+          "darkest": "#046845",
+          "light": "#2aa372",
+          "lighter": "#35ab79",
+          "lightest": "#4fc08d"
+        },
+        "heroFrom": "#03593a",
+        "heroMid": "#02704a",
+        "heroTo": "#00875a",
+        "contrastOnWhite": 4.56,
+        "contrastOnDark": 4.56,
+        "hueShift": 0.07,
+        "lumFromLogo": -0.0335
+      }
+    },
+    {
+      "site": "compiler",
+      "name": "编译原理学习站",
+      "dir": "compiler",
+      "thirdParty": false,
+      "hueDeg": 128.5,
+      "tile": "#618d04",
+      "tileDark": "#689800",
+      "mark": "#ffffff",
+      "contrastTileVsPage": 3.93,
+      "contrastWhiteOnTile": 3.93,
+      "contrastTileDarkVsDarkPage": 4.98,
+      "contrastMarkVsTileDark": 3.45,
+      "theme": {
+        "seed": "#618d04",
+        "hue": 128.4,
+        "chroma": 0.1456,
+        "primary": "#598200",
+        "primaryDark": "#64900d",
+        "light": {
+          "dark": "#4f7401",
+          "darker": "#496c00",
+          "darkest": "#395600",
+          "light": "#658f1b",
+          "lighter": "#6b9626",
+          "lightest": "#7fab3f"
+        },
+        "dark": {
+          "dark": "#598202",
+          "darker": "#537a00",
+          "darkest": "#436400",
+          "light": "#709d24",
+          "lighter": "#77a52e",
+          "lightest": "#8cbb47"
+        },
+        "heroFrom": "#395600",
+        "heroMid": "#496c00",
+        "heroTo": "#598200",
+        "contrastOnWhite": 4.57,
+        "contrastOnDark": 4.56,
+        "hueShift": 0.06,
+        "lumFromLogo": -0.0349
+      }
+    },
+    {
+      "site": "js-ts",
+      "name": "JS/TS 深度学习笔记",
+      "dir": "js-ts/docs-site",
+      "thirdParty": false,
+      "hueDeg": 95.8,
+      "tile": "#967f05",
+      "tileDark": "#a28900",
+      "mark": "#ffffff",
+      "contrastTileVsPage": 3.94,
+      "contrastWhiteOnTile": 3.94,
+      "contrastTileDarkVsDarkPage": 5.01,
+      "contrastMarkVsTileDark": 3.43,
+      "theme": {
+        "seed": "#967f05",
+        "hue": 96.1,
+        "chroma": 0.1163,
+        "primary": "#8a7400",
+        "primaryDark": "#99820e",
+        "light": {
+          "dark": "#7b6802",
+          "darker": "#736100",
+          "darkest": "#5c4e02",
+          "light": "#97811b",
+          "lighter": "#9e8826",
+          "lightest": "#b39d3f"
+        },
+        "dark": {
+          "dark": "#8b7501",
+          "darker": "#826e04",
+          "darkest": "#6b5a02",
+          "light": "#a68f24",
+          "lighter": "#ad962e",
+          "lightest": "#c3ac47"
+        },
+        "heroFrom": "#5c4e02",
+        "heroMid": "#736100",
+        "heroTo": "#8a7400",
+        "contrastOnWhite": 4.57,
+        "contrastOnDark": 4.55,
+        "hueShift": 0.35,
+        "lumFromLogo": -0.0361
+      }
+    },
+    {
+      "site": "browser",
+      "name": "浏览器与网络原理学习站",
+      "dir": "browser",
+      "thirdParty": false,
+      "hueDeg": 63.1,
+      "tile": "#bc6d03",
+      "tileDark": "#ca7602",
+      "mark": "#ffffff",
+      "contrastTileVsPage": 3.93,
+      "contrastWhiteOnTile": 3.93,
+      "contrastTileDarkVsDarkPage": 5.0,
+      "contrastMarkVsTileDark": 3.44,
+      "theme": {
+        "seed": "#bc6d03",
+        "hue": 62.7,
+        "chroma": 0.1306,
+        "primary": "#ad6402",
+        "primaryDark": "#bf700c",
+        "light": {
+          "dark": "#9c5902",
+          "darker": "#925302",
+          "darkest": "#764302",
+          "light": "#bb711d",
+          "lighter": "#c37827",
+          "lightest": "#da8d40"
+        },
+        "dark": {
+          "dark": "#ae6504",
+          "darker": "#a45f04",
+          "darkest": "#894d00",
+          "light": "#cd7d24",
+          "lighter": "#d5842e",
+          "lightest": "#ec9a47"
+        },
+        "heroFrom": "#764302",
+        "heroMid": "#925302",
+        "heroTo": "#ad6402",
+        "contrastOnWhite": 4.55,
+        "contrastOnDark": 4.55,
+        "hueShift": 0.14,
+        "lumFromLogo": -0.0357
+      }
+    },
+    {
+      "site": "security",
+      "name": "安全学习笔记",
+      "dir": "security",
+      "thirdParty": false,
+      "hueDeg": 30.3,
+      "tile": "#e64835",
+      "tileDark": "#eb5b47",
+      "mark": "#ffffff",
+      "contrastTileVsPage": 3.93,
+      "contrastWhiteOnTile": 3.93,
+      "contrastTileDarkVsDarkPage": 5.01,
+      "contrastMarkVsTileDark": 3.43,
+      "theme": {
+        "seed": "#e64835",
+        "hue": 30.3,
+        "chroma": 0.1977,
+        "primary": "#d93b29",
+        "primaryDark": "#ea4c38",
+        "light": {
+          "dark": "#c92919",
+          "darker": "#c01d0d",
+          "darkest": "#a10a00",
+          "light": "#e84a37",
+          "lighter": "#f1533f",
+          "lightest": "#fe7561"
+        },
+        "dark": {
+          "dark": "#da3c2a",
+          "darker": "#d13221",
+          "darkest": "#b80e00",
+          "light": "#f95a46",
+          "lighter": "#ff6550",
+          "lightest": "#ff907e"
+        },
+        "heroFrom": "#a10a00",
+        "heroMid": "#c01d0d",
+        "heroTo": "#d93b29",
+        "contrastOnWhite": 4.56,
+        "contrastOnDark": 4.56,
+        "hueShift": 0.03,
+        "lumFromLogo": -0.036
+      }
+    },
+    {
+      "site": "backend",
+      "name": "后端开发学习站",
+      "dir": "backend",
+      "thirdParty": false,
+      "hueDeg": 357.6,
+      "tile": "#df4588",
+      "tileDark": "#e45892",
+      "mark": "#ffffff",
+      "contrastTileVsPage": 3.95,
+      "contrastWhiteOnTile": 3.95,
+      "contrastTileDarkVsDarkPage": 5.0,
+      "contrastMarkVsTileDark": 3.44,
+      "theme": {
+        "seed": "#df4588",
+        "hue": 357.9,
+        "chroma": 0.1979,
+        "primary": "#d2387e",
+        "primaryDark": "#e2488b",
+        "light": {
+          "dark": "#c32771",
+          "darker": "#ba1b6a",
+          "darkest": "#9d0156",
+          "light": "#e1478a",
+          "lighter": "#ea5091",
+          "lightest": "#ff6ba6"
+        },
+        "dark": {
+          "dark": "#d2387e",
+          "darker": "#ca2f76",
+          "darkest": "#b10a62",
+          "light": "#f15697",
+          "lighter": "#fa5f9f",
+          "lightest": "#ff89b4"
+        },
+        "heroFrom": "#9d0156",
+        "heroMid": "#ba1b6a",
+        "heroTo": "#d2387e",
+        "contrastOnWhite": 4.54,
+        "contrastOnDark": 4.54,
+        "hueShift": 0.33,
+        "lumFromLogo": -0.0351
+      }
+    },
+    {
+      "site": "webgl",
+      "name": "WebGL 与 3D 框架学习站",
+      "dir": "webgl",
+      "thirdParty": false,
+      "hueDeg": 324.9,
+      "tile": "#c053c8",
+      "tileDark": "#c663cd",
+      "mark": "#ffffff",
+      "contrastTileVsPage": 3.93,
+      "contrastWhiteOnTile": 3.93,
+      "contrastTileDarkVsDarkPage": 4.97,
+      "contrastMarkVsTileDark": 3.46,
+      "theme": {
+        "seed": "#c053c8",
+        "hue": 324.9,
+        "chroma": 0.1982,
+        "primary": "#b448bd",
+        "primaryDark": "#c457cc",
+        "light": {
+          "dark": "#a639ae",
+          "darker": "#9e30a6",
+          "darkest": "#871390",
+          "light": "#c255ca",
+          "lighter": "#ca5dd2",
+          "lightest": "#e173e9"
+        },
+        "dark": {
+          "dark": "#b548bd",
+          "darker": "#ad40b5",
+          "darkest": "#96279f",
+          "light": "#d264da",
+          "lighter": "#da6ce2",
+          "lightest": "#f182f9"
+        },
+        "heroFrom": "#871390",
+        "heroMid": "#9e30a6",
+        "heroTo": "#b448bd",
+        "contrastOnWhite": 4.57,
+        "contrastOnDark": 4.55,
+        "hueShift": 0.32,
+        "lumFromLogo": -0.0348
+      }
+    },
+    {
+      "site": "gui",
+      "name": "GUI 框架原理学习站",
+      "dir": "gui",
+      "thirdParty": false,
+      "hueDeg": 292.2,
+      "tile": "#8d67f1",
+      "tileDark": "#9474f3",
+      "mark": "#ffffff",
+      "contrastTileVsPage": 3.94,
+      "contrastWhiteOnTile": 3.94,
+      "contrastTileDarkVsDarkPage": 4.96,
+      "contrastMarkVsTileDark": 3.47,
+      "theme": {
+        "seed": "#8d67f1",
+        "hue": 292.3,
+        "chroma": 0.1985,
+        "primary": "#835ce5",
+        "primaryDark": "#906af4",
+        "light": {
+          "dark": "#774ed6",
+          "darker": "#7046cd",
+          "darkest": "#5d2eb6",
+          "light": "#8f69f4",
+          "lighter": "#9671fc",
+          "lightest": "#a88ffe"
+        },
+        "dark": {
+          "dark": "#835ce5",
+          "darker": "#7c54dc",
+          "darkest": "#693dc5",
+          "light": "#9c79ff",
+          "lighter": "#a285ff",
+          "lightest": "#b5a2fe"
+        },
+        "heroFrom": "#5d2eb6",
+        "heroMid": "#7046cd",
+        "heroTo": "#835ce5",
+        "contrastOnWhite": 4.54,
+        "contrastOnDark": 4.55,
+        "hueShift": 0.03,
+        "lumFromLogo": -0.0345
+      }
+    }
+  ]
+}
