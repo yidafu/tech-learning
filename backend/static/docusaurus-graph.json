@@ -180,7 +180,8 @@
       "05-校验体系与Kotlin陷阱",
       "06-错误模型-ProblemDetail与错误码",
       "07-Jackson3序列化",
-      "08-REST契约-幂等-分页-版本化与OpenAPI"
+      "08-REST契约-幂等-分页-版本化与OpenAPI",
+      "09-补充-注解版SpringMVC从零实现"
     ],
     "referencedBy": [
       "后端开发学习大纲"
@@ -237,6 +238,14 @@
   {
     "id": "08-REST契约-幂等-分页-版本化与OpenAPI",
     "title": "08. REST 契约：幂等、分页、版本化与 OpenAPI",
+    "linkTo": [],
+    "referencedBy": [
+      "04-第四阶段"
+    ]
+  },
+  {
+    "id": "09-补充-注解版SpringMVC从零实现",
+    "title": "09. 补充：注解版 Spring MVC 从零实现",
     "linkTo": [],
     "referencedBy": [
       "04-第四阶段"
