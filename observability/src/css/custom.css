@@ -1,18 +1,13 @@
 /* ============================================================
  * tech-learning 站群统一主题（唯一源头：shared/theme/custom.css）
  * 由 shared/sync-theme.mjs 同步到各站 src/css/custom.css，勿手改各站副本。
- * 基准：react 站定制 + landing 蓝（#2e7cf6），五站观感一致。
+ *
+ * 主色不写在这里：每站的主色由 shared/brand/build.py 从该站 Logo 色派生，
+ * 输出 shared/brand/theme/<站>.css，同步为同目录的 brand.css，下面第一行引入。
+ * 因此这个文件在 11 个站里逐字节相同，站点差异只在 brand.css。
  * ============================================================ */
 
-:root {
-  --ifm-color-primary: #2e7cf6;
-  --ifm-color-primary-dark: #1e6de9;
-  --ifm-color-primary-darker: #1c66dc;
-  --ifm-color-primary-darkest: #1754b5;
-  --ifm-color-primary-light: #468cf7;
-  --ifm-color-primary-lighter: #5395f8;
-  --ifm-color-primary-lightest: #77adf9;
-}
+@import './brand.css';
 
 /* Infima 新版默认 light 背景 transparent，内嵌 webview（底层黑）会透出来，显式钉死 */
 html {
@@ -27,7 +22,8 @@ html[data-theme='dark'] {
 
 .hero--landing {
   padding: 4.5rem 0 4rem;
-  background: linear-gradient(160deg, var(--ifm-color-primary-darkest) 0%, var(--ifm-color-primary-dark) 45%, var(--ifm-color-primary) 100%);
+  /* hero 固定为深色面：取该站主色的深三档，两套主题都不反转，白字始终可读 */
+  background: linear-gradient(160deg, var(--brand-hero-from) 0%, var(--brand-hero-mid) 45%, var(--brand-hero-to) 100%);
 }
 
 .hero__subtitle {
@@ -111,6 +107,16 @@ html[data-theme='dark'] .reading-order__label {
   color: var(--ifm-color-primary-light);
 }
 
+/* 深色模式的主色是「浅档」（为了在 #1b1b1d 上可读），压白字会反向失效：
+ * 凡是「主色底 + 白字」的用法，深色模式下改成深色字 */
+html[data-theme='dark'] .reading-order__step {
+  color: #1b1b1d;
+}
+
+html[data-theme='dark'] .button--primary {
+  --ifm-button-color: #1b1b1d;
+}
+
 /* 卡片网格 */
 .card-grid {
   display: grid;
@@ -189,8 +195,9 @@ html[data-theme='dark'] .reading-order__label {
   color: var(--ifm-color-emphasis-600);
 }
 
-/* 分类配色（卡片 ::before / 标签 / 悬停统一取 --card-accent） */
-.feature-card--primary { --card-accent: #2e7cf6; }
+/* 分类配色（卡片 ::before / 标签 / 悬停统一取 --card-accent）
+ * primary 跟随该站主色；其余 5 个是站内分类色，不随站变 */
+.feature-card--primary { --card-accent: var(--ifm-color-primary); }
 .feature-card--purple { --card-accent: #8b5cf6; }
 .feature-card--cyan { --card-accent: #0ea5e9; }
 .feature-card--orange { --card-accent: #f59e0b; }
@@ -204,6 +211,125 @@ html[data-theme='dark'] .feature-card {
 
 html[data-theme='dark'] .feature-card:hover {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+/* ============ 页脚（站群三列导航） ============ */
+
+/* 页脚容器是 container--fluid（铺满视口），而导航内容只有两三百像素宽——
+   单列长列表在宽屏上右边一大片空白，重心全跑左边。这里把导航排成三列网格
+   并整体收窄居中，重心回到页面中轴，底栏再用细线隔开版权。 */
+.footer {
+  --ifm-footer-padding-vertical: 3.25rem;
+}
+
+.footer__links {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2.25rem 2.5rem;
+  max-width: 58rem;
+  margin: 0 auto;
+  text-align: left;
+}
+
+/* 网格接管排布：清掉 Infima 给每列的 padding / margin */
+.footer__col {
+  margin: 0;
+  padding: 0;
+}
+
+/* 列标题降为「分组标签」：小字号 + 字距，不跟链接抢注意力 */
+.footer__title {
+  margin-bottom: 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.footer__items {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.footer__link-item {
+  font-size: 0.925rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.72);
+  transition: color 0.15s ease;
+}
+
+.footer__link-item:hover {
+  color: #fff;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  text-decoration-color: color-mix(in srgb, var(--ifm-color-primary-light) 85%, transparent);
+}
+
+/* 跨站外链箭头：跟着文字走，别比文字显眼 */
+.footer__link-item svg {
+  width: 11px;
+  height: 11px;
+  margin-left: 0.3rem;
+  opacity: 0.45;
+}
+
+.footer__link-item:hover svg {
+  opacity: 0.9;
+}
+
+/* 底栏：一条细线与导航分隔，版权退到辅助信息层级 */
+.footer__bottom {
+  max-width: 58rem;
+  margin: 2.5rem auto 0;
+  padding-top: 1.4rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer__copyright {
+  font-size: 0.83rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* 窄屏：两列，第三组横跨整行、组内再折成两列，避免右半屏空着 */
+@media (max-width: 768px) {
+  .footer__links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem;
+  }
+
+  .footer__col:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .footer__col:last-child .footer__items {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem 2rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .footer {
+    --ifm-footer-padding-vertical: 2.5rem;
+  }
+
+  .footer__links {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+
+  .footer__col:last-child {
+    grid-column: auto;
+  }
+
+  .footer__col:last-child .footer__items {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+
+  .footer__bottom {
+    margin-top: 1.75rem;
+  }
 }
 
 /* ============ MDX 组件：Callout（react 站 MDX 文档使用） ============ */

@@ -1,0 +1,43 @@
+/* 文档站主题色 · browser（浏览器与网络原理学习站）
+ * 由 shared/brand/build.py 生成，勿手改。
+ * 链路：build.py → shared/brand/theme/browser.css → shared/sync-theme.mjs → src/css/brand.css
+ *
+ * 取色自 Logo 底板 #bc6d03：OKLCH 62.7° / C 0.1306 / L 0.61
+ * 主色保留原色相与彩度，亮度下移到 L 0.573，白底正文对比度 4.55:1（AA ≥ 4.5）
+ * 深色模式基色 L 0.619，对 #1b1b1d 对比度 4.55:1
+ */
+
+:root {
+  --ifm-color-primary: #ad6402;
+  --ifm-color-primary-dark: #9c5902;
+  --ifm-color-primary-darker: #925302;
+  --ifm-color-primary-darkest: #764302;
+  --ifm-color-primary-light: #bb711d;
+  --ifm-color-primary-lighter: #c37827;
+  --ifm-color-primary-lightest: #da8d40;
+  --ifm-link-color: var(--ifm-color-primary);
+
+  /* Infima 的 contrast-* 默认是固定的蓝，不跟着主色走，这里显式派生。
+     第一行是兜底：不支持 color-mix 的浏览器退回中性底色，而不是蓝。 */
+  --ifm-color-primary-contrast-background: var(--ifm-color-emphasis-100);
+  --ifm-color-primary-contrast-background: color-mix(in srgb, var(--ifm-color-primary) 9%, #ffffff);
+  --ifm-color-primary-contrast-foreground: #764302;
+
+  /* hero 自己就是深色面，固定用浅色主题那套，深色模式也不反转 */
+  --brand-hero-from: #764302;
+  --brand-hero-mid: #925302;
+  --brand-hero-to: #ad6402;
+}
+
+html[data-theme='dark'] {
+  --ifm-color-primary: #bf700c;
+  --ifm-color-primary-dark: #ae6504;
+  --ifm-color-primary-darker: #a45f04;
+  --ifm-color-primary-darkest: #894d00;
+  --ifm-color-primary-light: #cd7d24;
+  --ifm-color-primary-lighter: #d5842e;
+  --ifm-color-primary-lightest: #ec9a47;
+
+  --ifm-color-primary-contrast-background: color-mix(in srgb, var(--ifm-color-primary) 14%, #1b1b1d);
+  --ifm-color-primary-contrast-foreground: var(--ifm-color-primary);
+}

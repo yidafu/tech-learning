@@ -1,0 +1,43 @@
+/* 文档站主题色 · react-native（ReactNative 原理学习站）
+ * 由 shared/brand/build.py 生成，勿手改。
+ * 链路：build.py → shared/brand/theme/react-native.css → shared/sync-theme.mjs → src/css/brand.css
+ *
+ * 取色自 Logo 底板 #61dafb：OKLCH 218.7° / C 0.1007 / L 0.832
+ * 主色保留原色相与彩度，亮度下移到 L 0.557，白底正文对比度 4.54:1（AA ≥ 4.5）
+ * 深色模式基色 L 0.832，对 #1b1b1d 对比度 10.59:1
+ */
+
+:root {
+  --ifm-color-primary: #00819b;
+  --ifm-color-primary-dark: #00738b;
+  --ifm-color-primary-darker: #066b81;
+  --ifm-color-primary-darkest: #035668;
+  --ifm-color-primary-light: #1f8ea9;
+  --ifm-color-primary-lighter: #2b95b0;
+  --ifm-color-primary-lightest: #45abc6;
+  --ifm-link-color: var(--ifm-color-primary);
+
+  /* Infima 的 contrast-* 默认是固定的蓝，不跟着主色走，这里显式派生。
+     第一行是兜底：不支持 color-mix 的浏览器退回中性底色，而不是蓝。 */
+  --ifm-color-primary-contrast-background: var(--ifm-color-emphasis-100);
+  --ifm-color-primary-contrast-background: color-mix(in srgb, var(--ifm-color-primary) 9%, #ffffff);
+  --ifm-color-primary-contrast-foreground: #035668;
+
+  /* hero 自己就是深色面，固定用浅色主题那套，深色模式也不反转 */
+  --brand-hero-from: #035668;
+  --brand-hero-mid: #066b81;
+  --brand-hero-to: #00819b;
+}
+
+html[data-theme='dark'] {
+  --ifm-color-primary: #61dafb;
+  --ifm-color-primary-dark: #51ccec;
+  --ifm-color-primary-darker: #47c3e4;
+  --ifm-color-primary-darkest: #27adcd;
+  --ifm-color-primary-light: #8ce5ff;
+  --ifm-color-primary-lighter: #a5eaff;
+  --ifm-color-primary-lightest: #e4f8fe;
+
+  --ifm-color-primary-contrast-background: color-mix(in srgb, var(--ifm-color-primary) 14%, #1b1b1d);
+  --ifm-color-primary-contrast-foreground: var(--ifm-color-primary);
+}
