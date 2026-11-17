@@ -291,8 +291,8 @@ class NPlusOneProofTest(
 
 ## 9. 延伸
 
-- 上一册：[05-持久化选型-JPA-MyBatis-JdbcClient](05-持久化选型-JPA-MyBatis-JdbcClient.md)——先决定要不要用 JPA，再谈怎么用好。
-- 下一册：[07-Schema演进与零停机迁移](07-Schema演进与零停机迁移.md)——实体改了，表怎么跟着改而不停服。
+- 上一册：[06-持久化选型-JPA-MyBatis-JdbcClient](06-持久化选型-JPA-MyBatis-JdbcClient.md)——先决定要不要用 JPA，再谈怎么用好。
+- 下一册：[08-Schema演进与零停机迁移](08-Schema演进与零停机迁移.md)——实体改了，表怎么跟着改而不停服。
 - 事务边界与 `@Transactional` 的失效现场在[第六阶段 02 册](../06-第六阶段/02-Transactional全解与六种失效现场.md)。
 - 乐观锁与 `version` 字段在[第六阶段 04 册](../06-第六阶段/04-并发控制-乐观锁-悲观锁与唯一约束.md)。
 - 用切片测试与 Testcontainers 固化这些断言，见[第十阶段导览](../10-第十阶段/01-导览.md)。

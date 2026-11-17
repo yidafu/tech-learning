@@ -244,7 +244,7 @@ class ResourceServerConfig {
 ## 9. 延伸
 
 - 上一册：[02-SpringSecurity过滤器链与认证授权时序](02-SpringSecurity过滤器链与认证授权时序.md)——`BearerTokenAuthenticationFilter` 在链里的位置。
-- 下一册：[04-授权模型与多租户数据隔离](04-授权模型与多租户数据隔离.md)——验完 token 之后，「他能看哪些数据」。
-- 纯 Bearer 无状态 API 为什么可以关 CSRF、关了之后还剩什么风险，见本阶段 [05 册](05-Spring侧的Web攻击面防线.md)。
+- 下一册：[04-权限模型-RBAC-ABAC与ReBAC](04-权限模型-RBAC-ABAC与ReBAC.md)——验完 token 之后，「他能做什么」，以及权限该不该塞进 token。
+- 纯 Bearer 无状态 API 为什么可以关 CSRF、关了之后还剩什么风险，见本阶段 [06 册](06-Spring侧的Web攻击面防线.md)。
 - Cookie 属性（`HttpOnly`/`SameSite`/`__Host-` 前缀）的完整语义在[浏览器站第四阶段 05 册](https://yidafu.github.io/tech-learning/browser/docs/第四阶段/请求语义-协商-Cookie-条件请求与Range)。
 - 令牌校验失败如何返回统一的 `ProblemDetail` 而不是默认空体，见[第四阶段 06 册](../04-第四阶段/06-错误模型-ProblemDetail与错误码.md)。

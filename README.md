@@ -16,7 +16,7 @@
 | [编译原理学习站](https://yidafu.github.io/tech-learning/compiler/) | `compiler/` | 3007 | 八阶段：词法 → 语法 → 语义 → IR 与字节码 VM → GC → 优化 → Babel/tsc/esbuild 对标与毕业项目 |
 | [GUI 框架原理学习站](https://yidafu.github.io/tech-learning/gui/) | `gui/` | 3008 | 八阶段：绘制层 → 文本排版 → 控件树与布局 → 事件 → 渲染调度 → signals 声明式层；TypeScript + raylib（ScriptC 编译为原生窗口程序），目前为大纲与阶段导览 |
 | [浏览器与网络原理学习站](https://yidafu.github.io/tech-learning/browser/) | `browser/` | 3009 | 十阶段沿一次真实请求走完全链路：导航决策 → DNS/TCP/TLS → HTTP 三代协议 → CDN 与服务端 → 缓存调度 → HTML/CSS/JS 解析 → 渲染管线 → 首屏指标与交互 → 毕业项目，目前为大纲与阶段导览 |
-| [后端开发学习站](https://yidafu.github.io/tech-learning/backend/) | `backend/` | 3010 | Kotlin + Spring Boot 十二阶段：十五站请求链路 → 容器原理 → Web 层与契约 → 数据层 → 事务与一致性 → 缓存消息 → 并发模型 → 安全 → 生产化 → 微服务与大型应用 → 毕业项目，86 篇正文全部上线 |
+| [后端开发学习站](https://yidafu.github.io/tech-learning/backend/) | `backend/` | 3010 | Kotlin + Spring Boot 十二阶段：十五站请求链路 → 容器原理 → Web 层与契约 → 数据建模与持久化 → 事务与一致性 → 缓存消息 → 并发模型 → 安全 → 生产化 → 微服务与大型应用 → 毕业项目，87 篇正文全部上线 |
 
 ## 本地开发
 

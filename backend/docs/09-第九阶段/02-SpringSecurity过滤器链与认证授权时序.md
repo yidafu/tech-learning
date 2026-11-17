@@ -272,7 +272,7 @@ URL 级规则和方法级规则是**两道独立的门，都要过**。`anyReque
 ## 10. 延伸
 
 - 下一册：[03-会话-JWT与OAuth2-OIDC](03-会话-JWT与OAuth2-OIDC.md)——`BearerTokenAuthenticationFilter` 从哪来、`JwtDecoder` 要校验什么。
-- 再下一册：[04-授权模型与多租户数据隔离](04-授权模型与多租户数据隔离.md)——URL 规则管不到的「这条数据是不是你的」。
+- 再下一册：[04-权限模型-RBAC-ABAC与ReBAC](04-权限模型-RBAC-ABAC与ReBAC.md)——URL 规则管不到的「能操作哪些数据」，以及角色为什么越建越多。
 - Filter / Interceptor / AOP 三层的执行顺序与能力边界在[第四阶段 03 册](../04-第四阶段/03-Filter-Interceptor-AOP的执行顺序.md)。
 - 自调用绕过代理的完整原理（JDK 代理 vs CGLIB）在[第三阶段 04 册](../03-第三阶段/04-AOP与代理-自调用的真相.md)。
 - 安全链里的异常如何变成 RFC 9457 响应，见[第四阶段 06 册](../04-第四阶段/06-错误模型-ProblemDetail与错误码.md)。

@@ -354,5 +354,5 @@ class TransactionalFailureTest @Autowired constructor(
 
 - 下一册：[03-编程式事务与事务边界设计](03-编程式事务与事务边界设计.md)——代理靠不住的时候，用 `TransactionTemplate` 把边界画在代码里。
 - 自调用的代理原理在[第三阶段 04 册](../03-第三阶段/04-AOP与代理-自调用的真相.md)；`@Transactional` 在请求链路里的位置见[第四阶段 03 册](../04-第四阶段/03-Filter-Interceptor-AOP的执行顺序.md)。
-- 隔离级别、MVCC 快照、死锁日志怎么读，属于数据库层，见[第五阶段 04 册](../05-第五阶段/04-事务与隔离级别的实证.md)。
+- 隔离级别、MVCC 快照、死锁日志怎么读，属于数据库层，见[第五阶段 05 册](../05-第五阶段/05-事务与隔离级别的实证.md)。
 - Kotlin 的 `final` 与 CGLIB 的冲突，见[第二阶段 06 册](../02-第二阶段/06-Kotlin与Spring的接缝-allopen-noarg与DSL配置.md)。

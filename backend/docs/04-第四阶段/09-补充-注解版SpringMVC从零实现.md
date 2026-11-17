@@ -434,7 +434,7 @@ sequenceDiagram
 值得注意的两处细节：
 
 - **`InvocationTargetException` 必须剥壳**。不剥，`catch (e: Exception)` 永远匹配不到业务异常，所有错误都变成 500，`@Transactional` 的回滚规则也会判断错（Spring 在 `JdkDynamicAopProxy` 与 `ReflectiveMethodInvocation` 里做了同样的事）。
-- **500 不能带 `detail`**。上面 `problem(resp, 500, ..., null)` 里那个 `null` 是刻意的：错误信息泄露是安全册（第九阶段 07 册）的独立课题，但习惯要在写第一版代码时养成——**未知异常对客户端不透明，对日志透明**。
+- **500 不能带 `detail`**。上面 `problem(resp, 500, ..., null)` 里那个 `null` 是刻意的：错误信息泄露是安全册（第九阶段 08 册）的独立课题，但习惯要在写第一版代码时养成——**未知异常对客户端不透明，对日志透明**。
 
 ## 7. 零 XML 启动：三条路线
 
